@@ -78,6 +78,18 @@ async def websocket_endpoint(browser_ws: WebSocket):
                         "audio_format": "pcm_s16le",
                         "sample_rate": 16000,
                         "num_channels": 1,
+                        "language_hints": ["fr"],
+                        "language_hints_strict": True,
+                        "context": {
+                            "general": [
+                                {"key": "domain", "value": "Task management"},
+                                {
+                                    "key": "topic",
+                                    "value": "Voice-driven todo list application",
+                                },
+                            ],
+                            "terms": ["todo", "todos"],
+                        },
                     }
 
                     # Open Soniox connection
