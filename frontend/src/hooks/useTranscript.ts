@@ -22,8 +22,12 @@ export function useTranscript() {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const start = useCallback(async () => {
+    // Fix #5: Guard against double-start
+    if (status !== "idle") return;
+
     setStatus("connecting");
     setFinalText("");
     setInterimText("");
@@ -34,6 +38,13 @@ export function useTranscript() {
       const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
       wsRef.current = ws;
 
+      // Fix #1: Wait for open/error using Promise, then set persistent handlers after
+      await new Promise<void>((resolve, reject) => {
+        ws.onopen = () => resolve();
+        ws.onerror = () => reject(new Error("WebSocket connection failed"));
+      });
+
+      // Fix #1: Set persistent handlers after the connection is established
       ws.onmessage = (event) => {
         const msg: TranscriptMessage = JSON.parse(event.data);
 
@@ -54,6 +65,10 @@ export function useTranscript() {
           }
           setInterimText(newInterim);
         } else if (msg.type === "stopped") {
+          if (stopTimeoutRef.current !== null) {
+            clearTimeout(stopTimeoutRef.current);
+            stopTimeoutRef.current = null;
+          }
           setStatus("idle");
           setInterimText("");
           cleanup();
@@ -69,16 +84,10 @@ export function useTranscript() {
         cleanup();
       };
 
+      // Fix #3: onclose only updates status; cleanup() already handles closing
       ws.onclose = () => {
         setStatus("idle");
-        cleanup();
       };
-
-      // Wait for WebSocket to open
-      await new Promise<void>((resolve, reject) => {
-        ws.onopen = () => resolve();
-        ws.onerror = () => reject(new Error("WebSocket connection failed"));
-      });
 
       // Start mic capture
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -106,8 +115,8 @@ export function useTranscript() {
         }
       };
 
+      // Fix #4: Don't connect workletNode to destination (avoids mic echo)
       source.connect(workletNode);
-      workletNode.connect(audioContext.destination);
 
       // Tell server to start Soniox session
       ws.send(JSON.stringify({ type: "start" }));
@@ -116,13 +125,20 @@ export function useTranscript() {
       setStatus("idle");
       cleanup();
     }
-  }, []);
+  }, [status]);
 
   const stop = useCallback(() => {
     setStatus("stopping");
     const ws = wsRef.current;
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: "stop" }));
+
+      // Fix #2: Timeout in case server never responds with "stopped"
+      stopTimeoutRef.current = setTimeout(() => {
+        stopTimeoutRef.current = null;
+        cleanup();
+        setStatus("idle");
+      }, 5000);
     }
     // Stop mic immediately
     if (mediaStreamRef.current) {
@@ -152,10 +168,15 @@ export function useTranscript() {
       audioContextRef.current.close();
       audioContextRef.current = null;
     }
-    if (wsRef.current) {
+    // Fix #3: Only close WebSocket if it isn't already closed/closing
+    if (
+      wsRef.current &&
+      wsRef.current.readyState !== WebSocket.CLOSED &&
+      wsRef.current.readyState !== WebSocket.CLOSING
+    ) {
       wsRef.current.close();
-      wsRef.current = null;
     }
+    wsRef.current = null;
   }
 
   return { status, finalText, interimText, start, stop };
