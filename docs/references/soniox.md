@@ -24,6 +24,10 @@ Max context size: 8,000 tokens (~10,000 chars).
 
 No language hints set — Soniox auto-detects. Add `language_hints` if needed later.
 
+## Gotchas
+
+- **Auth is not checked at connection time.** Soniox accepts the WebSocket connection and the initial config message even with an invalid API key. The failure comes later (when streaming audio or receiving results), not on connect. This means you can't rely on a connection error to detect a bad key — you need to watch for errors during the streaming phase.
+
 ## Parameters for Later Items
 
 - `enable_endpoint_detection` — speech boundary detection (Item 3)
