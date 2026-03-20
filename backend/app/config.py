@@ -7,4 +7,4 @@ class Settings(BaseSettings):
     model_config = {"env_file": ".env"}
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[missing-argument]  # populated from .env by pydantic-settings

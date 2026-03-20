@@ -130,7 +130,7 @@ async def websocket_endpoint(browser_ws: WebSocket):
                 if soniox_ws:
                     await soniox_ws.send(message["bytes"])
 
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, RuntimeError):
         pass
     finally:
         if relay_task:

@@ -6,7 +6,7 @@ from app.ws import router as ws_router
 app = FastAPI()
 
 app.add_middleware(
-    CORSMiddleware,
+    CORSMiddleware,  # type: ignore[arg-type]  # Starlette typing gap
     allow_origins=["http://localhost:5173"],
     allow_methods=["*"],
     allow_headers=["*"],
