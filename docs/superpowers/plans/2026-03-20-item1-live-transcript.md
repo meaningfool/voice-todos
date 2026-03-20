@@ -6,7 +6,7 @@
 
 **Architecture:** React+Vite frontend connects via WebSocket to a FastAPI backend, which bridges to Soniox's real-time STT WebSocket. Audio flows browser→server→Soniox, transcript tokens flow Soniox→server→browser.
 
-**Tech Stack:** React 19, Vite, TypeScript, FastAPI, websockets (Python), soniox Python SDK, PCM audio via AudioWorklet.
+**Tech Stack:** React 19, Vite, TypeScript, FastAPI, websockets (Python), soniox Python SDK, PCM audio via AudioWorklet. **Tooling:** uv (Python), pnpm (JS).
 
 **Spec:** `docs/superpowers/specs/2026-03-20-item1-live-transcript-design.md`
 
@@ -94,32 +94,16 @@ git commit -m "chore: add gitignore for backend, frontend, and IDE files"
 - Create: `backend/.env`
 - Create: `backend/tests/__init__.py`
 
-- [ ] **Step 1: Create `backend/pyproject.toml`**
+- [ ] **Step 1: Initialize backend project with uv**
 
-```toml
-[project]
-name = "voice-todos-backend"
-version = "0.1.0"
-requires-python = ">=3.11"
-dependencies = [
-    "fastapi>=0.115",
-    "uvicorn[standard]>=0.34",
-    "websockets>=15",
-    "soniox>=2.2",
-    "pydantic-settings>=2.7",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=8",
-    "pytest-asyncio>=0.25",
-    "httpx>=0.28",
-]
-
-[build-system]
-requires = ["setuptools>=75"]
-build-backend = "setuptools.backends._legacy:_Backend"
+```bash
+cd backend
+uv init --name voice-todos-backend --python ">=3.11"
+uv add fastapi "uvicorn[standard]" websockets soniox pydantic-settings
+uv add --dev pytest pytest-asyncio httpx
 ```
+
+This creates `pyproject.toml` and `uv.lock` automatically.
 
 - [ ] **Step 2: Create `backend/app/__init__.py`**
 
@@ -171,20 +155,20 @@ SONIOX_API_KEY=your_key_here
 
 Empty file.
 
-- [ ] **Step 7: Install dependencies and verify**
+- [ ] **Step 7: Verify dependencies are installed**
 
 ```bash
 cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+uv run python -c "import fastapi; import soniox; print('OK')"
 ```
+
+Expected: `OK`
 
 - [ ] **Step 8: Run the server and verify health endpoint**
 
 ```bash
 cd backend
-uvicorn app.main:app --reload --port 8000
+uv run uvicorn app.main:app --reload --port 8000
 # In another terminal:
 curl http://localhost:8000/health
 ```
@@ -234,7 +218,7 @@ def test_ws_endpoint_accepts_connection():
 
 ```bash
 cd backend
-pytest tests/test_ws.py::test_ws_endpoint_accepts_connection -v
+uv run pytest tests/test_ws.py::test_ws_endpoint_accepts_connection -v
 ```
 
 Expected: FAIL — no `/ws` endpoint exists yet.
@@ -389,7 +373,7 @@ async def health():
 
 ```bash
 cd backend
-pytest tests/test_ws.py -v
+uv run pytest tests/test_ws.py -v
 ```
 
 Expected: test passes (the endpoint accepts the connection and returns an error since Soniox key is not valid in test, but the connection itself works).
@@ -416,9 +400,9 @@ git commit -m "feat: add WebSocket endpoint bridging browser to Soniox STT"
 - [ ] **Step 1: Scaffold React + Vite + TypeScript project**
 
 ```bash
-npm create vite@latest frontend -- --template react-ts
+pnpm create vite@latest frontend -- --template react-ts
 cd frontend
-npm install
+pnpm install
 ```
 
 - [ ] **Step 2: Configure Vite proxy for WebSocket**
@@ -461,7 +445,7 @@ export default App;
 
 ```bash
 cd frontend
-npm run dev
+pnpm dev
 ```
 
 Open http://localhost:5173 — should show "Voice Todos" heading.
@@ -773,15 +757,14 @@ git commit -m "feat: add transcript hook, RecordButton, TranscriptArea component
 
 ```bash
 cd backend
-source .venv/bin/activate
-uvicorn app.main:app --reload --port 8000
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
 - [ ] **Step 2: Start the frontend (separate terminal)**
 
 ```bash
 cd frontend
-npm run dev
+pnpm dev
 ```
 
 - [ ] **Step 3: Open http://localhost:5173 in Chrome**
