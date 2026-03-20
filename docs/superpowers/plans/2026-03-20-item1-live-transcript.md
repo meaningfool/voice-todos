@@ -84,7 +84,92 @@ git commit -m "chore: add gitignore for backend, frontend, and IDE files"
 
 ---
 
-## Task 2: Backend project scaffolding
+## Task 2: Dev tooling setup
+
+**Files:**
+- Create: `backend/ruff.toml`
+- Create: `frontend/oxlintrc.json`
+
+- [ ] **Step 1: Configure Ruff for Python**
+
+Create `backend/ruff.toml`:
+
+```toml
+line-length = 88
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[format]
+quote-style = "double"
+```
+
+Rules selected:
+- `E` / `F` — pycodestyle + pyflakes (core errors)
+- `I` — isort (import sorting)
+- `UP` — pyupgrade (modern Python syntax)
+- `B` — bugbear (common pitfalls)
+- `SIM` — simplify (unnecessary complexity)
+
+- [ ] **Step 2: Configure oxlint for TypeScript/React**
+
+Create `frontend/oxlintrc.json`:
+
+```json
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "react-hooks", "import"],
+  "rules": {
+    "no-unused-vars": "warn",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    "typescript/no-explicit-any": "warn"
+  },
+  "ignorePatterns": ["dist", "node_modules"]
+}
+```
+
+- [ ] **Step 3: Add lint/format scripts to plan**
+
+These scripts will be added to the respective projects when they are scaffolded:
+
+**`backend/pyproject.toml`** (added during Task 3):
+```toml
+[tool.ruff]
+# Reads from ruff.toml
+```
+
+Backend commands:
+```bash
+uv run ruff check .          # lint
+uv run ruff check --fix .    # lint + autofix
+uv run ruff format .         # format
+uv run ruff format --check . # format check (CI)
+```
+
+**`frontend/package.json` scripts** (added during Task 4):
+```json
+{
+  "scripts": {
+    "lint": "oxlint -c oxlintrc.json src/",
+    "lint:fix": "oxlint -c oxlintrc.json --fix src/",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
+  }
+}
+```
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add backend/ruff.toml frontend/oxlintrc.json
+git commit -m "chore: add Ruff (Python) and oxlint (TS/React) config"
+```
+
+---
+
+## Task 3: Backend project scaffolding
 
 **Files:**
 - Create: `backend/pyproject.toml`
@@ -100,7 +185,7 @@ git commit -m "chore: add gitignore for backend, frontend, and IDE files"
 cd backend
 uv init --name voice-todos-backend --python ">=3.11"
 uv add fastapi "uvicorn[standard]" websockets soniox pydantic-settings
-uv add --dev pytest pytest-asyncio httpx
+uv add --dev pytest pytest-asyncio httpx ruff
 ```
 
 This creates `pyproject.toml` and `uv.lock` automatically.
@@ -184,7 +269,7 @@ git commit -m "feat: scaffold backend with FastAPI, config, and health endpoint"
 
 ---
 
-## Task 3: Backend WebSocket endpoint (Soniox bridge)
+## Task 4: Backend WebSocket endpoint (Soniox bridge)
 
 **Files:**
 - Create: `backend/app/ws.py`
@@ -378,7 +463,7 @@ uv run pytest tests/test_ws.py -v
 
 Expected: test passes (the endpoint accepts the connection and returns an error since Soniox key is not valid in test, but the connection itself works).
 
-Note: The test will get an `error` response (no valid Soniox key in test env), which is acceptable — the test asserts the endpoint exists and responds. Integration testing with real Soniox comes in Task 6.
+Note: The test will get an `error` response (no valid Soniox key in test env), which is acceptable — the test asserts the endpoint exists and responds. Integration testing with real Soniox comes in Task 7.
 
 - [ ] **Step 6: Commit**
 
@@ -389,7 +474,7 @@ git commit -m "feat: add WebSocket endpoint bridging browser to Soniox STT"
 
 ---
 
-## Task 4: Frontend project scaffolding
+## Task 5: Frontend project scaffolding
 
 **Files:**
 - Create: `frontend/package.json` (via Vite scaffolding)
@@ -403,6 +488,22 @@ git commit -m "feat: add WebSocket endpoint bridging browser to Soniox STT"
 pnpm create vite@latest frontend -- --template react-ts
 cd frontend
 pnpm install
+pnpm add -D oxlint oxfmt
+```
+
+Add lint/format scripts to `frontend/package.json`:
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "oxlint -c oxlintrc.json src/",
+    "lint:fix": "oxlint -c oxlintrc.json --fix src/",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
+  }
+}
 ```
 
 - [ ] **Step 2: Configure Vite proxy for WebSocket**
@@ -459,7 +560,7 @@ git commit -m "feat: scaffold React + Vite frontend with WebSocket proxy"
 
 ---
 
-## Task 5: Frontend transcript hook and components
+## Task 6: Frontend transcript hook and components
 
 **Files:**
 - Create: `frontend/src/hooks/useTranscript.ts`
@@ -747,7 +848,7 @@ git commit -m "feat: add transcript hook, RecordButton, TranscriptArea component
 
 ---
 
-## Task 6: End-to-end integration test
+## Task 7: End-to-end integration test
 
 **Files:** No new files — manual testing with real Soniox key.
 
