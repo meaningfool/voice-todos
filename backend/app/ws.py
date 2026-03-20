@@ -13,13 +13,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 SONIOX_WS_URL = "wss://stt-rt.soniox.com/transcribe-websocket"
-SONIOX_CONFIG = {
-    "api_key": settings.soniox_api_key,
-    "model": "stt-rt-v4",
-    "audio_format": "pcm_s16le",
-    "sample_rate": 16000,
-    "num_channels": 1,
-}
+STOP_TIMEOUT_SECONDS = 5.0
 
 
 async def _relay_soniox_to_browser(
@@ -45,7 +39,7 @@ async def _relay_soniox_to_browser(
                     }
                 )
     except websockets.ConnectionClosed:
-        pass
+        logger.warning("Soniox connection closed unexpectedly during relay")
     except Exception as e:
         logger.exception("Error relaying from Soniox")
         with contextlib.suppress(Exception):
@@ -66,12 +60,30 @@ async def websocket_endpoint(browser_ws: WebSocket):
             # Text message = JSON control signal
             if "text" in message:
                 data = json.loads(message["text"])
+                msg_type = data.get("type")
 
-                if data["type"] == "start":
+                if msg_type == "start":
+                    # If already connected, close existing connection first
+                    if soniox_ws is not None:
+                        if relay_task:
+                            relay_task.cancel()
+                            relay_task = None
+                        with contextlib.suppress(Exception):
+                            await soniox_ws.close()
+                        soniox_ws = None
+
+                    soniox_config = {
+                        "api_key": settings.soniox_api_key,
+                        "model": "stt-rt-v4",
+                        "audio_format": "pcm_s16le",
+                        "sample_rate": 16000,
+                        "num_channels": 1,
+                    }
+
                     # Open Soniox connection
                     try:
                         soniox_ws = await websockets.connect(SONIOX_WS_URL)
-                        await soniox_ws.send(json.dumps(SONIOX_CONFIG))
+                        await soniox_ws.send(json.dumps(soniox_config))
                         relay_task = asyncio.create_task(
                             _relay_soniox_to_browser(soniox_ws, browser_ws)
                         )
@@ -85,13 +97,23 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             }
                         )
 
-                elif data["type"] == "stop" and soniox_ws:
+                elif msg_type == "stop" and soniox_ws:
                     await soniox_ws.send(b"")  # Empty frame = end of audio
                     # Wait for relay task to finish (Soniox sends "finished")
                     if relay_task:
-                        await asyncio.wait_for(relay_task, timeout=5.0)
-                        relay_task = None
-                    await soniox_ws.close()
+                        try:
+                            await asyncio.wait_for(
+                                relay_task, timeout=STOP_TIMEOUT_SECONDS
+                            )
+                        except TimeoutError:
+                            logger.warning(
+                                "Timed out waiting for Soniox relay to finish"
+                            )
+                            relay_task.cancel()
+                        finally:
+                            relay_task = None
+                    with contextlib.suppress(Exception):
+                        await soniox_ws.close()
                     soniox_ws = None
 
             # Binary message = audio frame
@@ -105,4 +127,5 @@ async def websocket_endpoint(browser_ws: WebSocket):
         if relay_task:
             relay_task.cancel()
         if soniox_ws:
-            await soniox_ws.close()
+            with contextlib.suppress(Exception):
+                await soniox_ws.close()
