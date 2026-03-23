@@ -17,5 +17,8 @@ frontend/dist/
 # Dev scripts
 .pid.*
 
+# Session recordings (recent are ephemeral; golden/ is committed)
+sessions/recent/
+
 # Superpowers
 .superpowers/

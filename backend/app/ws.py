@@ -8,6 +8,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.config import settings
 from app.extract import extract_todos
+from app.session_recorder import SessionRecorder
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +23,15 @@ async def _relay_soniox_to_browser(
     browser_ws: WebSocket,
     transcript_parts: list[str],
     interim_parts: list[str],
+    recorder: SessionRecorder | None = None,
 ):
     """Read transcript events from Soniox and forward to browser."""
     try:
         async for message in soniox_ws:
+            if recorder:
+                recorder.write_soniox_message(
+                    message if isinstance(message, str) else message.decode()
+                )
             event = json.loads(message)
             if event.get("finished"):
                 return
@@ -64,6 +70,7 @@ async def websocket_endpoint(browser_ws: WebSocket):
     relay_task = None
     transcript_parts: list[str] = []
     interim_parts: list[str] = []
+    recorder = SessionRecorder()
 
     try:
         while True:
@@ -107,9 +114,11 @@ async def websocket_endpoint(browser_ws: WebSocket):
                         await soniox_ws.send(json.dumps(soniox_config))
                         transcript_parts.clear()
                         interim_parts.clear()
+                        recorder.start()
                         relay_task = asyncio.create_task(
                             _relay_soniox_to_browser(
-                                soniox_ws, browser_ws, transcript_parts, interim_parts
+                                soniox_ws, browser_ws, transcript_parts,
+                                interim_parts, recorder,
                             )
                         )
                         await browser_ws.send_json({"type": "started"})
@@ -148,23 +157,24 @@ async def websocket_endpoint(browser_ws: WebSocket):
                         len(full_transcript),
                         full_transcript[:200],
                     )
+                    todo_items: list[dict] = []
                     try:
                         todos = await extract_todos(full_transcript)
                         logger.info("Extracted %d todos", len(todos))
+                        todo_items = [
+                            t.model_dump(exclude_none=True) for t in todos
+                        ]
                         await browser_ws.send_json(
-                            {
-                                "type": "todos",
-                                "items": [
-                                    t.model_dump(exclude_none=True)
-                                    for t in todos
-                                ],
-                            }
+                            {"type": "todos", "items": todo_items}
                         )
                     except Exception:
                         logger.exception("Todo extraction failed")
                         await browser_ws.send_json(
                             {"type": "todos", "items": []}
                         )
+
+                    recorder.write_result(full_transcript, todo_items)
+                    recorder.stop()
 
                     await browser_ws.send_json({"type": "stopped"})
 
@@ -175,11 +185,13 @@ async def websocket_endpoint(browser_ws: WebSocket):
             # Binary message = audio frame
             elif "bytes" in message:
                 if soniox_ws:
+                    recorder.write_audio(message["bytes"])
                     await soniox_ws.send(message["bytes"])
 
     except (WebSocketDisconnect, RuntimeError):
         pass
     finally:
+        recorder.stop()
         if relay_task:
             relay_task.cancel()
         if soniox_ws:
