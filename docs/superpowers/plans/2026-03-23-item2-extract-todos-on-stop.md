@@ -1425,3 +1425,85 @@ Expected: FAIL — audio.pcm is smaller than expected because the backend receiv
 git add scripts/test_audio_pipeline.sh
 git commit -m "test: add audio pipeline integration test with agent-browser"
 ```
+
+---
+
+## Revision — 2026-03-23 (what actually happened)
+
+Tasks 1–13 were implemented largely as planned. Task 14 (audio pipeline test) was not needed — the 300ms flush delay it was designed to protect was removed after proving audio bytes aren't lost. The following additional work was done across two sessions to fix transcript word loss.
+
+### What changed in `backend/app/ws.py`
+
+**Stop handler** now sends `{"type": "finalize"}` before `b""`. This was the root fix for trailing words being lost. The plan's Task 5 only had `b""`.
+
+**Relay function** (`_relay_soniox_to_browser`) now:
+- Detects `<fin>` marker tokens from finalize responses
+- Filters them out of the token stream
+- Clears `interim_parts` when `<fin>` is seen (prevents stale interim from being appended to the already-complete finals)
+- Tracks `interim_parts` separately from `transcript_parts` (was added in session 1 as an interim tail fallback)
+
+**`stopped` message** now includes `transcript: full_transcript` so the frontend doesn't have to reconstruct it.
+
+### What changed in `frontend/src/hooks/useTranscript.ts`
+
+Beyond what Task 11 planned:
+
+- **`TranscriptMessage` interface** has a `transcript?: string` field for the `stopped` message
+- **`stopped` handler** uses `msg.transcript` as source of truth instead of promoting `interimTextRef.current`
+- **`MediaRecorder`** records raw mic audio independently. New state: `micRecordingUrl`. Produces a playable blob on stop.
+- **`stop()` callback** delays mic teardown by 200ms (`MIC_TAIL_MS`), then tears down audio, then sends `{"type": "stop"}` to backend. The plan had stop sent synchronously before teardown.
+
+### What changed in `frontend/src/App.tsx`
+
+Beyond what Task 12 planned:
+
+- Destructures `micRecordingUrl` from hook
+- Renders "No todos found in this recording." when idle with transcript but no todos
+- Renders audio player + download link when `micRecordingUrl` is set
+
+### What changed in `frontend/src/hooks/transcriptReducer.ts` (new file)
+
+Extracted message-processing logic into a pure function `processMessages(messages, useBackendTranscript)` for testing. Mirrors the `onmessage` handler logic. Not wired into the hook (the hook has its own copy with React-specific concerns).
+
+### Tests: what was actually built
+
+**Backend:**
+
+| File | Tests | What it covers |
+|------|-------|---------------|
+| `test_replay.py` | 2 | `test_transcript_not_empty` + `test_result_matches_transcript` against all fixtures. Simplified from the plan's approach — no fixture-specific tests. |
+| `test_soniox_integration.py` | 2 | Real Soniox API: `test_without_finalize_loses_tail` (proves bug), `test_with_finalize_captures_full_sentence` (proves fix). Not in original plan. |
+| `test_ws.py` | 6 | As planned, plus existing endpoint tests. |
+| `test_extract.py` | 6 | As planned. |
+| `test_models.py` | 6 | As planned. |
+| `test_config.py` | 3 | As planned. |
+
+**Frontend:**
+
+| File | Tests | What it covers |
+|------|-------|---------------|
+| `App.test.tsx` | 5 | Plan's 4 tests + "no todos with transcript" empty state. |
+| `transcriptReducer.test.ts` | 2 | Proves old behavior loses interim tail, new behavior (backend transcript) preserves it. Not in original plan. |
+| `TodoCard.test.tsx` | 7 | As planned. |
+| `TodoList.test.tsx` | 3 | As planned. |
+| `TodoSkeleton.test.tsx` | 1 | As planned. |
+| `RecordButton.test.tsx` | 3 | As planned. |
+
+**Fixtures added** (not in plan):
+
+| Fixture | What it captures |
+|---------|-----------------|
+| `call-mom-memo-supplier` | Original fixture from session 1 |
+| `to-build-todos` | Soniox only finalizes "this", interim has "to build" |
+| `finding-out-if-you` | Soniox never sends `finished`, interim has full sentence |
+| `stop-the-button` | 2.6s utterance, without finalize only "Stop" comes back |
+| `text-is-captured` | Finalize produces `<fin>`, stale interim caused duplicated text |
+
+**Scripts added** (not in plan):
+
+- `scripts/pcm_to_wav.py` — converts raw PCM to playable WAV
+- `scripts/soniox_transcribe.py` — sends audio directly to Soniox API (no backend)
+
+### Task 14: not implemented
+
+The audio pipeline integration test with agent-browser was not built. The 300ms flush delay it was designed to protect was removed after byte-counting proved audio is not lost. The real issue (Soniox not finalizing tokens) was unrelated to audio byte delivery.

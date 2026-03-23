@@ -186,3 +186,54 @@ End-to-end test that verifies no audio bytes are dropped between the browser's A
 - Todo editing or deletion
 - Authentication
 - Transcript visibility toggle (deferred to first working version)
+
+---
+
+## Revision — 2026-03-23 (post-implementation)
+
+Changes discovered and applied during implementation that diverge from the original spec above.
+
+### Soniox stop sequence
+
+The original spec assumed sending an empty frame (`b""`) was sufficient to end the Soniox stream. It is not — pending interim tokens are silently dropped. The correct sequence is:
+
+1. Send `{"type": "finalize"}` — promotes all interim tokens to final, emits `<fin>` marker
+2. Send `b""` — signals end of stream
+3. Filter `<fin>` from transcript tokens, clear stale interim state after finalize
+
+See `docs/references/soniox.md` for full details.
+
+### Backend sends full transcript in `stopped` message
+
+The `stopped` message now includes a `transcript` field with the backend's assembled transcript:
+
+```json
+{ "type": "stopped", "transcript": "full text here" }
+```
+
+The frontend uses this as the source of truth instead of independently reconstructing from interim/final tokens, which was prone to state timing issues.
+
+### Frontend empty state
+
+When extraction returns no todos, the transcript stays visible and a "No todos found in this recording." message is shown. The original spec had no handling for this case — the transcript would disappear.
+
+### Raw mic recording
+
+The frontend records the raw mic stream via `MediaRecorder` (runs independently, non-blocking). After stop, an audio player and download link appear. This is a debugging tool for comparing what the mic captured vs what Soniox transcribed.
+
+### 200ms mic tail delay
+
+On stop, the mic keeps streaming for 200ms before teardown, giving Soniox trailing audio context. The stop signal is sent to the backend after this delay.
+
+### Testing
+
+- **Soniox integration test** (`test_soniox_integration.py`): Sends real audio to real Soniox API. Proves finalize captures trailing words, and without finalize they're lost.
+- **Replay tests simplified**: 3 fixture-specific interim tail tests replaced by 2 generic tests (`test_transcript_not_empty`, `test_result_matches_transcript`) that run against all fixtures. New fixtures added: `to-build-todos`, `finding-out-if-you`, `stop-the-button`, `text-is-captured`.
+- **Frontend `transcriptReducer`**: Extracted message-processing logic into a pure testable function. Tests prove old behavior (interim promotion) loses text when a finals-only message clears the ref, and new behavior (backend transcript) preserves it.
+- **300ms flush delay removed**: Was added then removed after proving audio bytes are not lost. The audio pipeline integration test (Task 14) was not needed.
+- **Stop sequence test removed**: The 300ms delay it tested no longer exists.
+
+### Utility scripts added
+
+- `scripts/pcm_to_wav.py` — converts `audio.pcm` to playable WAV
+- `scripts/soniox_transcribe.py` — sends audio directly to Soniox (bypasses backend)
