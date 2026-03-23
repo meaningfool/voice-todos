@@ -158,37 +158,29 @@ export function useTranscript() {
 
   const stop = useCallback(() => {
     setStatus("extracting");
+    const ws = wsRef.current;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: "stop" }));
 
-    // 1. Stop the mic so no new audio is captured
+      stopTimeoutRef.current = setTimeout(() => {
+        stopTimeoutRef.current = null;
+        cleanup();
+        setStatus("idle");
+      }, 30000);
+    }
+    // Stop mic and tear down audio pipeline
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       mediaStreamRef.current = null;
     }
-
-    // 2. Wait for buffered audio to flush through worklet → WebSocket,
-    //    then tear down the pipeline and tell the backend we're done.
-    setTimeout(() => {
-      if (workletNodeRef.current) {
-        workletNodeRef.current.disconnect();
-        workletNodeRef.current = null;
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
-      }
-
-      // 3. Now that all audio has been sent, tell the backend to stop
-      const ws = wsRef.current;
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "stop" }));
-
-        stopTimeoutRef.current = setTimeout(() => {
-          stopTimeoutRef.current = null;
-          cleanup();
-          setStatus("idle");
-        }, 30000);
-      }
-    }, 300);
+    if (workletNodeRef.current) {
+      workletNodeRef.current.disconnect();
+      workletNodeRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
   }, []);
 
   function cleanup() {
