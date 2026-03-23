@@ -18,7 +18,7 @@ export function RecordButton({ status, onStart, onStop }: Props) {
           Stop
         </button>
       );
-    case "stopping":
-      return <button disabled>Stopping...</button>;
+    case "extracting":
+      return <button disabled>Extracting...</button>;
   }
 }

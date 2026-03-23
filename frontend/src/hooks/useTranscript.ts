@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 
-export type Status = "idle" | "connecting" | "recording" | "stopping";
+export type Status = "idle" | "connecting" | "recording" | "extracting";
 
 interface Token {
   text: string;
@@ -128,7 +128,7 @@ export function useTranscript() {
   }, [status]);
 
   const stop = useCallback(() => {
-    setStatus("stopping");
+    setStatus("extracting");
     const ws = wsRef.current;
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: "stop" }));
