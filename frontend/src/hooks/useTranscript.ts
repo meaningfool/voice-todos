@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import type { Todo } from "../types";
 
 export type Status = "idle" | "connecting" | "recording" | "extracting";
 
@@ -8,8 +9,16 @@ interface Token {
 }
 
 interface TranscriptMessage {
-  type: "started" | "transcript" | "stopped" | "error";
+  type: "started" | "transcript" | "todos" | "stopped" | "error";
   tokens?: Token[];
+  items?: Array<{
+    text: string;
+    priority?: string;
+    category?: string;
+    due_date?: string;
+    notification?: string;
+    assign_to?: string;
+  }>;
   message?: string;
 }
 
@@ -17,6 +26,7 @@ export function useTranscript() {
   const [status, setStatus] = useState<Status>("idle");
   const [finalText, setFinalText] = useState("");
   const [interimText, setInterimText] = useState("");
+  const [todos, setTodos] = useState<Todo[]>([]);
 
   const wsRef = useRef<WebSocket | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -31,6 +41,7 @@ export function useTranscript() {
     setStatus("connecting");
     setFinalText("");
     setInterimText("");
+    setTodos([]);
 
     try {
       // Open WebSocket to backend
@@ -64,6 +75,17 @@ export function useTranscript() {
             setFinalText((prev) => prev + newFinal);
           }
           setInterimText(newInterim);
+        } else if (msg.type === "todos" && msg.items) {
+          setTodos(
+            msg.items.map((item) => ({
+              text: item.text,
+              priority: item.priority as Todo["priority"],
+              category: item.category,
+              dueDate: item.due_date,
+              notification: item.notification,
+              assignTo: item.assign_to,
+            }))
+          );
         } else if (msg.type === "stopped") {
           if (stopTimeoutRef.current !== null) {
             clearTimeout(stopTimeoutRef.current);
@@ -179,5 +201,5 @@ export function useTranscript() {
     wsRef.current = null;
   }
 
-  return { status, finalText, interimText, start, stop };
+  return { status, finalText, interimText, todos, start, stop };
 }
