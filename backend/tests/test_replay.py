@@ -53,10 +53,13 @@ def _accumulate_transcript(messages: list[dict]) -> tuple[str, str]:
                 interim_parts.append(interim_text)
 
     final_text = "".join(final_parts)
-    if not final_text.strip() and interim_parts:
-        final_text = "".join(interim_parts)
+    interim_text = "".join(interim_parts)
 
-    return final_text, "".join(interim_parts)
+    # Append trailing interim text that was never finalized
+    if interim_text:
+        final_text = final_text + interim_text
+
+    return final_text, interim_text
 
 
 def has_fixtures() -> bool:
@@ -106,3 +109,39 @@ class TestReplay:
             assert final_text.strip() == result["transcript"].strip(), (
                 f"Fixture {name}: accumulated transcript doesn't match result.json"
             )
+
+    def test_interim_tail_is_not_lost(self):
+        """When final tokens don't cover the tail of speech, the last
+        interim text should be appended to the transcript.
+
+        In the call-mom-memo-supplier fixture, the speaker ends with
+        "wedding on, uh, next Wednesday" but Soniox never finalizes
+        those tokens. The transcript must include them.
+        """
+        messages = _load_soniox_messages("call-mom-memo-supplier")
+
+        # Find what the last interim text contains
+        last_interim = ""
+        for event in messages:
+            if event.get("finished"):
+                break
+            tokens = event.get("tokens", [])
+            interim = "".join(
+                t["text"] for t in tokens if not t.get("is_final", False)
+            )
+            if interim:
+                last_interim = interim
+
+        # The last interim should mention "Wednesday"
+        assert "wednesday" in last_interim.lower(), (
+            f"Fixture sanity check failed: expected 'Wednesday' in last interim, "
+            f"got {last_interim!r}"
+        )
+
+        # The accumulated transcript must include the interim tail
+        transcript, _ = _accumulate_transcript(messages)
+        assert "wednesday" in transcript.lower(), (
+            f"Interim tail text lost! Transcript ends with: "
+            f"...{transcript[-60:]!r}\n"
+            f"Missing interim tail: {last_interim!r}"
+        )

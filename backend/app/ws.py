@@ -147,11 +147,10 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             relay_task = None
 
                     # Extract todos from accumulated transcript
-                    # Use final tokens; fall back to interim if no finals arrived
+                    # Append trailing interim text that Soniox never finalized
                     full_transcript = "".join(transcript_parts)
-                    if not full_transcript.strip() and interim_parts:
-                        full_transcript = "".join(interim_parts)
-                        logger.info("Using interim text as fallback for extraction")
+                    if interim_parts:
+                        full_transcript += "".join(interim_parts)
                     logger.info(
                         "Transcript (%d chars): %s",
                         len(full_transcript),
