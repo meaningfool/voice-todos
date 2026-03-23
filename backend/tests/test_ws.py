@@ -1,6 +1,9 @@
+from unittest.mock import AsyncMock, patch
+
 from starlette.testclient import TestClient
 
 from app.main import app
+from app.models import Todo
 
 
 def test_ws_endpoint_accepts_connection():
@@ -53,3 +56,39 @@ def test_ws_disconnect_without_stop():
         response = ws.receive_json()
         assert response["type"] in ("started", "error")
     # WebSocket closed without sending stop — server should clean up gracefully
+
+
+def test_ws_stop_sends_todos_before_stopped():
+    """After stop, server sends todos then stopped — verifying the protocol sequence."""
+    mock_todos = [Todo(text="Buy groceries", priority="high")]
+
+    with (
+        patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
+        patch("app.ws.extract_todos", new_callable=AsyncMock, return_value=mock_todos),
+    ):
+        # Fake Soniox connection that immediately signals "finished"
+        mock_soniox = AsyncMock()
+        mock_soniox.send = AsyncMock()
+        mock_soniox.close = AsyncMock()
+
+        async def soniox_messages():
+            yield '{"finished": true}'
+
+        mock_soniox.__aiter__ = lambda self: soniox_messages()
+        mock_connect.return_value = mock_soniox
+
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json()["type"] == "started"
+
+            ws.send_json({"type": "stop"})
+
+            # Verify protocol: todos arrives before stopped
+            todos_msg = ws.receive_json()
+            assert todos_msg["type"] == "todos"
+            assert len(todos_msg["items"]) == 1
+            assert todos_msg["items"][0]["text"] == "Buy groceries"
+
+            stopped_msg = ws.receive_json()
+            assert stopped_msg["type"] == "stopped"
