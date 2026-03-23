@@ -156,11 +156,12 @@ export function useTranscript() {
       ws.send(JSON.stringify({ type: "stop" }));
 
       // Fix #2: Timeout in case server never responds with "stopped"
+      // 30s to cover Soniox flush + Gemini extraction
       stopTimeoutRef.current = setTimeout(() => {
         stopTimeoutRef.current = null;
         cleanup();
         setStatus("idle");
-      }, 5000);
+      }, 30000);
     }
     // Stop mic immediately
     if (mediaStreamRef.current) {
