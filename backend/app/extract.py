@@ -29,7 +29,7 @@ def _get_agent() -> Agent[None, ExtractionResult]:
         from app.config import settings  # noqa: F401 — ensures .env is loaded
 
         _agent = Agent(
-            "google-gla:gemini-2.5-flash",
+            "google-gla:gemini-3-flash-preview",
             output_type=ExtractionResult,
             system_prompt=_SYSTEM_PROMPT,
         )
