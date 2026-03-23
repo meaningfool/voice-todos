@@ -1362,3 +1362,66 @@ Expected: all tests PASS
 git add -A
 git commit -m "feat: item 2 complete — extract todos on stop"
 ```
+
+---
+
+## Task 14: Audio pipeline integration test (agent-browser)
+
+Verify no audio bytes are dropped between the AudioWorklet and the backend WebSocket during the stop sequence. Uses a real browser — no mocks in the data path.
+
+**Files:**
+- Create: `scripts/test_audio_pipeline.sh`
+
+- [ ] **Step 1: Write the test script**
+
+Create `scripts/test_audio_pipeline.sh` that:
+
+1. Ensures both dev servers are running (backend on :8000, frontend on :5173)
+2. Clears `sessions/recent/` so we can identify the new session
+3. Opens the app with `agent-browser --engine chrome`
+4. Injects a fake `getUserMedia` via `agent-browser eval`:
+
+```javascript
+navigator.mediaDevices.getUserMedia = async (constraints) => {
+  const ctx = new AudioContext({ sampleRate: 16000 });
+  const osc = ctx.createOscillator();
+  osc.frequency.value = 440;
+  osc.start();
+  const dest = ctx.createMediaStreamDestination();
+  osc.connect(dest);
+  return dest.stream;
+};
+```
+
+5. Clicks Start (via `agent-browser snapshot -i` then `agent-browser click @ref`)
+6. Waits 3 seconds for audio to flow
+7. Clicks Stop
+8. Waits for the button to return to "Start" (poll `agent-browser snapshot -i` until idle)
+9. Finds the newest session in `sessions/recent/`
+10. Reads `audio.pcm` file size
+11. Computes expected bytes: `3 seconds × 16000 × 2 = 96000`
+12. Asserts: actual >= 86400 (90% of expected)
+13. Closes the browser
+
+- [ ] **Step 2: Run the test — verify it passes with the current code**
+
+```bash
+./scripts/test_audio_pipeline.sh
+```
+
+Expected: PASS — audio.pcm is ~96KB
+
+- [ ] **Step 3: Temporarily break the stop sequence — verify the test fails**
+
+In `frontend/src/hooks/useTranscript.ts`, move `ws.send(stop)` back to synchronous (before the setTimeout). Run the test again.
+
+Expected: FAIL — audio.pcm is smaller than expected because the backend received stop before all audio arrived, and subsequent audio was ignored.
+
+- [ ] **Step 4: Restore the fix, verify the test passes again**
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add scripts/test_audio_pipeline.sh
+git commit -m "test: add audio pipeline integration test with agent-browser"
+```

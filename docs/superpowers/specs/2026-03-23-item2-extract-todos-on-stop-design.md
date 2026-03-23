@@ -153,14 +153,30 @@ Install shadcn/ui + Tailwind CSS into the frontend:
 
 ### Backend
 
-- Unit tests for `extract_todos()` with sample transcripts
-- Mock the PydanticAI agent to avoid real Gemini API calls
+- Unit tests for `extract_todos()` with sample transcripts (real Gemini API, skipped without key)
 - WebSocket integration tests: verify stop → todos → stopped sequence
+- **Session replay tests**: replay recorded `soniox.jsonl` fixtures to verify transcript accumulation — catches interim tail text loss without needing a mic or Soniox API
+- **Session recording**: every WebSocket session automatically records `audio.pcm`, `soniox.jsonl`, `result.json` to `sessions/recent/` (last 10 kept). Test fixtures are copied to `backend/tests/fixtures/`.
 
 ### Frontend
 
 - Component rendering tests using Vitest + @testing-library/react
 - Tests for TodoCard (renders text, badges conditionally), TodoList (renders items, empty state), TodoSkeleton (renders placeholders), RecordButton (extracting state)
+- **Stop sequence test**: verifies `ws.send(stop)` is sent AFTER the 300ms audio flush delay, not synchronously (uses fake timers, catches ordering regressions)
+
+### Audio pipeline integration test (agent-browser)
+
+End-to-end test that verifies no audio bytes are dropped between the browser's AudioWorklet and the backend WebSocket during the stop sequence. Uses a real browser with a real audio pipeline — no mocks in the data path.
+
+**Mechanism:**
+1. `agent-browser eval` monkey-patches `navigator.mediaDevices.getUserMedia` to return a `MediaStream` from an `OscillatorNode` (440Hz tone at 16kHz). This produces real audio samples that flow through the real AudioWorklet, real WebSocket send, to the real backend.
+2. Click Start, wait N seconds, click Stop, wait for idle.
+3. Read the backend's recorded `sessions/recent/*/audio.pcm` file size.
+4. Assert: received bytes >= 90% of expected (`N × 16000 samples/sec × 2 bytes/sample`).
+
+**What it proves:** If someone removes the 300ms flush delay or breaks the stop sequence order, the backend will receive fewer audio bytes than expected because in-flight chunks between the worklet thread and the main thread are destroyed on disconnect.
+
+**Requirements:** Backend and frontend dev servers running. Chrome installed via `agent-browser install`.
 
 ## Out of Scope
 
