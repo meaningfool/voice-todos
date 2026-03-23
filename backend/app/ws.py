@@ -35,7 +35,13 @@ async def _relay_soniox_to_browser(
             event = json.loads(message)
             if event.get("finished"):
                 return
-            tokens = event.get("tokens", [])
+            raw_tokens = event.get("tokens", [])
+            # Check if finalize completed — <fin> means all tokens are now final
+            has_fin = any(t.get("text") == "<fin>" for t in raw_tokens)
+            tokens = [t for t in raw_tokens if t.get("text") != "<fin>"]
+            if has_fin:
+                # Finalize made everything final — discard stale interim
+                interim_parts.clear()
             if tokens:
                 for t in tokens:
                     if t.get("is_final", False):
@@ -132,7 +138,11 @@ async def websocket_endpoint(browser_ws: WebSocket):
                         )
 
                 elif msg_type == "stop" and soniox_ws:
-                    await soniox_ws.send(b"")  # Empty frame = end of audio
+                    # Finalize forces Soniox to emit all pending interim
+                    # tokens as final, then sends a <fin> marker token.
+                    # Only after that do we send the empty frame to close.
+                    await soniox_ws.send(json.dumps({"type": "finalize"}))
+                    await soniox_ws.send(b"")  # Empty frame = end of stream
                     if relay_task:
                         try:
                             await asyncio.wait_for(
@@ -175,7 +185,10 @@ async def websocket_endpoint(browser_ws: WebSocket):
                     recorder.write_result(full_transcript, todo_items)
                     recorder.stop()
 
-                    await browser_ws.send_json({"type": "stopped"})
+                    await browser_ws.send_json({
+                        "type": "stopped",
+                        "transcript": full_transcript,
+                    })
 
                     with contextlib.suppress(Exception):
                         await soniox_ws.close()

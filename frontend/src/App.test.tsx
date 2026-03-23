@@ -44,6 +44,24 @@ describe("App", () => {
     expect(screen.queryByText(/Extracted Todos/)).not.toBeInTheDocument();
   });
 
+  it("shows transcript and 'no todos' message when idle with transcript but no todos", () => {
+    mockUseTranscript.mockReturnValue({
+      ...baseHook,
+      status: "idle",
+      finalText: "Okay so let's get started on this exercise",
+      todos: [],
+    });
+    render(<App />);
+    // Transcript must stay visible
+    expect(
+      screen.getByText("Okay so let's get started on this exercise")
+    ).toBeInTheDocument();
+    // Empty state message shown
+    expect(
+      screen.getByText("No todos found in this recording.")
+    ).toBeInTheDocument();
+  });
+
   it("does not render TodoList while extracting even if todos exist", () => {
     mockUseTranscript.mockReturnValue({
       ...baseHook,

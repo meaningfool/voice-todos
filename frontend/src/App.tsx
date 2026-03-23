@@ -5,7 +5,7 @@ import { TodoList } from "./components/TodoList";
 import { TodoSkeleton } from "./components/TodoSkeleton";
 
 function App() {
-  const { status, finalText, interimText, todos, start, stop } =
+  const { status, finalText, interimText, todos, micRecordingUrl, start, stop } =
     useTranscript();
 
   return (
@@ -15,6 +15,20 @@ function App() {
       <TranscriptArea finalText={finalText} interimText={interimText} />
       {status === "extracting" && <TodoSkeleton />}
       {status === "idle" && todos.length > 0 && <TodoList todos={todos} />}
+      {status === "idle" && todos.length === 0 && finalText && (
+        <div style={{ marginTop: "1rem", color: "#888", fontStyle: "italic" }}>
+          No todos found in this recording.
+        </div>
+      )}
+      {micRecordingUrl && (
+        <div style={{ marginTop: "1.5rem", padding: "1rem", background: "#f5f5f5", borderRadius: 8 }}>
+          <div style={{ marginBottom: "0.5rem", fontWeight: 500 }}>Raw mic recording</div>
+          <audio controls src={micRecordingUrl} style={{ width: "100%" }} />
+          <a href={micRecordingUrl} download="mic-recording.webm" style={{ fontSize: "0.85rem" }}>
+            Download
+          </a>
+        </div>
+      )}
     </div>
   );
 }
