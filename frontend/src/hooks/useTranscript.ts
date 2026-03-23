@@ -158,31 +158,37 @@ export function useTranscript() {
 
   const stop = useCallback(() => {
     setStatus("extracting");
-    const ws = wsRef.current;
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: "stop" }));
 
-      // Fix #2: Timeout in case server never responds with "stopped"
-      // 30s to cover Soniox flush + Gemini extraction
-      stopTimeoutRef.current = setTimeout(() => {
-        stopTimeoutRef.current = null;
-        cleanup();
-        setStatus("idle");
-      }, 30000);
-    }
-    // Stop mic immediately
+    // 1. Stop the mic so no new audio is captured
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       mediaStreamRef.current = null;
     }
-    if (workletNodeRef.current) {
-      workletNodeRef.current.disconnect();
-      workletNodeRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
+
+    // 2. Wait for buffered audio to flush through worklet → WebSocket,
+    //    then tear down the pipeline and tell the backend we're done.
+    setTimeout(() => {
+      if (workletNodeRef.current) {
+        workletNodeRef.current.disconnect();
+        workletNodeRef.current = null;
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+
+      // 3. Now that all audio has been sent, tell the backend to stop
+      const ws = wsRef.current;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "stop" }));
+
+        stopTimeoutRef.current = setTimeout(() => {
+          stopTimeoutRef.current = null;
+          cleanup();
+          setStatus("idle");
+        }, 30000);
+      }
+    }, 300);
   }, []);
 
   function cleanup() {

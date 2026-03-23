@@ -1,0 +1,18 @@
+{
+  "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is arranged, uh, by, uh, for the, u",
+  "todos": [
+    {
+      "text": "Call Mom",
+      "category": "Personal"
+    },
+    {
+      "text": "Finish the memo",
+      "category": "Work"
+    },
+    {
+      "text": "Call supplier to ensure catering is arranged",
+      "category": "Work",
+      "assign_to": "JC"
+    }
+  ]
+}
