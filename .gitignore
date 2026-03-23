@@ -14,5 +14,8 @@ frontend/dist/
 .vscode/
 *.swp
 
+# Dev scripts
+.pid.*
+
 # Superpowers
 .superpowers/

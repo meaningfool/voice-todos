@@ -17,6 +17,8 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
   },
   server: {
+    port: 5173,
+    strictPort: true,
     proxy: {
       "/ws": {
         target: "ws://localhost:8000",
