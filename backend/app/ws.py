@@ -21,6 +21,7 @@ async def _relay_soniox_to_browser(
     soniox_ws: websockets.ClientConnection,
     browser_ws: WebSocket,
     transcript_parts: list[str],
+    interim_parts: list[str],
 ):
     """Read transcript events from Soniox and forward to browser."""
     try:
@@ -33,6 +34,11 @@ async def _relay_soniox_to_browser(
                 for t in tokens:
                     if t.get("is_final", False):
                         transcript_parts.append(t["text"])
+                # Track latest interim text as fallback for extraction
+                interim_text = "".join(t["text"] for t in tokens if not t.get("is_final", False))
+                if interim_text:
+                    interim_parts.clear()
+                    interim_parts.append(interim_text)
                 await browser_ws.send_json(
                     {
                         "type": "transcript",
@@ -57,6 +63,7 @@ async def websocket_endpoint(browser_ws: WebSocket):
     soniox_ws = None
     relay_task = None
     transcript_parts: list[str] = []
+    interim_parts: list[str] = []
 
     try:
         while True:
@@ -99,8 +106,11 @@ async def websocket_endpoint(browser_ws: WebSocket):
                         soniox_ws = await websockets.connect(SONIOX_WS_URL)
                         await soniox_ws.send(json.dumps(soniox_config))
                         transcript_parts.clear()
+                        interim_parts.clear()
                         relay_task = asyncio.create_task(
-                            _relay_soniox_to_browser(soniox_ws, browser_ws, transcript_parts)
+                            _relay_soniox_to_browser(
+                                soniox_ws, browser_ws, transcript_parts, interim_parts
+                            )
                         )
                         await browser_ws.send_json({"type": "started"})
                     except Exception as e:
@@ -128,16 +138,33 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             relay_task = None
 
                     # Extract todos from accumulated transcript
+                    # Use final tokens; fall back to interim if no finals arrived
                     full_transcript = "".join(transcript_parts)
-                    todos = await extract_todos(full_transcript)
-                    await browser_ws.send_json(
-                        {
-                            "type": "todos",
-                            "items": [
-                                t.model_dump(exclude_none=True) for t in todos
-                            ],
-                        }
+                    if not full_transcript.strip() and interim_parts:
+                        full_transcript = "".join(interim_parts)
+                        logger.info("Using interim text as fallback for extraction")
+                    logger.info(
+                        "Transcript (%d chars): %s",
+                        len(full_transcript),
+                        full_transcript[:200],
                     )
+                    try:
+                        todos = await extract_todos(full_transcript)
+                        logger.info("Extracted %d todos", len(todos))
+                        await browser_ws.send_json(
+                            {
+                                "type": "todos",
+                                "items": [
+                                    t.model_dump(exclude_none=True)
+                                    for t in todos
+                                ],
+                            }
+                        )
+                    except Exception:
+                        logger.exception("Todo extraction failed")
+                        await browser_ws.send_json(
+                            {"type": "todos", "items": []}
+                        )
 
                     await browser_ws.send_json({"type": "stopped"})
 

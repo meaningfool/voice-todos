@@ -27,6 +27,7 @@ export function useTranscript() {
   const [finalText, setFinalText] = useState("");
   const [interimText, setInterimText] = useState("");
   const [todos, setTodos] = useState<Todo[]>([]);
+  const interimTextRef = useRef("");
 
   const wsRef = useRef<WebSocket | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -75,6 +76,7 @@ export function useTranscript() {
             setFinalText((prev) => prev + newFinal);
           }
           setInterimText(newInterim);
+          interimTextRef.current = newInterim;
         } else if (msg.type === "todos" && msg.items) {
           setTodos(
             msg.items.map((item) => ({
@@ -91,8 +93,13 @@ export function useTranscript() {
             clearTimeout(stopTimeoutRef.current);
             stopTimeoutRef.current = null;
           }
-          setStatus("idle");
+          // Promote remaining interim text to final so transcript stays visible
+          if (interimTextRef.current) {
+            setFinalText((prev) => prev + interimTextRef.current);
+            interimTextRef.current = "";
+          }
           setInterimText("");
+          setStatus("idle");
           cleanup();
         } else if (msg.type === "error") {
           console.error("Server error:", msg.message);
