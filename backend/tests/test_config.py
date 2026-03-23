@@ -24,3 +24,14 @@ def test_settings_requires_api_key(monkeypatch, tmp_path):
 
     with pytest.raises(ValidationError):
         Settings(_env_file=str(empty_env))  # type: ignore[missing-argument]
+
+
+def test_settings_loads_gemini_key(monkeypatch):
+    """Settings reads GEMINI_API_KEY from environment."""
+    monkeypatch.setenv("SONIOX_API_KEY", "soniox-test")
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-test-key")
+
+    from app.config import Settings
+
+    s = Settings()  # type: ignore[missing-argument]
+    assert s.gemini_api_key == "gemini-test-key"
