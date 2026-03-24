@@ -20,10 +20,10 @@ Before implementation begins, the following audio fixtures must be recorded and 
 
 - Todos appear on screen while the user is still speaking
 - Later speech can refine or add detail to earlier todos
-- The todo list never loses items during a session
+- Later speech can merge or remove earlier todos when added context shows the earlier extraction was wrong
 - Stop button triggers a final extraction sweep
 - Full server-side observability via Logfire
-- End-to-end behavioral tests with real Soniox and Gemini
+- Deterministic CI coverage plus opt-in end-to-end behavioral tests with real Soniox and Gemini
 
 ## Non-goals
 
@@ -63,15 +63,17 @@ Browser                      FastAPI                          External
 
 Two triggers, plus a final sweep on stop:
 
-**Trigger 1 — Soniox `<end>` token (primary).** When Soniox emits an endpoint marker, the loop triggers extraction. This is Soniox's built-in utterance boundary detection. The `max_endpoint_delay_ms` setting can be tuned (default 2000ms, can lower to 700-1000ms) for faster triggers.
+**Trigger 1 — Soniox `<end>` token (primary).** When Soniox emits an endpoint marker, the loop triggers extraction. This is Soniox's built-in utterance boundary detection. `ws.py` must explicitly enable this in the Soniox config via `enable_endpoint_detection: true`. The `max_endpoint_delay_ms` setting can be tuned (default 2000ms, can lower to 700-1000ms) for faster triggers; the initial implementation should set it explicitly rather than relying on a server default.
 
 **Trigger 2 — Token count fallback.** If N new finalized tokens accumulate without an `<end>`, trigger anyway. Starting value: 30 tokens (tunable). This handles continuous speech without pauses.
 
-**On stop:** One final extraction on the complete transcript.
+**On stop:** One final extraction on the complete finalized transcript.
 
 ### Concurrency: dirty flag, not a queue
 
 If an extraction is already in flight when a new trigger fires, don't start another. Set a dirty flag. When the current extraction completes, check the flag — if dirty, run again with the latest transcript. Multiple intermediate signals collapse into one run. There is no queue — just a single "needs re-extraction" flag.
+
+**Stop behavior is special.** `on_stop()` does not cancel an in-flight extraction. It waits for the current extraction to finish, then runs exactly one final pass on the fully finalized transcript after Soniox finalize/finish has completed. Only after that final pass completes may the stop flow send `stopped`. This guarantees the session ends from a finalized transcript, not a speculative interim snapshot.
 
 ## ExtractionLoop interface
 
@@ -86,7 +88,7 @@ ExtractionLoop(
 **Methods:**
 - `on_endpoint()` — called when `<end>` token received from Soniox
 - `on_tokens(count: int)` — called after each `apply_event`, with the number of new final tokens
-- `on_stop()` — final extraction, awaits result. Calls `send_fn` internally (same path as mid-session extractions). The caller does not use a return value.
+- `on_stop()` — waits for any in-flight extraction, then performs exactly one final extraction on the finalized transcript and awaits that result. Calls `send_fn` internally (same path as mid-session extractions). The caller does not use a return value.
 - `cancel()` — cancels any in-flight extraction `asyncio.Task` and resets internal state. Called when the session ends abruptly (e.g., WebSocket disconnect without stop).
 
 **Internal state:**
@@ -94,6 +96,7 @@ ExtractionLoop(
 - `_tokens_since_last_extraction: int` — reset after each extraction
 - `_extraction_running: bool` — guards concurrent execution
 - `_dirty: bool` — set when a trigger fires during an in-flight extraction
+- `_stop_requested: bool` — set by `on_stop()` so the loop knows it must perform one final finalized pass before the session can end
 
 **Data flow:**
 1. `_relay_soniox_to_browser` calls `transcript.apply_event()` as today
@@ -118,9 +121,10 @@ async def extract_todos(
 
 **Prompt additions:**
 - "You may receive a list of previously extracted todos. Return the updated complete list."
-- "Preserve the order of existing todos. Append new todos at the end."
+- "Preserve the order of existing todos where that order still makes sense. Append genuinely new todos at the end."
 - "If new speech adds details to an existing todo, update it in place."
-- "Do not remove a todo unless the speaker explicitly cancels it."
+- "If later context shows an earlier todo was over-split, duplicated, misheard, or should be absorbed into another todo, merge or remove it."
+- "Explicit cancellation is one reason to remove a todo, but not the only one."
 - "If no previous todos are provided, extract from scratch."
 
 **Input format when previous todos exist:**
@@ -137,14 +141,15 @@ Transcript:
 I need to buy milk, it's urgent, I need it by tomorrow...
 ```
 
-The LLM always returns the full current list. Position in the list is the stable identity — index 0 is always todo 0.
+The LLM always returns the full current list. This is a snapshot, not a patch. The frontend replaces the whole list on each `todos` message and must not assume stable item identity across extractions.
 
 ## Changes to ws.py
 
 Minimal changes:
 - Instantiate `ExtractionLoop` on `start`, passing `transcript` and a `send_fn` that sends `{"type": "todos", "items": [...]}` to the browser
+- Add Soniox endpoint detection settings to the start config: `enable_endpoint_detection: true` and an explicit `max_endpoint_delay_ms`
 - In `_relay_soniox_to_browser`: after `transcript.apply_event()`, call `loop.on_endpoint()` or `loop.on_tokens(n)` as appropriate
-- In the `stop` handler: call `await loop.on_stop()` instead of calling `extract_todos` directly. The final `todos` and `stopped` messages are sent as today.
+- In the `stop` handler: call `await loop.on_stop()` instead of calling `extract_todos` directly. `stopped` is sent only after `loop.on_stop()` completes its guaranteed final finalized pass.
 
 ## Frontend changes
 
@@ -155,12 +160,12 @@ Minimal changes:
 
 **Todo updates during recording:**
 - Every `todos` message replaces the full list via `setTodos()` (same mechanism as today)
-- Position-based identity: index N is always todo N
+- The list is treated as a full snapshot, not an append-only stream. Items may be refined, merged, removed, or reordered slightly as the model's understanding improves.
 - Optional future work: track which todos are new or changed by comparing incoming list against previous. Not required for this spec — can be added when the visual treatment spec is designed.
 
 **Stop behavior:**
-- User clicks Stop → status becomes `"extracting"` → backend runs final sweep → sends `todos` then `stopped` → status becomes `"idle"`
-- Same flow as item 2, but the final `todos` may just confirm what's already on screen
+- User clicks Stop → status becomes `"extracting"` → backend finishes any in-flight extraction, runs one final pass on finalized transcript, and the final message sequence ends with `todos` then `stopped` → status becomes `"idle"`
+- If an extraction is already running when Stop is clicked, that extraction is allowed to finish first; then one final pass runs on the finalized transcript; then `stopped` is sent
 
 **Skeleton cards:**
 - Shown only if status is `"extracting"` and no todos exist yet (edge case: user says nothing, clicks stop immediately)
@@ -204,7 +209,16 @@ ws_session (entire WebSocket connection)
 
 ## Testing strategy
 
-### End-to-end behavioral tests (primary)
+### Deterministic component and integration tests (primary)
+
+These tests do not require live vendors and should carry the bulk of CI confidence.
+
+- `TranscriptAccumulator` tests: `<end>` is detected and filtered from browser transcript tokens, `<end>` does not count toward the token threshold, `<fin>` behavior remains correct
+- `ExtractionLoop` tests: endpoint trigger, token-threshold trigger, dirty-flag collapse, no concurrent extraction overlap, `on_stop()` waits for the in-flight extraction and then performs exactly one final finalized pass
+- WebSocket tests with mocked Soniox / mocked `extract_todos`: endpoint detection config is sent on start, mid-session `todos` messages are forwarded, and `stopped` is sent only after the final pass's `todos`
+- Replay tests continue to run the production `TranscriptAccumulator` against recorded Soniox streams
+
+### End-to-end behavioral tests (secondary, opt-in)
 
 These tests use real Soniox and real Gemini. They replay recorded audio through the full pipeline and assert on observable behaviors. Gated behind `RUN_E2E_INTEGRATION=1`.
 
@@ -213,19 +227,19 @@ These tests use real Soniox and real Gemini. They replay recorded audio through 
 | 1 | Todos appear while the user is still speaking | `call-mom-memo-supplier` | At least one `todos` message arrives before `stop` is sent |
 | 2 | All todos are eventually captured | `call-mom-memo-supplier` | Final todo list contains all 3 expected items |
 | 3 | Later speech can refine earlier todos | `refine-todo` | A todo's text changes between two successive `todos` messages |
-| 4 | The todo list never loses items | `call-mom-memo-supplier` | Each `todos` message has item count >= the previous |
+| 4 | Stop uses a finalized transcript for its last pass | `call-mom-memo-supplier` | After `stop`, the last `todos` message before `stopped` reflects the final finalized pass |
 | 5 | Stop triggers a final sweep | `call-mom-memo-supplier` | A `todos` message arrives after `stop`, before `stopped` |
 | 6 | Token threshold fallback works | `continuous-speech` | A `todos` message arrives despite no `<end>` tokens in a long stretch |
 
 **Test mechanism:** The test starts the real FastAPI app, connects via WebSocket, sends `start`, streams `audio.pcm` frames at realistic 16kHz pacing, collects all server messages, sends `stop`, collects final messages, and asserts on the message sequence.
 
-### Component tests (secondary, added during TDD)
+### Additional targeted tests
 
-Built as needed when implementing specific mechanisms. The `ExtractionLoop` is the primary unit to test in isolation — it can be tested with a `TranscriptAccumulator` and a mock `extract_todos`, no WebSocket or API keys needed. These cover the combinatorial space: trigger conditions, dirty flag behavior, token threshold edge cases, concurrent extraction guards.
+The `ExtractionLoop` is the primary unit to test in isolation — it can be tested with a `TranscriptAccumulator` and a mock `extract_todos`, no WebSocket or API keys needed. In particular, deterministic tests should cover the correction cases that are hard to prove with live LLM output alone: later context causing merge/removal, and stop-time behavior when an extraction is already in flight.
 
 ### Existing tests
 
-All existing tests must continue passing. The stop flow still sends `todos` then `stopped` in the same order.
+All existing tests must continue passing unless intentionally updated for the new multiple-`todos` behavior. The stop flow must still guarantee that the final message sequence ends with `todos` then `stopped`.
 
 ## Protocol changes
 
