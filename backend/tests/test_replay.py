@@ -14,6 +14,8 @@ from pathlib import Path
 
 import pytest
 
+from app.transcript_accumulator import TranscriptAccumulator
+
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
@@ -30,38 +32,13 @@ def _load_soniox_messages(fixture_name: str) -> list[dict]:
 
 
 def _accumulate_transcript(messages: list[dict]) -> str:
-    """Simulate the backend's transcript accumulation logic.
-
-    Returns the full transcript text matching ws.py behavior.
-    """
-    final_parts: list[str] = []
-    interim_parts: list[str] = []
-
+    """Run recorded Soniox messages through the production accumulator."""
+    accumulator = TranscriptAccumulator()
     for event in messages:
         if event.get("finished"):
             break
-        raw_tokens = event.get("tokens", [])
-        # <fin> means finalize completed — discard stale interim
-        has_fin = any(t.get("text") == "<fin>" for t in raw_tokens)
-        tokens = [t for t in raw_tokens if t.get("text") != "<fin>"]
-        if has_fin:
-            interim_parts.clear()
-        if tokens:
-            for t in tokens:
-                if t.get("is_final", False):
-                    final_parts.append(t["text"])
-            interim_text = "".join(
-                t["text"] for t in tokens if not t.get("is_final", False)
-            )
-            if interim_text:
-                interim_parts.clear()
-                interim_parts.append(interim_text)
-
-    full_text = "".join(final_parts)
-    if interim_parts:
-        full_text += "".join(interim_parts)
-
-    return full_text
+        accumulator.apply_event(event)
+    return accumulator.full_text
 
 
 def _fixture_names() -> list[str]:

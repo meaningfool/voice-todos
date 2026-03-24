@@ -1,3 +1,5 @@
+from datetime import date, datetime
+
 import pytest
 from pydantic import ValidationError
 
@@ -29,7 +31,10 @@ def test_todo_all_fields():
     )
     assert todo.text == "Call dentist"
     assert todo.priority == "high"
+    assert todo.due_date == date(2026, 3, 27)
+    assert todo.notification == datetime(2026, 3, 27, 9, 0, 0)
     assert todo.assign_to == "Marie"
+    assert todo.model_dump(mode="json", exclude_none=True)["due_date"] == "2026-03-27"
 
 
 def test_todo_requires_text():
@@ -37,7 +42,7 @@ def test_todo_requires_text():
     from app.models import Todo
 
     with pytest.raises(ValidationError):
-        Todo()  # type: ignore[call-arg]
+        Todo()
 
 
 def test_todo_invalid_priority():
@@ -45,7 +50,7 @@ def test_todo_invalid_priority():
     from app.models import Todo
 
     with pytest.raises(ValidationError):
-        Todo(text="test", priority="critical")  # type: ignore[arg-type]
+        Todo(text="test", priority="critical")
 
 
 def test_extraction_result():

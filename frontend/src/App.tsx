@@ -5,14 +5,35 @@ import { TodoList } from "./components/TodoList";
 import { TodoSkeleton } from "./components/TodoSkeleton";
 
 function App() {
-  const { status, finalText, interimText, todos, micRecordingUrl, start, stop } =
-    useTranscript();
+  const {
+    status,
+    finalText,
+    interimText,
+    todos,
+    micRecordingUrl,
+    warningMessage,
+    start,
+    stop,
+  } = useTranscript();
 
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", padding: "2rem" }}>
       <h1>Voice Todos</h1>
       <RecordButton status={status} onStart={start} onStop={stop} />
       <TranscriptArea finalText={finalText} interimText={interimText} />
+      {warningMessage && (
+        <div
+          style={{
+            marginTop: "1rem",
+            padding: "0.75rem 1rem",
+            background: "#fff7ed",
+            color: "#9a3412",
+            borderRadius: 8,
+          }}
+        >
+          {warningMessage}
+        </div>
+      )}
       {status === "extracting" && <TodoSkeleton />}
       {status === "idle" && todos.length > 0 && <TodoList todos={todos} />}
       {status === "idle" && todos.length === 0 && finalText && (

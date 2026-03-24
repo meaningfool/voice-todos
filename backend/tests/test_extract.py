@@ -1,12 +1,22 @@
 import os
+from datetime import UTC, datetime
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 import app.extract as _extract_mod
+from app.models import ExtractionResult, Todo
 
 requires_gemini = pytest.mark.skipif(
-    not os.environ.get("GEMINI_API_KEY"),
-    reason="GEMINI_API_KEY not set — skipping integration test",
+    not (
+        os.environ.get("GEMINI_API_KEY")
+        and os.environ.get("RUN_GEMINI_INTEGRATION") == "1"
+    ),
+    reason=(
+        "Gemini integration tests require GEMINI_API_KEY and "
+        "RUN_GEMINI_INTEGRATION=1"
+    ),
 )
 
 
@@ -95,6 +105,47 @@ async def test_extract_todos_whitespace_only():
 
     todos = await extract_todos("   \n  ")
     assert todos == []
+
+
+@pytest.mark.asyncio
+async def test_extract_todos_passes_reference_context_to_agent():
+    """The extraction prompt includes deterministic local date context."""
+    from app.extract import extract_todos
+
+    fake_agent = SimpleNamespace(
+        run=AsyncMock(return_value=SimpleNamespace(output=ExtractionResult(todos=[])))
+    )
+    reference_dt = datetime(2026, 3, 23, 9, 30, tzinfo=UTC)
+
+    with patch("app.extract._get_agent", return_value=fake_agent):
+        await extract_todos(
+            "Remind me tomorrow to call Marie.", reference_dt=reference_dt
+        )
+
+    sent_prompt = fake_agent.run.await_args.args[0]
+    assert "Current local datetime: 2026-03-23T09:30:00+00:00" in sent_prompt
+    assert "Current local date: 2026-03-23" in sent_prompt
+    assert "Current timezone: UTC" in sent_prompt
+
+
+@pytest.mark.asyncio
+async def test_extract_todos_returns_agent_output():
+    """Structured agent output is returned unchanged to the caller."""
+    from app.extract import extract_todos
+
+    fake_todos = [
+        Todo(text="Call Marie", due_date="2026-03-24", assign_to="Marie")
+    ]
+    fake_agent = SimpleNamespace(
+        run=AsyncMock(
+            return_value=SimpleNamespace(output=ExtractionResult(todos=fake_todos))
+        )
+    )
+
+    with patch("app.extract._get_agent", return_value=fake_agent):
+        todos = await extract_todos("Call Marie tomorrow.")
+
+    assert todos == fake_todos
 
 
 @requires_gemini

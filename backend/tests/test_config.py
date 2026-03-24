@@ -1,21 +1,34 @@
 import pytest
 from pydantic import ValidationError
 
+import app.config as config_module
+
+
+@pytest.fixture(autouse=True)
+def _clear_settings_cache():
+    config_module.get_settings.cache_clear()
+    yield
+    config_module.get_settings.cache_clear()
+
 
 def test_settings_loads_from_env(monkeypatch):
-    """Settings reads SONIOX_API_KEY from environment."""
+    """Settings reads required keys and defaults optional flags."""
     monkeypatch.setenv("SONIOX_API_KEY", "test-key-123")
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-key-456")
 
-    # Import fresh to pick up the env var
     from app.config import Settings
 
-    s = Settings()  # type: ignore[missing-argument]
+    s = Settings()
     assert s.soniox_api_key == "test-key-123"
+    assert s.gemini_api_key == "gemini-key-456"
+    assert s.record_sessions is False
+    assert s.soniox_stop_timeout_seconds == 30.0
 
 
 def test_settings_requires_api_key(monkeypatch, tmp_path):
-    """Settings raises ValidationError when SONIOX_API_KEY is missing."""
+    """Settings raises ValidationError when required keys are missing."""
     monkeypatch.delenv("SONIOX_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     # Point to an empty .env so pydantic-settings can't read the real one
     empty_env = tmp_path / ".env"
     empty_env.write_text("")
@@ -23,7 +36,7 @@ def test_settings_requires_api_key(monkeypatch, tmp_path):
     from app.config import Settings
 
     with pytest.raises(ValidationError):
-        Settings(_env_file=str(empty_env))  # type: ignore[missing-argument]
+        Settings(_env_file=str(empty_env))
 
 
 def test_settings_loads_gemini_key(monkeypatch):
@@ -33,5 +46,5 @@ def test_settings_loads_gemini_key(monkeypatch):
 
     from app.config import Settings
 
-    s = Settings()  # type: ignore[missing-argument]
+    s = Settings()
     assert s.gemini_api_key == "gemini-test-key"

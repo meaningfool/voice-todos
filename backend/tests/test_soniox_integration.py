@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -70,7 +71,13 @@ async def _transcribe(audio: bytes, api_key: str, *, use_finalize: bool) -> str:
     return "".join(final_tokens)
 
 
-@pytest.mark.skipif(not _has_api_key(), reason="SONIOX_API_KEY not set")
+@pytest.mark.skipif(
+    not (_has_api_key() and os.environ.get("RUN_SONIOX_INTEGRATION") == "1"),
+    reason=(
+        "Soniox integration tests require SONIOX_API_KEY and "
+        "RUN_SONIOX_INTEGRATION=1"
+    ),
+)
 class TestSonioxFinalize:
     """Tests that require the real Soniox API."""
 
@@ -95,7 +102,9 @@ class TestSonioxFinalize:
         assert "button" not in transcript
 
     @pytest.mark.asyncio
-    async def test_with_finalize_captures_full_sentence(self, audio: bytes, api_key: str):
+    async def test_with_finalize_captures_full_sentence(
+        self, audio: bytes, api_key: str
+    ):
         """With finalize, all pending tokens are promoted to final."""
         transcript = await _transcribe(audio, api_key, use_finalize=True)
         assert "Stop" in transcript

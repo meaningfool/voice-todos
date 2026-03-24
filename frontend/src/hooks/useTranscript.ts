@@ -1,5 +1,10 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Todo } from "../types";
+import {
+  applyTranscriptTokens,
+  EMPTY_TRANSCRIPT_STATE,
+  finalizeTranscript,
+} from "./transcriptReducer";
 
 export type Status = "idle" | "connecting" | "recording" | "extracting";
 
@@ -12,6 +17,7 @@ interface TranscriptMessage {
   type: "started" | "transcript" | "todos" | "stopped" | "error";
   transcript?: string;
   tokens?: Token[];
+  warning?: string;
   items?: Array<{
     text: string;
     priority?: string;
@@ -28,60 +34,110 @@ export function useTranscript() {
   const [finalText, setFinalText] = useState("");
   const [interimText, setInterimText] = useState("");
   const [todos, setTodos] = useState<Todo[]>([]);
-  const interimTextRef = useRef("");
-
   const [micRecordingUrl, setMicRecordingUrl] = useState<string | null>(null);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
 
+  const transcriptStateRef = useRef(EMPTY_TRANSCRIPT_STATE);
+  const micRecordingUrlRef = useRef<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const micTailTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const micChunksRef = useRef<Blob[]>([]);
 
+  const updateTranscriptState = useCallback((nextState: typeof EMPTY_TRANSCRIPT_STATE) => {
+    transcriptStateRef.current = nextState;
+    setFinalText(nextState.finalText);
+    setInterimText(nextState.interimText);
+  }, []);
+
+  const clearMicRecordingUrl = useCallback(() => {
+    if (micRecordingUrlRef.current) {
+      URL.revokeObjectURL(micRecordingUrlRef.current);
+      micRecordingUrlRef.current = null;
+    }
+    setMicRecordingUrl(null);
+  }, []);
+
+  const cleanup = useCallback(
+    ({ revokeRecordingUrl = false }: { revokeRecordingUrl?: boolean } = {}) => {
+      if (micTailTimeoutRef.current !== null) {
+        clearTimeout(micTailTimeoutRef.current);
+        micTailTimeoutRef.current = null;
+      }
+      if (stopTimeoutRef.current !== null) {
+        clearTimeout(stopTimeoutRef.current);
+        stopTimeoutRef.current = null;
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        if (revokeRecordingUrl) {
+          mediaRecorderRef.current.onstop = null;
+        }
+        mediaRecorderRef.current.stop();
+      }
+      mediaRecorderRef.current = null;
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+        mediaStreamRef.current = null;
+      }
+      if (workletNodeRef.current) {
+        workletNodeRef.current.disconnect();
+        workletNodeRef.current = null;
+      }
+      if (audioContextRef.current) {
+        void audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      if (
+        wsRef.current &&
+        wsRef.current.readyState !== WebSocket.CLOSED &&
+        wsRef.current.readyState !== WebSocket.CLOSING
+      ) {
+        wsRef.current.close();
+      }
+      wsRef.current = null;
+      if (revokeRecordingUrl) {
+        clearMicRecordingUrl();
+      }
+    },
+    [clearMicRecordingUrl]
+  );
+
+  useEffect(() => {
+    return () => cleanup({ revokeRecordingUrl: true });
+  }, [cleanup]);
+
   const start = useCallback(async () => {
-    // Fix #5: Guard against double-start
     if (status !== "idle") return;
 
     setStatus("connecting");
-    setFinalText("");
-    setInterimText("");
+    setWarningMessage(null);
+    updateTranscriptState(EMPTY_TRANSCRIPT_STATE);
     setTodos([]);
+    clearMicRecordingUrl();
 
     try {
-      // Open WebSocket to backend
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
       wsRef.current = ws;
 
-      // Fix #1: Wait for open/error using Promise, then set persistent handlers after
       await new Promise<void>((resolve, reject) => {
         ws.onopen = () => resolve();
         ws.onerror = () => reject(new Error("WebSocket connection failed"));
       });
 
-      // Fix #1: Set persistent handlers after the connection is established
       ws.onmessage = (event) => {
         const msg: TranscriptMessage = JSON.parse(event.data);
 
         if (msg.type === "started") {
           setStatus("recording");
         } else if (msg.type === "transcript" && msg.tokens) {
-          let newFinal = "";
-          let newInterim = "";
-          for (const token of msg.tokens) {
-            if (token.is_final) {
-              newFinal += token.text;
-            } else {
-              newInterim += token.text;
-            }
-          }
-          if (newFinal) {
-            setFinalText((prev) => prev + newFinal);
-          }
-          setInterimText(newInterim);
-          interimTextRef.current = newInterim;
+          updateTranscriptState(
+            applyTranscriptTokens(transcriptStateRef.current, msg.tokens)
+          );
         } else if (msg.type === "todos" && msg.items) {
           setTodos(
             msg.items.map((item) => ({
@@ -94,38 +150,30 @@ export function useTranscript() {
             }))
           );
         } else if (msg.type === "stopped") {
-          if (stopTimeoutRef.current !== null) {
-            clearTimeout(stopTimeoutRef.current);
-            stopTimeoutRef.current = null;
-          }
-          // Use backend's full transcript as source of truth
-          if (msg.transcript) {
-            setFinalText(msg.transcript);
-          } else if (interimTextRef.current) {
-            setFinalText((prev) => prev + interimTextRef.current);
-          }
-          interimTextRef.current = "";
-          setInterimText("");
+          updateTranscriptState(
+            finalizeTranscript(transcriptStateRef.current, msg.transcript)
+          );
+          setWarningMessage(msg.warning ?? null);
           setStatus("idle");
           cleanup();
         } else if (msg.type === "error") {
           console.error("Server error:", msg.message);
+          setWarningMessage(msg.message ?? "Something went wrong.");
           setStatus("idle");
           cleanup();
         }
       };
 
       ws.onerror = () => {
+        setWarningMessage("WebSocket connection failed.");
         setStatus("idle");
         cleanup();
       };
 
-      // Fix #3: onclose only updates status; cleanup() already handles closing
       ws.onclose = () => {
         setStatus("idle");
       };
 
-      // Start mic capture
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate: 16000,
@@ -136,11 +184,6 @@ export function useTranscript() {
       });
       mediaStreamRef.current = stream;
 
-      // Record raw mic audio independently (non-blocking)
-      if (micRecordingUrl) {
-        URL.revokeObjectURL(micRecordingUrl);
-        setMicRecordingUrl(null);
-      }
       micChunksRef.current = [];
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -149,11 +192,15 @@ export function useTranscript() {
       };
       mediaRecorder.onstop = () => {
         const blob = new Blob(micChunksRef.current, { type: mediaRecorder.mimeType });
-        setMicRecordingUrl(URL.createObjectURL(blob));
+        const nextUrl = URL.createObjectURL(blob);
+        if (micRecordingUrlRef.current) {
+          URL.revokeObjectURL(micRecordingUrlRef.current);
+        }
+        micRecordingUrlRef.current = nextUrl;
+        setMicRecordingUrl(nextUrl);
       };
       mediaRecorder.start();
 
-      // Set up AudioWorklet for PCM extraction
       const audioContext = new AudioContext({ sampleRate: 16000 });
       audioContextRef.current = audioContext;
 
@@ -168,32 +215,30 @@ export function useTranscript() {
         }
       };
 
-      // Fix #4: Don't connect workletNode to destination (avoids mic echo)
       source.connect(workletNode);
 
-      // Tell server to start Soniox session
       ws.send(JSON.stringify({ type: "start" }));
     } catch (err) {
       console.error("Failed to start:", err);
+      setWarningMessage("Microphone setup failed.");
       setStatus("idle");
       cleanup();
     }
-  }, [status]);
+  }, [clearMicRecordingUrl, cleanup, status, updateTranscriptState]);
 
   const stop = useCallback(() => {
-    setStatus("extracting");
+    if (status !== "recording") return;
 
-    // Keep mic streaming for 200ms so Soniox gets trailing silence
-    // to finalize the last spoken words, then tear down and send stop.
+    setStatus("extracting");
+    setWarningMessage(null);
+
     const MIC_TAIL_MS = 200;
 
     const teardownAndStop = () => {
-      // Stop raw mic recording (produces playable blob via onstop callback)
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         mediaRecorderRef.current.stop();
         mediaRecorderRef.current = null;
       }
-      // Stop mic and tear down audio pipeline
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((t) => t.stop());
         mediaStreamRef.current = null;
@@ -207,45 +252,29 @@ export function useTranscript() {
         audioContextRef.current = null;
       }
 
-      // Now tell backend to stop (after mic tail has been sent)
       const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "stop" }));
 
         stopTimeoutRef.current = setTimeout(() => {
-          stopTimeoutRef.current = null;
+          setWarningMessage("Timed out waiting for the backend to stop.");
           cleanup();
           setStatus("idle");
         }, 30000);
       }
     };
 
-    setTimeout(teardownAndStop, MIC_TAIL_MS);
-  }, []);
+    micTailTimeoutRef.current = setTimeout(teardownAndStop, MIC_TAIL_MS);
+  }, [cleanup, status]);
 
-  function cleanup() {
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-      mediaStreamRef.current = null;
-    }
-    if (workletNodeRef.current) {
-      workletNodeRef.current.disconnect();
-      workletNodeRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-    // Fix #3: Only close WebSocket if it isn't already closed/closing
-    if (
-      wsRef.current &&
-      wsRef.current.readyState !== WebSocket.CLOSED &&
-      wsRef.current.readyState !== WebSocket.CLOSING
-    ) {
-      wsRef.current.close();
-    }
-    wsRef.current = null;
-  }
-
-  return { status, finalText, interimText, todos, micRecordingUrl, start, stop };
+  return {
+    status,
+    finalText,
+    interimText,
+    todos,
+    micRecordingUrl,
+    warningMessage,
+    start,
+    stop,
+  };
 }

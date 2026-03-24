@@ -9,7 +9,8 @@ from __future__ import annotations
 import json
 import logging
 import shutil
-from datetime import datetime, timezone
+from contextlib import ExitStack
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -25,15 +26,21 @@ class SessionRecorder:
         self._dir: Path | None = None
         self._audio_file = None
         self._soniox_file = None
+        self._stack: ExitStack | None = None
 
     def start(self) -> None:
         """Begin recording a new session."""
-        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
+        timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%S")
         self._dir = SESSIONS_DIR / timestamp
         self._dir.mkdir(parents=True, exist_ok=True)
 
-        self._audio_file = open(self._dir / "audio.pcm", "wb")
-        self._soniox_file = open(self._dir / "soniox.jsonl", "w")
+        self._stack = ExitStack()
+        self._audio_file = self._stack.enter_context(
+            (self._dir / "audio.pcm").open("wb")
+        )
+        self._soniox_file = self._stack.enter_context(
+            (self._dir / "soniox.jsonl").open("w", encoding="utf-8")
+        )
 
         logger.info("Recording session to %s", self._dir)
 
@@ -58,12 +65,11 @@ class SessionRecorder:
 
     def stop(self) -> None:
         """Finish recording and close files."""
-        if self._audio_file:
-            self._audio_file.close()
-            self._audio_file = None
-        if self._soniox_file:
-            self._soniox_file.close()
-            self._soniox_file = None
+        if self._stack:
+            self._stack.close()
+            self._stack = None
+        self._audio_file = None
+        self._soniox_file = None
 
         if self._dir:
             logger.info("Session recorded: %s", self._dir)

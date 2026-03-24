@@ -16,6 +16,7 @@ describe("App", () => {
     finalText: "",
     interimText: "",
     todos: [],
+    warningMessage: null,
     start: vi.fn(),
     stop: vi.fn(),
   };
@@ -71,5 +72,16 @@ describe("App", () => {
     render(<App />);
     // Should show skeleton, not the todo list
     expect(screen.queryByText("Extracted Todos")).not.toBeInTheDocument();
+  });
+
+  it("renders a warning banner when the hook exposes one", () => {
+    mockUseTranscript.mockReturnValue({
+      ...baseHook,
+      warningMessage: "Timed out waiting for the final transcript.",
+    });
+    render(<App />);
+    expect(
+      screen.getByText("Timed out waiting for the final transcript.")
+    ).toBeInTheDocument();
   });
 });
