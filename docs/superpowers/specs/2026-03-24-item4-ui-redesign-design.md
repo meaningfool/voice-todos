@@ -41,7 +41,18 @@ The original roadmap framed item 4 as tentative vs confirmed todos. That is no l
 
 ## Canonical Reference
 
-The user-provided HTML is the canonical visual reference for this item. Implementation should treat that code as the target composition rather than as loose inspiration.
+The user-provided HTML is the canonical visual reference for this item. It is checked into the repo at:
+
+- `docs/references/2026-03-24-item4-motion-light-reference.html`
+
+Implementation and planning must open that file directly and treat it as the source of truth for layout, hierarchy, spacing intent, labels, and motion cues. This item is not a loose interpretation exercise.
+
+If this prose spec and the reference HTML ever feel in tension, use this rule:
+
+- the reference HTML wins for visual composition
+- this prose spec wins for how real app states map onto that composition
+
+Planning should explicitly cite the reference file, not just this document.
 
 Allowed adaptations are intentionally narrow:
 
@@ -49,6 +60,27 @@ Allowed adaptations are intentionally narrow:
 - map the reference controls to real `start()` / `stop()` behavior
 - add the missing `connecting` and `extracting` state handling
 - preserve warning and debug functionality without letting them dominate the main screen
+
+## Reference HTML Contract
+
+To avoid drift during planning or implementation, the following parts of the reference HTML are considered non-negotiable unless the user explicitly changes them:
+
+- outer page framing: warm full-page background with a single centered phone-shell card
+- shell proportions: narrow mobile-style card, rounded corners, fixed bottom dock, scrollable inner feed
+- header simplicity: title only in practice, with the mock's top-right button intentionally removed per user decision
+- empty-state copy and structure: large mic illustration, `Start speaking...`, and the supporting sentence about voice turning into tasks in real time
+- bottom action area: one dominant full-width CTA in the dock
+- listening treatment: waveform bars plus `Listening now...` above the CTA during recording
+- todo card shape: hollow leading circle, large rounded card, strong title, compact metadata chips
+- motion language: spring-style entry and brief warm change highlight derived from `spring-entry`, `wave-bar`, and `flash-orange`
+
+The following parts of the reference are explicitly adapted, not copied literally:
+
+- title text changes from `Voice Tasks` to `Voice-Todos`
+- the decorative top-right more button is removed
+- demo JavaScript timing is replaced by real React state from `useTranscript()`
+- fake demo tasks are replaced by real extracted todos
+- the missing `connecting` and `extracting` states are added using the same visual language
 
 ## Screen Structure
 
