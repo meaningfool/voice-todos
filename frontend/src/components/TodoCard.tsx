@@ -33,12 +33,12 @@ function MetaChip({
   );
 }
 
-export function TodoCard({ todo, highlighted = false, index }: Props) {
+export function TodoCard({ todo, highlighted = false, index = 0 }: Props) {
   const circleClass = todo.priority ? priorityCircle[todo.priority] : undefined;
 
   return (
     <article
-      data-testid={index !== undefined ? `todo-card-${index}` : undefined}
+      data-testid={`todo-card-${index}`}
       data-highlighted={highlighted ? "true" : "false"}
       className={cn("spring-entry voice-todo-card", highlighted && "flash-orange")}
     >
