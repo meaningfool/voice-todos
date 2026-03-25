@@ -1,1 +1,171 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap");
+
+:root {
+  --voice-accent: #e26d5c;
+  --voice-accent-hover: #d55f4e;
+  --voice-ink: #1f1f23;
+  --voice-muted: #6b7280;
+  --voice-surface: #ffffff;
+  --voice-shell: #fdf8f6;
+  --spring-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  background: var(--voice-shell);
+  color: var(--voice-ink);
+}
+
+h1,
+h2,
+h3,
+.voice-primary-button,
+.voice-listening-label {
+  font-family: "Archivo", sans-serif;
+}
+
+.voice-dock {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.voice-listening-ui {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  animation: fade-in 0.25s ease-out both;
+}
+
+.voice-waveform {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 2rem;
+}
+
+.wave-bar {
+  width: 3px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--voice-accent);
+  animation: wave 1s ease-in-out infinite;
+}
+
+.wave-bar:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.wave-bar:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.wave-bar:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.wave-bar:nth-child(5) {
+  animation-delay: 0.15s;
+}
+
+.wave-bar:nth-child(6) {
+  animation-delay: 0.25s;
+}
+
+.wave-bar:nth-child(7) {
+  animation-delay: 0.05s;
+}
+
+.wave-bar:nth-child(8) {
+  animation-delay: 0.18s;
+}
+
+.wave-bar:nth-child(9) {
+  animation-delay: 0.28s;
+}
+
+.voice-listening-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #737373;
+}
+
+.voice-primary-button {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  border: 0;
+  border-radius: 9999px;
+  padding: 1rem 1.25rem;
+  background: var(--voice-accent);
+  color: #fff;
+  font-family: "Archivo", sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  box-shadow: 0 10px 24px rgba(226, 109, 92, 0.24);
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+}
+
+.voice-primary-button:hover:not(:disabled) {
+  background: var(--voice-accent-hover);
+  box-shadow: 0 14px 28px rgba(226, 109, 92, 0.28);
+}
+
+.voice-primary-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.voice-primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+  box-shadow: none;
+}
+
+.voice-button-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    height: 8px;
+  }
+  50% {
+    height: 24px;
+  }
+}
