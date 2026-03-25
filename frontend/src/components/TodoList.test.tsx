@@ -8,13 +8,13 @@ describe("TodoList", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders count header with correct number", () => {
+  it("does not render the extracted todos heading", () => {
     const todos: Todo[] = [
       { text: "Task A" },
       { text: "Task B" },
     ];
     render(<TodoList todos={todos} />);
-    expect(screen.getByText("Extracted Todos (2)")).toBeInTheDocument();
+    expect(screen.queryByText("Extracted Todos (2)")).not.toBeInTheDocument();
   });
 
   it("renders all todo items", () => {
@@ -27,5 +27,28 @@ describe("TodoList", () => {
     expect(screen.getByText("Buy groceries")).toBeInTheDocument();
     expect(screen.getByText("Call dentist")).toBeInTheDocument();
     expect(screen.getByText("Review PR")).toBeInTheDocument();
+  });
+
+  it("highlights changed todos after rerender", () => {
+    const previousTodos: Todo[] = [
+      { text: "Buy groceries" },
+      { text: "Call dentist", dueDate: "2026-03-27" },
+    ];
+    const nextTodos: Todo[] = [
+      { text: "Buy groceries" },
+      { text: "Call dentist", dueDate: "2026-03-28" },
+    ];
+
+    const { rerender } = render(<TodoList todos={previousTodos} />);
+    rerender(<TodoList todos={nextTodos} />);
+
+    expect(screen.getByTestId("todo-card-1")).toHaveAttribute(
+      "data-highlighted",
+      "true",
+    );
+    expect(screen.getByTestId("todo-card-0")).toHaveAttribute(
+      "data-highlighted",
+      "false",
+    );
   });
 });
