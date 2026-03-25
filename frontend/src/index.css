@@ -37,6 +37,7 @@ h3,
 
 .voice-page-shell {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -209,6 +210,28 @@ h3,
 
 .voice-session-audio {
   width: 100%;
+}
+
+.voice-session-download {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 0.5rem 0.85rem;
+  background: #fff3ec;
+  color: #b94834;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.voice-session-download:hover {
+  background: #ffe9df;
+  color: #9f3f2d;
 }
 
 .voice-dock {
@@ -598,6 +621,8 @@ h3,
     width: 100%;
     min-height: 100vh;
     height: 100vh;
+    min-height: 100dvh;
+    height: 100dvh;
     border-radius: 0;
     border-left: 0;
     border-right: 0;
@@ -608,11 +633,14 @@ h3,
   }
 
   .voice-task-container {
-    padding: 0 1.5rem 9.5rem;
+    padding: 0 1.5rem calc(9.5rem + env(safe-area-inset-bottom, 0px));
   }
 
   .voice-device-dock {
-    padding: 1.25rem 1.5rem 1.5rem;
+    padding:
+      1.25rem
+      1.5rem
+      calc(1.5rem + env(safe-area-inset-bottom, 0px));
   }
 
   .voice-session-details {

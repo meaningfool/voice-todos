@@ -83,6 +83,9 @@ describe("App", () => {
     expect(screen.getByText("Session details")).toBeInTheDocument();
     expect(screen.getByText("Call Marie tomorrow")).toBeInTheDocument();
     expect(document.querySelector("audio")).not.toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Download raw recording" })
+    ).toHaveAttribute("href", "blob:recording");
   });
 
   it("renders warning messaging inside the main feed", () => {
@@ -93,9 +96,9 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(
-      screen.getByText("Timed out waiting for the final transcript.")
-    ).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Timed out waiting for the final transcript."
+    );
   });
 
   it("suppresses the no-todos result when a warning is present", () => {

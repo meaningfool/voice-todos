@@ -22,6 +22,13 @@ export function SessionDetails({ finalText, micRecordingUrl }: Props) {
           <div className="voice-session-details__section">
             <h2 className="voice-session-details__label">Recording</h2>
             <audio controls src={micRecordingUrl} className="voice-session-audio" />
+            <a
+              href={micRecordingUrl}
+              download="mic-recording.webm"
+              className="voice-session-download"
+            >
+              Download raw recording
+            </a>
           </div>
         ) : null}
       </div>

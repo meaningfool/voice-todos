@@ -44,7 +44,11 @@ function App() {
             </div>
           ) : null}
 
-          {warningMessage ? <div className="voice-warning-card">{warningMessage}</div> : null}
+          {warningMessage ? (
+            <div className="voice-warning-card" role="alert">
+              {warningMessage}
+            </div>
+          ) : null}
           {todos.length > 0 ? <TodoList todos={todos} /> : null}
           {status === "extracting" && todos.length === 0 ? <TodoSkeleton /> : null}
           {showNoTodosState ? (
