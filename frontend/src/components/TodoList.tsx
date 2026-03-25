@@ -8,7 +8,7 @@ interface Props {
 }
 
 export function TodoList({ todos }: Props) {
-  const previousTodosRef = useRef<Todo[] | null>(null);
+  const previousTodosRef = useRef<Todo[]>([]);
   const highlightTimeoutRef = useRef<number | null>(null);
   const [highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
 
@@ -21,11 +21,6 @@ export function TodoList({ todos }: Props) {
   }, []);
 
   useEffect(() => {
-    if (previousTodosRef.current === null) {
-      previousTodosRef.current = todos.map((todo) => ({ ...todo }));
-      return;
-    }
-
     const changedIndices = getChangedTodoIndices(previousTodosRef.current, todos);
     previousTodosRef.current = todos.map((todo) => ({ ...todo }));
 

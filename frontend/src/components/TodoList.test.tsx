@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { TodoList } from "./TodoList";
 import type { Todo } from "../types";
 
@@ -27,6 +27,23 @@ describe("TodoList", () => {
     expect(screen.getByText("Buy groceries")).toBeInTheDocument();
     expect(screen.getByText("Call dentist")).toBeInTheDocument();
     expect(screen.getByText("Review PR")).toBeInTheDocument();
+  });
+
+  it("highlights todos from the first non-empty render", async () => {
+    const todos: Todo[] = [{ text: "Buy groceries" }, { text: "Call dentist" }];
+
+    render(<TodoList todos={todos} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("todo-card-0")).toHaveAttribute(
+        "data-highlighted",
+        "true",
+      );
+      expect(screen.getByTestId("todo-card-1")).toHaveAttribute(
+        "data-highlighted",
+        "true",
+      );
+    });
   });
 
   it("highlights changed todos after rerender", () => {

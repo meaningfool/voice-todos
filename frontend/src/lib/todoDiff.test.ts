@@ -3,6 +3,20 @@ import type { Todo } from "../types";
 import { getChangedTodoIndices } from "./todoDiff";
 
 describe("getChangedTodoIndices", () => {
+  it("marks all todos as changed when the previous array is empty", () => {
+    const previous: Todo[] = [];
+    const next: Todo[] = [{ text: "Buy groceries" }, { text: "Call dentist" }];
+
+    expect(getChangedTodoIndices(previous, next)).toEqual([0, 1]);
+  });
+
+  it("returns an empty array when todos are unchanged", () => {
+    const previous: Todo[] = [{ text: "Buy groceries" }];
+    const next: Todo[] = [{ text: "Buy groceries" }];
+
+    expect(getChangedTodoIndices(previous, next)).toEqual([]);
+  });
+
   it("returns changed indices when a todo field changes", () => {
     const previous: Todo[] = [
       { text: "Buy groceries", priority: "low" },
