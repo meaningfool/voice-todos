@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
+import { vi } from "vitest";
 import { TodoList } from "./TodoList";
 import type { Todo } from "../types";
 
@@ -67,5 +68,47 @@ describe("TodoList", () => {
       "data-highlighted",
       "false",
     );
+  });
+
+  it("restarts the highlight animation when the same card changes again before clearing", () => {
+    vi.useFakeTimers();
+
+    try {
+      const firstTodos: Todo[] = [
+        { text: "Buy groceries" },
+        { text: "Call dentist", dueDate: "2026-03-27" },
+      ];
+      const secondTodos: Todo[] = [
+        { text: "Buy groceries" },
+        { text: "Call dentist", dueDate: "2026-03-28" },
+      ];
+      const thirdTodos: Todo[] = [
+        { text: "Buy groceries" },
+        { text: "Call dentist", dueDate: "2026-03-29" },
+      ];
+
+      const { rerender } = render(<TodoList todos={firstTodos} />);
+      const firstFlash = screen.getByTestId("todo-card-1-highlight");
+
+      rerender(<TodoList todos={secondTodos} />);
+      const secondFlash = screen.getByTestId("todo-card-1-highlight");
+      expect(secondFlash).not.toBe(firstFlash);
+
+      rerender(<TodoList todos={thirdTodos} />);
+      const thirdFlash = screen.getByTestId("todo-card-1-highlight");
+      expect(thirdFlash).not.toBe(secondFlash);
+
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+
+      expect(screen.getByTestId("todo-card-1")).toHaveAttribute(
+        "data-highlighted",
+        "false",
+      );
+      expect(screen.queryByTestId("todo-card-1-highlight")).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -11,6 +11,7 @@ export function TodoList({ todos }: Props) {
   const previousTodosRef = useRef<Todo[]>([]);
   const highlightTimeoutRef = useRef<number | null>(null);
   const [highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
+  const [highlightVersion, setHighlightVersion] = useState(0);
 
   useEffect(() => {
     return () => {
@@ -42,6 +43,7 @@ export function TodoList({ todos }: Props) {
     }
 
     setHighlightedIndices(changedIndices);
+    setHighlightVersion((value) => value + 1);
     highlightTimeoutRef.current = window.setTimeout(() => {
       setHighlightedIndices([]);
       highlightTimeoutRef.current = null;
@@ -58,6 +60,7 @@ export function TodoList({ todos }: Props) {
           todo={todo}
           index={index}
           highlighted={highlightedIndices.includes(index)}
+          highlightVersion={highlightVersion}
         />
       ))}
     </div>

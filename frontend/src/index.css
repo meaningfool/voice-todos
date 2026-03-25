@@ -162,6 +162,7 @@ h3,
 }
 
 .voice-todo-card {
+  position: relative;
   overflow: hidden;
   border: 1px solid rgba(226, 109, 92, 0.12);
   border-radius: 1.5rem;
@@ -180,10 +181,23 @@ h3,
 }
 
 .voice-todo-card__body {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   gap: 0.9rem;
   padding: 1rem 1rem 1.05rem;
+}
+
+.voice-todo-highlight {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(circle at top left, rgba(255, 223, 202, 0.95), rgba(255, 245, 239, 0.15) 55%, rgba(255, 255, 255, 0) 100%);
+  opacity: 0.9;
+  animation: flash-orange 1100ms ease-out both;
 }
 
 .voice-todo-circle {
@@ -230,13 +244,14 @@ h3,
 .voice-meta-row {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: 0.4rem;
   margin-top: 0.65rem;
 }
 
 .voice-meta-chip {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.35rem;
   border: 1px solid transparent;
   border-radius: 9999px;
@@ -245,14 +260,22 @@ h3,
   color: #4b5563;
   font-size: 0.72rem;
   font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
+  line-height: 1.2;
+  max-width: 100%;
+  white-space: normal;
 }
 
 .voice-meta-chip-icon {
   width: 0.8rem;
   height: 0.8rem;
   color: currentColor;
+  flex-shrink: 0;
+  margin-top: 0.02rem;
+}
+
+.voice-meta-chip__label {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .voice-meta-chip--calendar {

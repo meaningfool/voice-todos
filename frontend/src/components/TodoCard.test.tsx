@@ -43,6 +43,16 @@ describe("TodoCard", () => {
     expect(screen.getByText("2026-03-27T09:00")).toBeInTheDocument();
   });
 
+  it("allows long metadata values to wrap instead of clipping", () => {
+    const longAssignee = "Alexandria Catherine Montgomery-Smythe";
+    const todo: Todo = { text: "Review budget", assignTo: longAssignee };
+
+    render(<TodoCard todo={todo} />);
+
+    const chip = screen.getByText(longAssignee).closest(".voice-meta-chip");
+    expect(chip).toHaveClass("voice-meta-chip--wrap");
+  });
+
   it("does not render optional badges when fields are absent", () => {
     const todo: Todo = { text: "Simple task" };
     render(<TodoCard todo={todo} />);

@@ -14,6 +14,7 @@ interface Props {
   todo: Todo;
   highlighted?: boolean;
   index?: number;
+  highlightVersion?: number;
 }
 
 function MetaChip({
@@ -26,14 +27,19 @@ function MetaChip({
   className?: string;
 }) {
   return (
-    <span className={cn("voice-meta-chip", className)}>
+    <span className={cn("voice-meta-chip voice-meta-chip--wrap", className)}>
       {icon ? <AppIcon name={icon} className="voice-meta-chip-icon" /> : null}
-      <span>{children}</span>
+      <span className="voice-meta-chip__label">{children}</span>
     </span>
   );
 }
 
-export function TodoCard({ todo, highlighted = false, index = 0 }: Props) {
+export function TodoCard({
+  todo,
+  highlighted = false,
+  index = 0,
+  highlightVersion = 0,
+}: Props) {
   const circleClass = todo.priority ? priorityCircle[todo.priority] : undefined;
 
   return (
@@ -42,6 +48,14 @@ export function TodoCard({ todo, highlighted = false, index = 0 }: Props) {
       data-highlighted={highlighted ? "true" : "false"}
       className={cn("spring-entry voice-todo-card", highlighted && "flash-orange")}
     >
+      {highlighted ? (
+        <span
+          key={highlightVersion}
+          data-testid={`todo-card-${index}-highlight`}
+          aria-hidden="true"
+          className="voice-todo-highlight flash-orange"
+        />
+      ) : null}
       <div className="voice-todo-card__body">
         <div className={cn("voice-todo-circle", circleClass)} />
         <div className="voice-todo-content">
