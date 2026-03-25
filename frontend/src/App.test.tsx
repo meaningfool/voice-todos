@@ -21,7 +21,7 @@ describe("App", () => {
     stop: vi.fn(),
   };
 
-  it("renders TodoSkeleton when status is extracting", () => {
+  it("renders TodoSkeleton when status is extracting and no todos exist", () => {
     mockUseTranscript.mockReturnValue({ ...baseHook, status: "extracting" });
     const { container } = render(<App />);
     expect(container.querySelector("[class*='animate-pulse']")).not.toBeNull();
@@ -45,6 +45,29 @@ describe("App", () => {
     expect(screen.queryByText(/Extracted Todos/)).not.toBeInTheDocument();
   });
 
+  it("renders TodoList while recording when todos exist", () => {
+    mockUseTranscript.mockReturnValue({
+      ...baseHook,
+      status: "recording",
+      todos: [{ text: "Draft agenda" }],
+    });
+    render(<App />);
+    expect(screen.getByText("Draft agenda")).toBeInTheDocument();
+    expect(screen.getByText("Extracted Todos (1)")).toBeInTheDocument();
+  });
+
+  it("keeps TodoList visible during extracting when todos already exist", () => {
+    mockUseTranscript.mockReturnValue({
+      ...baseHook,
+      status: "extracting",
+      todos: [{ text: "Stale todo" }],
+    });
+    const { container } = render(<App />);
+    expect(screen.getByText("Stale todo")).toBeInTheDocument();
+    expect(screen.getByText("Extracted Todos (1)")).toBeInTheDocument();
+    expect(container.querySelector("[class*='animate-pulse']")).toBeNull();
+  });
+
   it("shows transcript and 'no todos' message when idle with transcript but no todos", () => {
     mockUseTranscript.mockReturnValue({
       ...baseHook,
@@ -61,17 +84,6 @@ describe("App", () => {
     expect(
       screen.getByText("No todos found in this recording.")
     ).toBeInTheDocument();
-  });
-
-  it("does not render TodoList while extracting even if todos exist", () => {
-    mockUseTranscript.mockReturnValue({
-      ...baseHook,
-      status: "extracting",
-      todos: [{ text: "Stale todo" }],
-    });
-    render(<App />);
-    // Should show skeleton, not the todo list
-    expect(screen.queryByText("Extracted Todos")).not.toBeInTheDocument();
   });
 
   it("renders a warning banner when the hook exposes one", () => {

@@ -4,6 +4,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+@dataclass(slots=True)
+class TranscriptAccumulatorResult:
+    tokens: list[dict[str, str | bool]]
+    has_endpoint: bool
+    final_token_count: int
+
+
 @dataclass
 class TranscriptAccumulator:
     final_parts: list[str] = field(default_factory=list)
@@ -13,21 +20,29 @@ class TranscriptAccumulator:
         self.final_parts.clear()
         self.interim_parts.clear()
 
-    def apply_event(self, event: dict[str, Any]) -> list[dict[str, str | bool]]:
+    def apply_event(self, event: dict[str, Any]) -> TranscriptAccumulatorResult:
         raw_tokens = [
             token
             for token in event.get("tokens", [])
             if isinstance(token, dict) and isinstance(token.get("text"), str)
         ]
         has_fin = any(token["text"] == "<fin>" for token in raw_tokens)
-        tokens = [token for token in raw_tokens if token["text"] != "<fin>"]
+        has_endpoint = any(token["text"] == "<end>" for token in raw_tokens)
+        tokens = [
+            token
+            for token in raw_tokens
+            if token["text"] not in {"<fin>", "<end>"}
+        ]
+        final_token_count = sum(1 for token in tokens if token.get("is_final", False))
 
         if has_fin:
             self.interim_parts.clear()
 
         if tokens:
+            saw_final = False
             for token in tokens:
                 if token.get("is_final", False):
+                    saw_final = True
                     self.final_parts.append(token["text"])
 
             interim_text = "".join(
@@ -36,11 +51,17 @@ class TranscriptAccumulator:
             if interim_text:
                 self.interim_parts.clear()
                 self.interim_parts.append(interim_text)
+            elif saw_final:
+                self.interim_parts.clear()
 
-        return [
-            {"text": token["text"], "is_final": token.get("is_final", False)}
-            for token in tokens
-        ]
+        return TranscriptAccumulatorResult(
+            tokens=[
+                {"text": token["text"], "is_final": token.get("is_final", False)}
+                for token in tokens
+            ],
+            has_endpoint=has_endpoint,
+            final_token_count=final_token_count,
+        )
 
     @property
     def full_text(self) -> str:

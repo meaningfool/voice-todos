@@ -1,0 +1,35 @@
+{
+  "transcript": "Tomorrow I need to email Sara about lunch books the dentist appointment update the pricing doc and remind Alex about the design review and then I should order printer ink and check the catering quote for Friday.",
+  "todos": [
+    {
+      "text": "Email Sara about lunch",
+      "category": "Communication",
+      "due_date": "2026-03-25"
+    },
+    {
+      "text": "Book a dentist appointment",
+      "category": "Personal",
+      "due_date": "2026-03-25"
+    },
+    {
+      "text": "Update the pricing document",
+      "category": "Work",
+      "due_date": "2026-03-25"
+    },
+    {
+      "text": "Remind Alex about the design review",
+      "category": "Work",
+      "due_date": "2026-03-25"
+    },
+    {
+      "text": "Order printer ink",
+      "category": "Office Supplies",
+      "due_date": "2026-03-25"
+    },
+    {
+      "text": "Check the catering quote",
+      "category": "Work",
+      "due_date": "2026-03-27"
+    }
+  ]
+}

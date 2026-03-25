@@ -25,6 +25,17 @@ _SYSTEM_PROMPT = (
     "- assign_to: extract person names when the speaker delegates a task.\n"
     "- category: infer a short category label only when the context is clear.\n"
     "- If no actionable todos are found, return an empty list.\n"
+    "\n"
+    "Incremental extraction rules:\n"
+    "- You may receive a list of previously extracted todos. "
+    "Return the updated complete list.\n"
+    "- Preserve the order of existing todos where that order still makes sense. "
+    "Append genuinely new todos at the end.\n"
+    "- If new speech adds details to an existing todo, update it in place.\n"
+    "- If later context shows an earlier todo was over-split, duplicated, misheard, "
+    "or should be absorbed into another todo, merge or remove it.\n"
+    "- Explicit cancellation is one reason to remove a todo, but not the only one.\n"
+    "- If no previous todos are provided, extract from scratch.\n"
 )
 
 _agent: Agent[None, ExtractionResult] | None = None
@@ -43,19 +54,59 @@ def _get_agent() -> Agent[None, ExtractionResult]:
     return _agent
 
 
-def _build_extraction_input(transcript: str, reference_dt: datetime) -> str:
+def _format_previous_todos(previous_todos: list[Todo]) -> str:
+    lines: list[str] = []
+    for index, todo in enumerate(previous_todos, start=1):
+        parts = [todo.text]
+        if todo.priority is not None:
+            parts.append(f"priority: {todo.priority}")
+        if todo.category is not None:
+            parts.append(f"category: {todo.category}")
+        if todo.due_date is not None:
+            parts.append(f"due: {todo.due_date.isoformat()}")
+        if todo.notification is not None:
+            parts.append(f"notification: {todo.notification.isoformat()}")
+        if todo.assign_to is not None:
+            parts.append(f"assign to: {todo.assign_to}")
+        text = parts[0]
+        metadata = ", ".join(parts[1:])
+        if metadata:
+            lines.append(f"{index}. {text} ({metadata})")
+        else:
+            lines.append(f"{index}. {text}")
+    return "\n".join(lines)
+
+
+def _build_extraction_input(
+    transcript: str,
+    reference_dt: datetime,
+    previous_todos: list[Todo] | None = None,
+) -> str:
     timezone_name = reference_dt.tzname() or "UTC"
-    return (
-        f"Current local datetime: {reference_dt.isoformat()}\n"
-        f"Current local date: {reference_dt.date().isoformat()}\n"
-        f"Current timezone: {timezone_name}\n\n"
-        "Transcript:\n"
-        f"{transcript}"
-    )
+    sections = [
+        f"Current local datetime: {reference_dt.isoformat()}",
+        f"Current local date: {reference_dt.date().isoformat()}",
+        f"Current timezone: {timezone_name}",
+    ]
+
+    if previous_todos:
+        sections.extend(
+            [
+                "",
+                "Previously extracted todos:",
+                _format_previous_todos(previous_todos),
+            ]
+        )
+
+    sections.extend(["", "Transcript:", transcript])
+    return "\n".join(sections)
 
 
 async def extract_todos(
-    transcript: str, *, reference_dt: datetime | None = None
+    transcript: str,
+    *,
+    reference_dt: datetime | None = None,
+    previous_todos: list[Todo] | None = None,
 ) -> list[Todo]:
     """Extract structured todos from a transcript using Gemini."""
     if not transcript.strip():
@@ -65,5 +116,7 @@ async def extract_todos(
         reference_dt = datetime.now().astimezone()
 
     agent = _get_agent()
-    result = await agent.run(_build_extraction_input(transcript, reference_dt))
+    result = await agent.run(
+        _build_extraction_input(transcript, reference_dt, previous_todos)
+    )
     return result.output.todos

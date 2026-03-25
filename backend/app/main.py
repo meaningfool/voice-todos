@@ -1,9 +1,14 @@
+import logfire
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.ws import router as ws_router
 
+logfire.configure(send_to_logfire="if-token-present")
+logfire.instrument_pydantic_ai()
+
 app = FastAPI()
+logfire.instrument_fastapi(app)
 
 app.add_middleware(
     CORSMiddleware,  # type: ignore[arg-type]  # Starlette typing gap

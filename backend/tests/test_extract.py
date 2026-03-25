@@ -129,6 +129,65 @@ async def test_extract_todos_passes_reference_context_to_agent():
 
 
 @pytest.mark.asyncio
+async def test_extract_todos_includes_previous_todos_in_prompt():
+    """Previous todos are threaded into the prompt with metadata."""
+    from app.extract import extract_todos
+
+    previous_todos = [
+        Todo(
+            text="Call Marie",
+            priority="high",
+            category="work",
+            due_date=datetime(2026, 3, 24).date(),
+            notification=datetime(2026, 3, 24, 9, 0, tzinfo=UTC),
+            assign_to="Marie",
+        )
+    ]
+    fake_agent = SimpleNamespace(
+        run=AsyncMock(return_value=SimpleNamespace(output=ExtractionResult(todos=[])))
+    )
+
+    with patch("app.extract._get_agent", return_value=fake_agent):
+        await extract_todos(
+            "Call Marie tomorrow morning.",
+            reference_dt=datetime(2026, 3, 23, 9, 30, tzinfo=UTC),
+            previous_todos=previous_todos,
+        )
+
+    sent_prompt = fake_agent.run.await_args.args[0]
+    assert "Previously extracted todos:" in sent_prompt
+    assert "1. Call Marie" in sent_prompt
+    assert "priority: high" in sent_prompt
+    assert "category: work" in sent_prompt
+    assert "due: 2026-03-24" in sent_prompt
+    assert "notification: 2026-03-24T09:00:00+00:00" in sent_prompt
+    assert "assign to: Marie" in sent_prompt
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("previous_todos", [[], None])
+async def test_extract_todos_omits_previous_section_when_empty_or_none(
+    previous_todos,
+):
+    """Empty previous_todos should not add an extra prompt section."""
+    from app.extract import extract_todos
+
+    fake_agent = SimpleNamespace(
+        run=AsyncMock(return_value=SimpleNamespace(output=ExtractionResult(todos=[])))
+    )
+
+    with patch("app.extract._get_agent", return_value=fake_agent):
+        await extract_todos(
+            "Call Marie tomorrow.",
+            reference_dt=datetime(2026, 3, 23, 9, 30, tzinfo=UTC),
+            previous_todos=previous_todos,
+        )
+
+    sent_prompt = fake_agent.run.await_args.args[0]
+    assert "Previously extracted todos:" not in sent_prompt
+
+
+@pytest.mark.asyncio
 async def test_extract_todos_returns_agent_output():
     """Structured agent output is returned unchanged to the caller."""
     from app.extract import extract_todos

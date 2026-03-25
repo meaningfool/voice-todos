@@ -51,7 +51,8 @@
 
 | File | Change |
 |------|--------|
-| `frontend/src/hooks/useTranscript.ts` | Remove `"extracting"` from mid-session flow, keep for final sweep only |
+| `frontend/src/App.tsx` | Render todos while recording, and show skeletons only during the final sweep when no todos exist yet |
+| `frontend/src/App.test.tsx` | Add rendering tests for todos during recording and skeleton suppression once todos exist |
 
 ---
 
@@ -450,6 +451,10 @@ git commit -m "feat: add previous_todos support to extract_todos for incremental
 
 This is the core new component. All tests use a mock `extract_todos` — no API keys needed.
 
+Important semantic split:
+- Background endpoint / token-threshold extractions should log failures and keep the session alive.
+- The final stop-time extraction must propagate failures back to `ws.py` so the user gets a warning instead of a silent miss.
+
 - [ ] **Step 1: Write failing test — endpoint triggers extraction**
 
 Create `backend/tests/test_extraction_loop.py`:
@@ -515,6 +520,7 @@ Create `backend/app/extraction_loop.py`:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 from collections.abc import Awaitable, Callable
 
@@ -541,43 +547,60 @@ class ExtractionLoop:
         self._tokens_since_last_extraction = 0
         self._extraction_task: asyncio.Task | None = None
         self._dirty = False
+        self._pending_trigger_reason: str | None = None
+        self._stop_requested = False
 
     async def _run_extraction(self, trigger_reason: str = "unknown") -> None:
-        """Run one extraction cycle."""
+        """Run one extraction cycle.
+
+        Raises on failure. Background callers decide whether to log/suppress;
+        on_stop() intentionally lets the final failure propagate to ws.py.
+        """
         transcript_text = self._transcript.full_text
         if not transcript_text.strip():
             return
 
-        try:
-            todos = await self._extract_fn(
-                transcript_text,
-                previous_todos=self._previous_todos or None,
-            )
-            self._previous_todos = todos
-            self._tokens_since_last_extraction = 0
-            await self._send_fn(todos)
-        except Exception:
-            logger.exception("Extraction failed")
+        todos = await self._extract_fn(
+            transcript_text,
+            previous_todos=self._previous_todos or None,
+        )
+        self._previous_todos = todos
+        self._tokens_since_last_extraction = 0
+        await self._send_fn(todos)
 
     async def _maybe_extract(self, trigger_reason: str = "unknown") -> None:
         """Start extraction if not already running, otherwise set dirty flag."""
+        if self._stop_requested and trigger_reason != "stop":
+            self._dirty = True
+            self._pending_trigger_reason = trigger_reason
+            return
+
         if self._extraction_task and not self._extraction_task.done():
             self._dirty = True
             self._pending_trigger_reason = trigger_reason
             return
 
         self._dirty = False
+        self._pending_trigger_reason = None
         self._extraction_task = asyncio.create_task(
-            self._extraction_cycle(trigger_reason)
+            self._background_extraction_cycle(trigger_reason)
         )
 
-    async def _extraction_cycle(self, trigger_reason: str) -> None:
-        """Run extraction, then re-run if dirty flag was set during execution."""
-        await self._run_extraction(trigger_reason)
-        while self._dirty:
-            self._dirty = False
-            reason = getattr(self, "_pending_trigger_reason", "dirty")
-            await self._run_extraction(reason)
+    async def _background_extraction_cycle(self, trigger_reason: str) -> None:
+        """Run background extraction(s), logging failures without killing the session."""
+        try:
+            await self._run_extraction(trigger_reason)
+            while self._dirty and not self._stop_requested:
+                self._dirty = False
+                reason = self._pending_trigger_reason or "dirty"
+                self._pending_trigger_reason = None
+                await self._run_extraction(reason)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Background extraction failed")
+        finally:
+            self._extraction_task = None
 
     async def on_endpoint(self) -> None:
         """Called when Soniox <end> token is received."""
@@ -590,13 +613,19 @@ class ExtractionLoop:
             asyncio.create_task(self._maybe_extract(trigger_reason="token_threshold"))
 
     async def on_stop(self) -> None:
-        """Wait for in-flight extraction, then run one final pass."""
+        """Wait for the current extraction, then run exactly one final pass."""
+        self._stop_requested = True
         if self._extraction_task and not self._extraction_task.done():
-            await self._extraction_task
+            with contextlib.suppress(Exception):
+                await self._extraction_task
 
-        # Final pass on the fully finalized transcript
+        # Ignore any queued dirty rerun and do one explicit final pass instead.
         self._dirty = False
-        await self._run_extraction(trigger_reason="stop")
+        self._pending_trigger_reason = None
+        try:
+            await self._run_extraction(trigger_reason="stop")
+        finally:
+            self._stop_requested = False
 
     def cancel(self) -> None:
         """Cancel in-flight extraction and reset state."""
@@ -604,6 +633,8 @@ class ExtractionLoop:
             self._extraction_task.cancel()
         self._extraction_task = None
         self._dirty = False
+        self._pending_trigger_reason = None
+        self._stop_requested = False
         self._previous_todos = []
         self._tokens_since_last_extraction = 0
 ```
@@ -695,15 +726,16 @@ async def test_dirty_flag_collapses_multiple_triggers(transcript, send_fn):
 
 
 @pytest.mark.asyncio
-async def test_on_stop_waits_for_inflight_then_runs_final(transcript, send_fn):
-    """on_stop waits for in-flight extraction, then runs one final pass."""
+async def test_on_stop_waits_for_inflight_and_skips_dirty_rerun(transcript, send_fn):
+    """Stop waits for the current extraction, then runs exactly one final pass."""
     call_count = 0
+    first_call_release = asyncio.Event()
 
     async def tracked_extract(*args, **kwargs):
         nonlocal call_count
         call_count += 1
         if call_count == 1:
-            await asyncio.sleep(0.1)
+            await first_call_release.wait()
         return [Todo(text=f"Todo {call_count}")]
 
     transcript.final_parts.append("Buy milk. ")
@@ -715,14 +747,18 @@ async def test_on_stop_waits_for_inflight_then_runs_final(transcript, send_fn):
         token_threshold=30,
     )
 
-    # Start an extraction
     await loop.on_endpoint()
     await asyncio.sleep(0.02)
 
-    # on_stop waits for it, then does final pass
-    await loop.on_stop()
+    # Queue another trigger while the first extraction is in flight.
+    await loop.on_endpoint()
 
-    # Should have 2 calls: in-flight + final
+    stop_task = asyncio.create_task(loop.on_stop())
+    await asyncio.sleep(0.02)
+    first_call_release.set()
+    await stop_task
+
+    # Exactly two calls: the in-flight run + the guaranteed final stop pass.
     assert call_count == 2
     assert send_fn.await_count == 2
 
@@ -743,6 +779,37 @@ async def test_on_stop_without_inflight(transcript, send_fn, mock_extract):
 
     mock_extract.assert_awaited_once()
     send_fn.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_on_stop_propagates_final_pass_failure(transcript, send_fn):
+    """Final pass failures must propagate so ws.py can surface a warning."""
+    call_count = 0
+
+    async def extract_then_fail(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 2:
+            raise RuntimeError("boom")
+        return [Todo(text="Buy milk")]
+
+    transcript.final_parts.append("Buy milk. ")
+
+    loop = ExtractionLoop(
+        transcript=transcript,
+        send_fn=send_fn,
+        extract_fn=extract_then_fail,
+        token_threshold=30,
+    )
+
+    await loop.on_endpoint()
+    await asyncio.sleep(0.05)
+
+    with pytest.raises(RuntimeError, match="boom"):
+        await loop.on_stop()
+
+    # The successful background extraction still sent one snapshot.
+    assert send_fn.await_count == 1
 
 
 @pytest.mark.asyncio
@@ -904,6 +971,10 @@ git commit -m "feat: add Logfire instrumentation for FastAPI and PydanticAI"
 - Modify: `backend/tests/test_ws.py`
 
 This is where the pieces come together. The WebSocket handler instantiates `ExtractionLoop` and calls it from the relay function.
+
+Important stop-path rule:
+- On a successful stop flow, the final message sequence should still end with `todos` then `stopped`
+- If the final extraction fails, surface a warning instead of failing silently, and do not overwrite the last successful todo snapshot with an empty replacement
 
 - [ ] **Step 1: Write failing test — mid-session todos are sent**
 
@@ -1202,6 +1273,8 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             except Exception:
                                 warning_message = "Todo extraction failed."
                                 logger.exception("Todo extraction failed")
+                                # Keep the last successfully sent todo snapshot.
+                                # Do not send an empty replacement list here.
 
                         if recorder:
                             recorder.write_result(full_transcript, latest_todo_items)
@@ -1248,6 +1321,15 @@ Expected: PASS
 
 The existing `test_ws_stop_sends_todos_before_stopped` test patches `extract_todos` at the module level. With ExtractionLoop, the stop flow now uses `extraction_loop.on_stop()` which calls `extract_todos` internally. The patch target stays the same (`app.ws.extract_todos`) because `ExtractionLoop` receives `extract_fn=extract_todos` from `ws.py`.
 
+Add two deterministic tests while updating `backend/tests/test_ws.py`:
+
+- `test_ws_stop_uses_finalized_transcript_for_final_pass`
+  - Patch `_relay_soniox_to_browser` with a helper that appends final transcript text before returning
+  - Assert `extract_todos` is awaited with the finalized transcript assembled after relay completion, not an earlier partial snapshot
+- `test_ws_stop_surfaces_final_extraction_failure`
+  - Patch `extract_todos` to raise during stop
+  - Assert the socket still yields `stopped` with `warning == "Todo extraction failed."`
+
 Run all ws tests to verify:
 
 Run: `cd backend && uv run pytest tests/test_ws.py -v`
@@ -1273,7 +1355,7 @@ git commit -m "feat: wire ExtractionLoop into WebSocket handler for mid-session 
 **Files:**
 - Modify: `backend/app/extraction_loop.py`
 
-- [ ] **Step 1: Add spans to _run_extraction and _maybe_extract**
+- [ ] **Step 1: Add spans without changing the stop/error semantics**
 
 Modify `backend/app/extraction_loop.py` — wrap extraction calls with Logfire spans:
 
@@ -1292,17 +1374,18 @@ async def _run_extraction(self, trigger_reason: str = "unknown") -> None:
         transcript_length=len(transcript_text),
         previous_todo_count=len(self._previous_todos),
     ):
-        try:
-            todos = await self._extract_fn(
-                transcript_text,
-                previous_todos=self._previous_todos or None,
-            )
-            self._previous_todos = todos
-            self._tokens_since_last_extraction = 0
-            await self._send_fn(todos)
-        except Exception:
-            logger.exception("Extraction failed")
+        todos = await self._extract_fn(
+            transcript_text,
+            previous_todos=self._previous_todos or None,
+        )
+        self._previous_todos = todos
+        self._tokens_since_last_extraction = 0
+        await self._send_fn(todos)
 ```
+
+Keep the semantic split from Task 3:
+- background extraction cycles log failures
+- `on_stop()` still allows the final extraction failure to propagate to `ws.py`
 
 Update callers to pass `trigger_reason`:
 - `on_endpoint`: `trigger_reason="endpoint"`
@@ -1323,16 +1406,74 @@ git commit -m "feat: add Logfire spans to ExtractionLoop for extraction cycle tr
 
 ---
 
-## Task 7: Frontend — handle todos during recording
+## Task 7: Frontend — render todos during recording
 
 **Files:**
-- Modify: `frontend/src/hooks/useTranscript.ts`
+- Modify: `frontend/src/App.tsx`
+- Modify: `frontend/src/App.test.tsx`
 
-The frontend already handles `todos` messages via `setTodos()`. The main change is that `todos` messages now arrive during `"recording"` status, not just during `"extracting"`.
+The hook already accepts `todos` messages during any status. The missing piece is rendering: today the app only shows `TodoList` while idle, so mid-session todo updates would be received but never displayed. This task changes the UI so todo snapshots are visible during recording and the skeleton only appears during the final sweep when the list is still empty.
 
-- [ ] **Step 1: Verify current behavior handles it**
+- [ ] **Step 1: Write failing App rendering tests**
 
-The current `ws.onmessage` handler at `frontend/src/hooks/useTranscript.ts:141-151` already handles `todos` messages unconditionally:
+Update `frontend/src/App.test.tsx`:
+
+- Change the existing `"renders TodoList when idle with todos"` test into a status-agnostic rendering test, or add a new one that proves `TodoList` renders during `"recording"` when todos exist
+- Replace the existing `"does not render TodoList while extracting even if todos exist"` assertion with the new desired behavior:
+  - if `status === "extracting"` and `todos.length === 0`, show `TodoSkeleton`
+  - if `status === "extracting"` and `todos.length > 0`, keep showing the todo list instead of hiding it behind skeletons
+
+Suggested assertions:
+
+```typescript
+it("renders TodoList while recording when todos exist", () => {
+  mockUseTranscript.mockReturnValue({
+    ...baseHook,
+    status: "recording",
+    todos: [{ text: "Buy groceries" }],
+  });
+  render(<App />);
+  expect(screen.getByText("Buy groceries")).toBeInTheDocument();
+});
+
+it("keeps TodoList visible during extracting when todos already exist", () => {
+  mockUseTranscript.mockReturnValue({
+    ...baseHook,
+    status: "extracting",
+    todos: [{ text: "Buy groceries" }],
+  });
+  const { container } = render(<App />);
+  expect(screen.getByText("Buy groceries")).toBeInTheDocument();
+  expect(screen.getByText(/Extracted Todos/)).toBeInTheDocument();
+  expect(container.querySelector("[class*='animate-pulse']")).toBeNull();
+});
+```
+
+- [ ] **Step 2: Implement App rendering changes**
+
+Modify `frontend/src/App.tsx`:
+
+- Render `TodoList` whenever `todos.length > 0`, regardless of whether status is `"recording"`, `"extracting"`, or `"idle"`
+- Render `TodoSkeleton` only when `status === "extracting"` and `todos.length === 0`
+- Keep the existing "No todos found in this recording." empty state only for the final idle state with transcript text and no todos
+
+Concretely, the current logic:
+
+```tsx
+{status === "extracting" && <TodoSkeleton />}
+{status === "idle" && todos.length > 0 && <TodoList todos={todos} />}
+```
+
+should become:
+
+```tsx
+{todos.length > 0 && <TodoList todos={todos} />}
+{status === "extracting" && todos.length === 0 && <TodoSkeleton />}
+```
+
+- [ ] **Step 3: Verify hook behavior still needs no logic change**
+
+The current `ws.onmessage` handler in `frontend/src/hooks/useTranscript.ts` already handles `todos` messages unconditionally:
 
 ```typescript
 } else if (msg.type === "todos" && msg.items) {
@@ -1340,29 +1481,30 @@ The current `ws.onmessage` handler at `frontend/src/hooks/useTranscript.ts:141-1
 }
 ```
 
-This means the frontend already works — `setTodos` replaces the list regardless of current status. No code change needed for the basic flow.
+No hook logic change is required for the basic mid-session flow, but keep the existing `"extracting"` state for the final stop sweep.
 
-- [ ] **Step 2: Verify stop flow still works**
-
-The stop handler at line 229-267 sends `stop`, sets status to `"extracting"`, and waits for `stopped`. The backend still sends `todos` then `stopped` on stop. The frontend handles this correctly.
-
-- [ ] **Step 3: Run frontend tests**
+- [ ] **Step 4: Run frontend tests**
 
 Run: `cd frontend && pnpm test:run`
 Expected: all pass
 
-- [ ] **Step 4: Commit (only if changes were needed)**
+- [ ] **Step 5: Commit**
 
-If no code changes are required, skip this commit.
+```bash
+git add frontend/src/App.tsx frontend/src/App.test.tsx
+git commit -m "feat: render todos while recording and keep list visible during final sweep"
+```
 
 ---
 
-## Task 8: End-to-end behavioral tests
+## Task 8: End-to-end behavioral tests (secondary, opt-in)
 
 **Files:**
 - Create: `backend/tests/test_e2e.py`
 
 **Prerequisite:** Fixtures `refine-todo` and `continuous-speech` must be recorded. If they don't exist, ask the user to record them. The test for `call-mom-memo-supplier` can proceed with the existing fixture.
+
+Note: the strongest proof that Stop uses the finalized transcript belongs in deterministic `ExtractionLoop` / `ws.py` tests from earlier tasks. The opt-in e2e tests here focus on the observable user behaviors that benefit most from a live pipeline check.
 
 - [ ] **Step 1: Write e2e test infrastructure**
 
@@ -1382,8 +1524,6 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-import struct
-import time
 from pathlib import Path
 
 import pytest
@@ -1405,10 +1545,25 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 BACKEND_URL = os.environ.get("E2E_BACKEND_URL", "ws://localhost:8000/ws")
 
 
-async def _replay_fixture(fixture_name: str, *, stop_after_audio: bool = True):
-    """Replay a fixture through the real backend, collect all messages.
+async def _drain_messages(ws, *, timeout: float) -> list[dict]:
+    """Drain all currently available messages until timeout."""
+    messages: list[dict] = []
+    try:
+        while True:
+            msg = json.loads(await asyncio.wait_for(ws.recv(), timeout=timeout))
+            messages.append(msg)
+            timeout = 0.01
+    except (asyncio.TimeoutError, TimeoutError):
+        return messages
 
-    Returns (messages_before_stop, messages_after_stop).
+
+async def _replay_fixture(fixture_name: str):
+    """Replay a fixture through the real backend, collect phase-separated messages.
+
+    Returns a dict with:
+    - during_audio: messages received while audio was still being streamed
+    - after_audio_before_stop: messages received after streaming ended but before stop
+    - after_stop: messages received after sending stop, until stopped
     """
     audio_path = FIXTURES_DIR / fixture_name / "audio.pcm"
     if not audio_path.exists():
@@ -1419,68 +1574,52 @@ async def _replay_fixture(fixture_name: str, *, stop_after_audio: bool = True):
     chunk_size = 3200  # 100ms of audio
     chunk_interval = 0.1  # seconds
 
-    messages_before_stop = []
-    messages_after_stop = []
+    during_audio = []
+    after_audio_before_stop = []
+    after_stop = []
 
     async with websockets.connect(BACKEND_URL) as ws:
         await ws.send(json.dumps({"type": "start"}))
 
-        # Collect the "started" message
         started = json.loads(await ws.recv())
         assert started["type"] == "started"
 
-        # Stream audio at realistic pace
         for i in range(0, len(audio_bytes), chunk_size):
             chunk = audio_bytes[i : i + chunk_size]
             await ws.send(chunk)
             await asyncio.sleep(chunk_interval)
+            during_audio.extend(await _drain_messages(ws, timeout=0.01))
 
-            # Non-blocking check for incoming messages
-            try:
-                while True:
-                    msg = json.loads(await asyncio.wait_for(ws.recv(), timeout=0.01))
-                    messages_before_stop.append(msg)
-            except (asyncio.TimeoutError, TimeoutError):
-                pass
-
-        # Wait a bit for any remaining extractions
         await asyncio.sleep(2)
+        after_audio_before_stop.extend(await _drain_messages(ws, timeout=0.5))
 
-        # Drain messages
-        try:
-            while True:
-                msg = json.loads(await asyncio.wait_for(ws.recv(), timeout=0.5))
-                messages_before_stop.append(msg)
-        except (asyncio.TimeoutError, TimeoutError):
-            pass
+        await ws.send(json.dumps({"type": "stop"}))
 
-        if stop_after_audio:
-            # Send stop
-            await ws.send(json.dumps({"type": "stop"}))
+        while True:
+            msg = json.loads(await asyncio.wait_for(ws.recv(), timeout=10))
+            after_stop.append(msg)
+            if msg["type"] == "stopped":
+                break
 
-            # Collect messages after stop
-            try:
-                while True:
-                    msg = json.loads(await asyncio.wait_for(ws.recv(), timeout=10))
-                    messages_after_stop.append(msg)
-                    if msg["type"] == "stopped":
-                        break
-            except (asyncio.TimeoutError, TimeoutError):
-                pass
-
-    return messages_before_stop, messages_after_stop
+    return {
+        "during_audio": during_audio,
+        "after_audio_before_stop": after_audio_before_stop,
+        "after_stop": after_stop,
+    }
 
 
 @requires_e2e
 @pytest.mark.asyncio
 async def test_todos_appear_while_speaking():
-    """Behavior 1: At least one todos message arrives before stop is sent."""
-    before_stop, after_stop = await _replay_fixture("call-mom-memo-supplier")
+    """Behavior 1: At least one todos message arrives before audio streaming ends."""
+    replay = await _replay_fixture("call-mom-memo-supplier")
 
-    todo_messages_before_stop = [m for m in before_stop if m["type"] == "todos"]
-    assert len(todo_messages_before_stop) >= 1, (
-        f"Expected todos before stop. Messages before stop: "
-        f"{[m['type'] for m in before_stop]}"
+    todo_messages_during_audio = [
+        m for m in replay["during_audio"] if m["type"] == "todos"
+    ]
+    assert len(todo_messages_during_audio) >= 1, (
+        "Expected at least one todos message while audio was still streaming. "
+        f"Messages during audio: {[m['type'] for m in replay['during_audio']]}"
     )
 
 
@@ -1488,12 +1627,12 @@ async def test_todos_appear_while_speaking():
 @pytest.mark.asyncio
 async def test_all_todos_captured():
     """Behavior 2: Final todo list contains all expected items."""
-    before_stop, after_stop = await _replay_fixture("call-mom-memo-supplier")
+    replay = await _replay_fixture("call-mom-memo-supplier")
 
-    # Find the last todos message (from the final sweep)
     all_todo_messages = (
-        [m for m in before_stop if m["type"] == "todos"]
-        + [m for m in after_stop if m["type"] == "todos"]
+        [m for m in replay["during_audio"] if m["type"] == "todos"]
+        + [m for m in replay["after_audio_before_stop"] if m["type"] == "todos"]
+        + [m for m in replay["after_stop"] if m["type"] == "todos"]
     )
     assert len(all_todo_messages) >= 1
 
@@ -1514,13 +1653,12 @@ async def test_all_todos_captured():
 @pytest.mark.asyncio
 async def test_stop_triggers_final_sweep():
     """Behavior 5: A todos message arrives after stop, before stopped."""
-    before_stop, after_stop = await _replay_fixture("call-mom-memo-supplier")
+    replay = await _replay_fixture("call-mom-memo-supplier")
 
-    after_stop_types = [m["type"] for m in after_stop]
+    after_stop_types = [m["type"] for m in replay["after_stop"]]
     assert "todos" in after_stop_types, (
         f"Expected todos after stop. Messages after stop: {after_stop_types}"
     )
-    # Verify todos comes before stopped
     todos_idx = after_stop_types.index("todos")
     stopped_idx = after_stop_types.index("stopped")
     assert todos_idx < stopped_idx
@@ -1530,9 +1668,13 @@ async def test_stop_triggers_final_sweep():
 @pytest.mark.asyncio
 async def test_refine_todo():
     """Behavior 3: Later speech can refine earlier todos."""
-    before_stop, after_stop = await _replay_fixture("refine-todo")
+    replay = await _replay_fixture("refine-todo")
 
-    todo_messages = [m for m in before_stop if m["type"] == "todos"]
+    todo_messages = [
+        m
+        for m in replay["during_audio"] + replay["after_audio_before_stop"]
+        if m["type"] == "todos"
+    ]
     if len(todo_messages) < 2:
         pytest.skip("Need at least 2 todo messages to test refinement")
 
@@ -1548,12 +1690,17 @@ async def test_refine_todo():
 @pytest.mark.asyncio
 async def test_token_threshold_fallback():
     """Behavior 6: Todos appear even without <end> tokens (continuous speech)."""
-    before_stop, after_stop = await _replay_fixture("continuous-speech")
+    replay = await _replay_fixture("continuous-speech")
 
-    todo_messages_before_stop = [m for m in before_stop if m["type"] == "todos"]
+    todo_messages_before_stop = [
+        m
+        for m in replay["during_audio"] + replay["after_audio_before_stop"]
+        if m["type"] == "todos"
+    ]
     assert len(todo_messages_before_stop) >= 1, (
         f"Expected todos from token threshold fallback. "
-        f"Messages before stop: {[m['type'] for m in before_stop]}"
+        f"Messages before stop: "
+        f"{[m['type'] for m in replay['during_audio'] + replay['after_audio_before_stop']]}"
     )
 ```
 

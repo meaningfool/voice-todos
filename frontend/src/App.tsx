@@ -34,8 +34,8 @@ function App() {
           {warningMessage}
         </div>
       )}
-      {status === "extracting" && <TodoSkeleton />}
-      {status === "idle" && todos.length > 0 && <TodoList todos={todos} />}
+      {todos.length > 0 && <TodoList todos={todos} />}
+      {status === "extracting" && todos.length === 0 && <TodoSkeleton />}
       {status === "idle" && todos.length === 0 && finalText && (
         <div style={{ marginTop: "1rem", color: "#888", fontStyle: "italic" }}>
           No todos found in this recording.
