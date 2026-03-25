@@ -98,6 +98,24 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("suppresses the no-todos result when a warning is present", () => {
+    mockUseTranscript.mockReturnValue({
+      ...baseHook,
+      finalText: "Call Marie tomorrow",
+      micRecordingUrl: "blob:recording",
+      warningMessage: "Timed out waiting for the final transcript.",
+    });
+
+    render(<App />);
+
+    expect(
+      screen.getByText("Timed out waiting for the final transcript.")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("No todos found in this recording.")
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps todos visible during extracting when todos already exist", () => {
     mockUseTranscript.mockReturnValue({
       ...baseHook,

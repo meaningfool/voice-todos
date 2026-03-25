@@ -21,7 +21,10 @@ function App() {
   );
   const showInitialEmptyState = status === "idle" && !hasSessionArtifacts;
   const showNoTodosState =
-    status === "idle" && todos.length === 0 && (Boolean(finalText) || Boolean(micRecordingUrl));
+    status === "idle" &&
+    !warningMessage &&
+    todos.length === 0 &&
+    (Boolean(finalText) || Boolean(micRecordingUrl));
 
   return (
     <main className="voice-page-shell">
