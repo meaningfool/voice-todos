@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { cn } from "../lib/utils";
 
 type AppIconName = "mic" | "calendar" | "tag" | "user";
@@ -7,7 +8,7 @@ interface Props {
   className?: string;
 }
 
-const paths: Record<AppIconName, JSX.Element> = {
+const paths: Record<AppIconName, ReactElement> = {
   mic: (
     <path
       d="M12 14.5a2.5 2.5 0 0 0 2.5-2.5V6a2.5 2.5 0 1 0-5 0v6a2.5 2.5 0 0 0 2.5 2.5Zm4.5-5V12a4.5 4.5 0 0 1-9 0V9.5"
