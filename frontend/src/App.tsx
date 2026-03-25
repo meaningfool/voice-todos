@@ -1,6 +1,7 @@
 import { useTranscript } from "./hooks/useTranscript";
+import { AppIcon } from "./components/AppIcon";
 import { RecordButton } from "./components/RecordButton";
-import { TranscriptArea } from "./components/TranscriptArea";
+import { SessionDetails } from "./components/SessionDetails";
 import { TodoList } from "./components/TodoList";
 import { TodoSkeleton } from "./components/TodoSkeleton";
 
@@ -8,7 +9,6 @@ function App() {
   const {
     status,
     finalText,
-    interimText,
     todos,
     micRecordingUrl,
     warningMessage,
@@ -16,41 +16,46 @@ function App() {
     stop,
   } = useTranscript();
 
+  const hasSessionArtifacts = Boolean(
+    finalText || micRecordingUrl || warningMessage || todos.length > 0
+  );
+  const showInitialEmptyState = status === "idle" && !hasSessionArtifacts;
+  const showNoTodosState =
+    status === "idle" && todos.length === 0 && (Boolean(finalText) || Boolean(micRecordingUrl));
+
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "2rem" }}>
-      <h1>Voice Todos</h1>
-      <RecordButton status={status} onStart={start} onStop={stop} />
-      <TranscriptArea finalText={finalText} interimText={interimText} />
-      {warningMessage && (
-        <div
-          style={{
-            marginTop: "1rem",
-            padding: "0.75rem 1rem",
-            background: "#fff7ed",
-            color: "#9a3412",
-            borderRadius: 8,
-          }}
-        >
-          {warningMessage}
+    <main className="voice-page-shell">
+      <section className="voice-device-shell" aria-label="Voice-Todos app shell">
+        <header className="voice-header">
+          <h1>Voice-Todos</h1>
+        </header>
+
+        <div className="voice-task-container">
+          {showInitialEmptyState ? (
+            <div className="voice-empty-state">
+              <div className="voice-empty-illustration" aria-hidden="true">
+                <AppIcon name="mic" className="voice-empty-illustration__icon" />
+              </div>
+              <h2>Start speaking...</h2>
+              <p>Your voice will be turned into tasks in real time.</p>
+            </div>
+          ) : null}
+
+          {warningMessage ? <div className="voice-warning-card">{warningMessage}</div> : null}
+          {todos.length > 0 ? <TodoList todos={todos} /> : null}
+          {status === "extracting" && todos.length === 0 ? <TodoSkeleton /> : null}
+          {showNoTodosState ? (
+            <div className="voice-result-state">No todos found in this recording.</div>
+          ) : null}
         </div>
-      )}
-      {todos.length > 0 && <TodoList todos={todos} />}
-      {status === "extracting" && todos.length === 0 && <TodoSkeleton />}
-      {status === "idle" && todos.length === 0 && finalText && (
-        <div style={{ marginTop: "1rem", color: "#888", fontStyle: "italic" }}>
-          No todos found in this recording.
+
+        <div className="voice-device-dock">
+          <RecordButton status={status} onStart={start} onStop={stop} />
         </div>
-      )}
-      {micRecordingUrl && (
-        <div style={{ marginTop: "1.5rem", padding: "1rem", background: "#f5f5f5", borderRadius: 8 }}>
-          <div style={{ marginBottom: "0.5rem", fontWeight: 500 }}>Raw mic recording</div>
-          <audio controls src={micRecordingUrl} style={{ width: "100%" }} />
-          <a href={micRecordingUrl} download="mic-recording.webm" style={{ fontSize: "0.85rem" }}>
-            Download
-          </a>
-        </div>
-      )}
-    </div>
+      </section>
+
+      <SessionDetails finalText={finalText} micRecordingUrl={micRecordingUrl} />
+    </main>
   );
 }
 
