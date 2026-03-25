@@ -7,6 +7,7 @@ from typing import Any
 @dataclass(slots=True)
 class TranscriptAccumulatorResult:
     tokens: list[dict[str, str | bool]]
+    has_fin: bool
     has_endpoint: bool
     final_token_count: int
 
@@ -59,6 +60,7 @@ class TranscriptAccumulator:
                 {"text": token["text"], "is_final": token.get("is_final", False)}
                 for token in tokens
             ],
+            has_fin=has_fin,
             has_endpoint=has_endpoint,
             final_token_count=final_token_count,
         )

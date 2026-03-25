@@ -87,6 +87,18 @@ class TestApplyEvent:
         assert accumulator.interim_parts == []
         assert result.has_endpoint is False
 
+    def test_fin_token_is_reported_without_endpoint(self):
+        """<fin> should be surfaced separately from endpoint handling."""
+        accumulator = TranscriptAccumulator()
+
+        result = accumulator.apply_event(
+            {"tokens": [{"text": "<fin>", "is_final": True}]}
+        )
+
+        assert result.has_fin is True
+        assert result.has_endpoint is False
+        assert result.final_token_count == 0
+
     def test_final_tokens_clear_stale_interim_text(self):
         """A later final-only event replaces, rather than appends, stale interim."""
         accumulator = TranscriptAccumulator()
