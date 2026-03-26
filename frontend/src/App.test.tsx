@@ -101,7 +101,7 @@ describe("App", () => {
     expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(1);
   });
 
-  it("shows one skeleton card while extracting with existing todos", () => {
+  it("shows two skeleton cards while extracting with one todo", () => {
     mockUseTranscript.mockReturnValue({
       ...baseHook,
       status: "extracting",
@@ -110,7 +110,7 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(1);
+    expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Extracting..." })).toBeDisabled();
   });
 
@@ -184,6 +184,6 @@ describe("App", () => {
     const { container } = render(<App />);
 
     expect(screen.getByText("Review budget")).toBeInTheDocument();
-    expect(container.querySelectorAll("[data-testid='todo-skeleton-card']")).toHaveLength(1);
+    expect(container.querySelectorAll("[data-testid='todo-skeleton-card']")).toHaveLength(2);
   });
 });

@@ -20,14 +20,8 @@ function App() {
     finalText || micRecordingUrl || warningMessage || todos.length > 0
   );
   const showInitialEmptyState = status === "idle" && !hasSessionArtifacts;
-  const skeletonCount =
-    status === "recording"
-      ? Math.max(1, 3 - todos.length)
-      : status === "extracting"
-        ? todos.length > 0
-          ? 1
-          : 3
-        : 0;
+  const isVoiceWorkInFlight = status === "recording" || status === "extracting";
+  const skeletonCount = isVoiceWorkInFlight ? Math.max(1, 3 - todos.length) : 0;
   const showNoTodosState =
     status === "idle" &&
     !warningMessage &&
