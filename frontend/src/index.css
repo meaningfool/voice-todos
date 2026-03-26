@@ -348,6 +348,10 @@ h3,
   margin-top: 1rem;
 }
 
+.voice-todo-feed--compact {
+  margin-top: 0.75rem;
+}
+
 .spring-entry {
   animation: spring-entry 320ms var(--spring-easing) both;
 }

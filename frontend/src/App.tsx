@@ -20,6 +20,14 @@ function App() {
     finalText || micRecordingUrl || warningMessage || todos.length > 0
   );
   const showInitialEmptyState = status === "idle" && !hasSessionArtifacts;
+  const skeletonCount =
+    status === "recording"
+      ? Math.max(1, 3 - todos.length)
+      : status === "extracting"
+        ? todos.length > 0
+          ? 1
+          : 3
+        : 0;
   const showNoTodosState =
     status === "idle" &&
     !warningMessage &&
@@ -50,7 +58,9 @@ function App() {
             </div>
           ) : null}
           {todos.length > 0 ? <TodoList todos={todos} /> : null}
-          {status === "extracting" && todos.length === 0 ? <TodoSkeleton /> : null}
+          {skeletonCount > 0 ? (
+            <TodoSkeleton count={skeletonCount} compact={todos.length > 0} />
+          ) : null}
           {showNoTodosState ? (
             <div className="voice-result-state">No todos found in this recording.</div>
           ) : null}

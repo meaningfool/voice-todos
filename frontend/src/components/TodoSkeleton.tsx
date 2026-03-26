@@ -1,10 +1,16 @@
-export function TodoSkeleton() {
+interface Props {
+  count?: number;
+  compact?: boolean;
+}
+
+export function TodoSkeleton({ count = 3, compact = false }: Props) {
   return (
-    <div className="voice-todo-feed">
-      {[1, 2, 3].map((i) => (
+    <div className={compact ? "voice-todo-feed voice-todo-feed--compact" : "voice-todo-feed"}>
+      {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
           className="spring-entry voice-todo-card voice-todo-card--skeleton animate-pulse"
+          data-testid="todo-skeleton-card"
         >
           <div className="voice-todo-card__body">
             <div className="voice-todo-circle voice-todo-circle--skeleton" />

@@ -49,16 +49,68 @@ describe("App", () => {
     expect(screen.getByText("Listening now...")).toBeInTheDocument();
   });
 
-  it("shows skeleton cards only when extracting without todos", () => {
+  it("shows three skeleton cards while recording with no todos", () => {
     mockUseTranscript.mockReturnValue({
       ...baseHook,
-      status: "extracting",
+      status: "recording",
       todos: [],
     });
 
-    const { container } = render(<App />);
+    render(<App />);
 
-    expect(container.querySelectorAll("[class*='animate-pulse']")).toHaveLength(3);
+    expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(3);
+  });
+
+  it("shows two skeleton cards while recording with one todo", () => {
+    mockUseTranscript.mockReturnValue({
+      ...baseHook,
+      status: "recording",
+      todos: [{ text: "Draft agenda" }],
+    });
+
+    render(<App />);
+
+    expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(2);
+  });
+
+  it("shows one skeleton card while recording with two todos", () => {
+    mockUseTranscript.mockReturnValue({
+      ...baseHook,
+      status: "recording",
+      todos: [{ text: "Draft agenda" }, { text: "Book room" }],
+    });
+
+    render(<App />);
+
+    expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(1);
+  });
+
+  it("shows one skeleton card while recording with three todos", () => {
+    mockUseTranscript.mockReturnValue({
+      ...baseHook,
+      status: "recording",
+      todos: [
+        { text: "Draft agenda" },
+        { text: "Book room" },
+        { text: "Share notes" },
+      ],
+    });
+
+    render(<App />);
+
+    expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(1);
+  });
+
+  it("shows one skeleton card while extracting with existing todos", () => {
+    mockUseTranscript.mockReturnValue({
+      ...baseHook,
+      status: "extracting",
+      todos: [{ text: "Review budget" }],
+    });
+
+    render(<App />);
+
+    expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(1);
     expect(screen.getByRole("button", { name: "Extracting..." })).toBeDisabled();
   });
 
@@ -71,6 +123,7 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByText("No todos found in this recording.")).toBeInTheDocument();
+    expect(screen.queryAllByTestId("todo-skeleton-card")).toHaveLength(0);
   });
 
   it("renders session details when a recording URL exists", () => {
@@ -131,6 +184,6 @@ describe("App", () => {
     const { container } = render(<App />);
 
     expect(screen.getByText("Review budget")).toBeInTheDocument();
-    expect(container.querySelector("[class*='animate-pulse']")).toBeNull();
+    expect(container.querySelectorAll("[data-testid='todo-skeleton-card']")).toHaveLength(1);
   });
 });
