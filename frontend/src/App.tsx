@@ -1,5 +1,5 @@
+import { Mic } from "lucide-react";
 import { useTranscript } from "./hooks/useTranscript";
-import { AppIcon } from "./components/AppIcon";
 import { RecordButton } from "./components/RecordButton";
 import { SessionDetails } from "./components/SessionDetails";
 import { TodoList } from "./components/TodoList";
@@ -30,16 +30,16 @@ function App() {
     <main className="voice-page-shell">
       <section className="voice-device-shell" aria-label="Voice-Todos app shell">
         <header className="voice-header">
-          <h1>Voice-Todos</h1>
+          <h1>Voice Todos</h1>
         </header>
 
         <div className="voice-task-container">
           {showInitialEmptyState ? (
             <div className="voice-empty-state">
               <div className="voice-empty-illustration" aria-hidden="true">
-                <AppIcon name="mic" className="voice-empty-illustration__icon" />
+                <Mic aria-hidden="true" className="voice-empty-illustration__icon" />
               </div>
-              <h2>Start speaking...</h2>
+              <h2>Get started</h2>
               <p>Your voice will be turned into tasks in real time.</p>
             </div>
           ) : null}

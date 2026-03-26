@@ -24,14 +24,16 @@ describe("App", () => {
   it("renders the phone-shell empty state on first load", () => {
     mockUseTranscript.mockReturnValue(baseHook);
 
-    render(<App />);
+    const { container } = render(<App />);
 
-    expect(screen.getByText("Voice-Todos")).toBeInTheDocument();
-    expect(screen.getByText("Start speaking...")).toBeInTheDocument();
+    expect(screen.getByText("Voice Todos")).toBeInTheDocument();
+    expect(screen.getByText("Get started")).toBeInTheDocument();
     expect(
       screen.getByText("Your voice will be turned into tasks in real time.")
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start Session" })).toBeInTheDocument();
+    expect(container.querySelectorAll(".lucide-mic")).toHaveLength(2);
+    expect(screen.queryByTestId("app-icon-mic")).not.toBeInTheDocument();
   });
 
   it("keeps todos visible while recording", () => {

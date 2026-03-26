@@ -9,6 +9,7 @@ class MockWebSocket {
   static CLOSED = 3;
   static instances: MockWebSocket[] = [];
 
+  readonly url: string;
   readyState = MockWebSocket.CONNECTING;
   sent: unknown[] = [];
   onopen: (() => void) | null = null;
@@ -20,7 +21,8 @@ class MockWebSocket {
     this.onclose?.();
   });
 
-  constructor(public readonly url: string) {
+  constructor(url: string) {
+    this.url = url;
     MockWebSocket.instances.push(this);
   }
 
@@ -132,7 +134,7 @@ describe("useTranscript", () => {
     vi.unstubAllGlobals();
   });
 
-  type HookResult = ReturnType<typeof renderHook<typeof useTranscript>>["result"];
+  type HookResult = { current: ReturnType<typeof useTranscript> };
 
   async function startRecording(result: HookResult) {
     await act(async () => {

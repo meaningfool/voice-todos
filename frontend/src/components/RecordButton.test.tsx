@@ -8,7 +8,8 @@ describe("RecordButton", () => {
 
     const button = screen.getByRole("button", { name: "Start Session" });
     expect(button).toBeEnabled();
-    expect(screen.getByTestId("app-icon-mic")).toBeInTheDocument();
+    expect(button.querySelector(".lucide-mic")).not.toBeNull();
+    expect(screen.queryByTestId("app-icon-mic")).not.toBeInTheDocument();
     expect(screen.queryByText("Listening now...")).not.toBeInTheDocument();
     fireEvent.click(button);
     expect(onStart).toHaveBeenCalledTimes(1);

@@ -1,5 +1,5 @@
+import { Mic } from "lucide-react";
 import type { Status } from "../hooks/useTranscript";
-import { AppIcon } from "./AppIcon";
 
 interface Props {
   status: Status;
@@ -49,7 +49,7 @@ export function RecordButton({ status, onStart, onStop }: Props) {
         onClick={handleClick}
       >
         {status === "idle" ? (
-          <AppIcon name="mic" className="voice-button-icon" />
+          <Mic aria-hidden="true" className="voice-button-icon" />
         ) : null}
         <span>{labelByStatus[status]}</span>
       </button>
