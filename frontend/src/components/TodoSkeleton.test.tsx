@@ -13,4 +13,12 @@ describe("TodoSkeleton", () => {
     const cards = getAllByTestId("todo-skeleton-card");
     expect(cards).toHaveLength(2);
   });
+
+  it("applies the compact wrapper class when compact is true", () => {
+    const { container } = render(<TodoSkeleton count={1} compact />);
+    const feed = container.firstElementChild;
+
+    expect(feed).toHaveClass("voice-todo-feed");
+    expect(feed).toHaveClass("voice-todo-feed--compact");
+  });
 });
