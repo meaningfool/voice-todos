@@ -22,6 +22,13 @@ def _format_result_dir(timestamp: datetime) -> str:
     return timestamp.astimezone(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
 
 
+def _result_dir_name(timestamp: datetime, *, suffix: int = 0) -> str:
+    base_name = _format_result_dir(timestamp)
+    if suffix == 0:
+        return base_name
+    return f"{base_name}-{suffix:02d}"
+
+
 def _serialize_case(case: ReportCase[Any, Any, Any]) -> dict[str, Any]:
     return {
         "name": case.name,
@@ -89,23 +96,42 @@ def build_report_artifact(
     }
 
 
+def reserve_result_dir(
+    *,
+    output_dir: Path = DEFAULT_RESULTS_DIR,
+    timestamp: datetime | None = None,
+) -> Path:
+    artifact_timestamp = timestamp or _utc_now()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    suffix = 0
+    while True:
+        result_dir = output_dir / _result_dir_name(artifact_timestamp, suffix=suffix)
+        try:
+            result_dir.mkdir()
+        except FileExistsError:
+            suffix += 1
+            continue
+        return result_dir
+
+
 def write_report_artifact(
     report: EvaluationReport[Any, Any, Any],
     *,
     output_dir: Path = DEFAULT_RESULTS_DIR,
+    result_dir: Path | None = None,
     repeat: int,
     max_concurrency: int,
     timestamp: datetime | None = None,
 ) -> Path:
     artifact_timestamp = timestamp or _utc_now()
-    result_dir = output_dir / _format_result_dir(artifact_timestamp)
-    result_dir.mkdir(parents=True, exist_ok=True)
+    resolved_result_dir = result_dir or reserve_result_dir(
+        output_dir=output_dir,
+        timestamp=artifact_timestamp,
+    )
+    resolved_result_dir.mkdir(parents=True, exist_ok=True)
 
-    artifact_path = result_dir / f"{report.name}.json"
-    if artifact_path.exists():
-        raise FileExistsError(
-            f"Refusing to overwrite existing artifact: {artifact_path}"
-        )
+    artifact_path = resolved_result_dir / f"{report.name}.json"
 
     payload = build_report_artifact(
         report,
@@ -113,5 +139,7 @@ def write_report_artifact(
         max_concurrency=max_concurrency,
         timestamp=artifact_timestamp,
     )
-    artifact_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    with artifact_path.open("x", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True)
+        handle.write("\n")
     return artifact_path

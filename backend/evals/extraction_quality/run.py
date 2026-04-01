@@ -29,6 +29,7 @@ from evals.extraction_quality.experiment_configs import (
 )
 from evals.extraction_quality.result_artifacts import (
     DEFAULT_RESULTS_DIR,
+    reserve_result_dir,
     write_report_artifact,
 )
 
@@ -184,7 +185,7 @@ async def _run_experiment(
     *,
     repeat: int,
     max_concurrency: int,
-    output_dir: Path,
+    result_dir: Path,
     artifact_timestamp: datetime,
 ) -> None:
     _ensure_provider_env(experiment)
@@ -201,7 +202,7 @@ async def _run_experiment(
     report.print(include_metadata=True)
     artifact_path = write_report_artifact(
         report,
-        output_dir=output_dir,
+        result_dir=result_dir,
         repeat=repeat,
         max_concurrency=max_concurrency,
         timestamp=artifact_timestamp,
@@ -228,12 +229,17 @@ async def _run(args: argparse.Namespace) -> int:
         print("No runnable experiments selected.")
         return 0
 
+    result_dir = reserve_result_dir(
+        output_dir=args.output_dir,
+        timestamp=artifact_timestamp,
+    )
+
     for experiment in runnable_experiments:
         await _run_experiment(
             experiment,
             repeat=args.repeat,
             max_concurrency=args.max_concurrency,
-            output_dir=args.output_dir,
+            result_dir=result_dir,
             artifact_timestamp=artifact_timestamp,
         )
 

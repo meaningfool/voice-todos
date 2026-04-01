@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from importlib import import_module
 from pathlib import Path
 
-from pydantic_evals.reporting import EvaluationReport, ReportCase
+from pydantic_evals.reporting import EvaluationReport, ReportCase, ReportCaseFailure
 
 from app.models import Todo
 from app.prompts.registry import PromptRef
@@ -190,3 +190,91 @@ def test_write_report_artifact_creates_timestamped_json(tmp_path, monkeypatch):
     ]
     assert payload["trace_id"] == "report-trace-id"
     assert payload["span_id"] == "report-span-id"
+
+
+def test_write_report_artifact_uses_unique_result_dir_on_timestamp_collision(
+    tmp_path,
+):
+    result_artifacts = import_module("evals.extraction_quality.result_artifacts")
+    timestamp = datetime(2026, 4, 1, 16, 20, 0, tzinfo=UTC)
+
+    report = EvaluationReport(
+        name="gemini3_flash_default",
+        cases=[],
+        experiment_metadata={
+            "experiment": "gemini3_flash_default",
+            "dataset_name": "todo_extraction_v1",
+        },
+    )
+
+    first_path = result_artifacts.write_report_artifact(
+        report,
+        output_dir=tmp_path,
+        repeat=1,
+        max_concurrency=1,
+        timestamp=timestamp,
+    )
+    second_path = result_artifacts.write_report_artifact(
+        report,
+        output_dir=tmp_path,
+        repeat=1,
+        max_concurrency=1,
+        timestamp=timestamp,
+    )
+
+    assert first_path.parent.name == "2026-04-01T16-20-00Z"
+    assert second_path.parent.name == "2026-04-01T16-20-00Z-01"
+    assert first_path != second_path
+    assert first_path.exists()
+    assert second_path.exists()
+
+
+def test_write_report_artifact_serializes_failures(tmp_path):
+    result_artifacts = import_module("evals.extraction_quality.result_artifacts")
+
+    report = EvaluationReport(
+        name="gemini3_flash_default",
+        cases=[],
+        failures=[
+            ReportCaseFailure(
+                name="case-2",
+                inputs={"transcript": "Schedule dentist"},
+                metadata={
+                    "dataset": "todo_extraction_v1",
+                    "case_type": "extraction",
+                    "source_fixture": "fixture-2.json",
+                },
+                expected_output=[Todo(text="Schedule dentist")],
+                error_message="provider timeout",
+                error_stacktrace="Traceback...",
+                trace_id="failure-trace-id",
+                span_id="failure-span-id",
+            )
+        ],
+        experiment_metadata={
+            "experiment": "gemini3_flash_default",
+            "dataset_name": "todo_extraction_v1",
+        },
+    )
+
+    artifact_path = result_artifacts.write_report_artifact(
+        report,
+        output_dir=tmp_path,
+        repeat=1,
+        max_concurrency=1,
+        timestamp=datetime(2026, 4, 1, 16, 20, 0, tzinfo=UTC),
+    )
+
+    payload = json.loads(artifact_path.read_text())
+
+    assert payload["failures"] == [
+        {
+            "name": "case-2",
+            "source_fixture": "fixture-2.json",
+            "expected_todo_count": 1,
+            "predicted_todo_count": None,
+            "error_message": "provider timeout",
+            "trace_id": "failure-trace-id",
+            "span_id": "failure-span-id",
+        }
+    ]
