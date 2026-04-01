@@ -10,10 +10,21 @@ from typing import Any
 from pydantic_ai import Agent
 
 from app.config import get_settings
-from app.model_providers import GoogleModel, GoogleProvider, build_model
+from app.model_providers import (
+    GoogleModel as _GoogleModel,
+)
+from app.model_providers import (
+    GoogleProvider as _GoogleProvider,
+)
+from app.model_providers import (
+    build_model,
+)
 from app.models import ExtractionResult, Todo
 from app.prompts.registry import PromptRef
 from app.prompts.registry import get_prompt_ref as _load_prompt_ref
+
+GoogleModel = _GoogleModel
+GoogleProvider = _GoogleProvider
 
 
 @dataclass(frozen=True)
@@ -104,12 +115,7 @@ def _get_gemini_api_key() -> str:
 
 
 def _build_model(model_name: str) -> Any:
-    return build_model(
-        model_name,
-        gemini_api_key=_get_gemini_api_key(),
-        google_model_cls=GoogleModel,
-        google_provider_cls=GoogleProvider,
-    )
+    return build_model(model_name, gemini_api_key_getter=_get_gemini_api_key)
 
 
 def build_extraction_agent(
