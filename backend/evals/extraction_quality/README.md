@@ -43,8 +43,10 @@ If you prefer to share one file across worktrees, symlink `backend/.env` to the
 copy you keep elsewhere instead of duplicating it.
 
 `LOGFIRE_TOKEN` is optional, but it changes the observability experience: when
-it is set, the backend's existing Logfire instrumentation can ship spans and
-traces to Logfire; when it is unset, the runs still work but stay local.
+it is set, backend processes that already configure Logfire can ship spans and
+traces to Logfire. The standalone `evals/extraction_quality/run.py` CLI does
+not auto-configure Logfire from `backend/.env` today, so setting the token
+there alone does not make this command path send remote Logfire traces.
 
 ## Dataset Asset
 
@@ -141,7 +143,12 @@ The runner:
 
 ## Comparing Experiments In Logfire
 
-Each run records experiment metadata so runs can be separated by:
+The runner still attaches experiment metadata with `set_eval_attribute`, but you
+only see it in Logfire if Logfire has already been configured for the current
+process by some other path. `LOGFIRE_TOKEN` in `backend/.env` alone is not
+enough for `evals/extraction_quality/run.py` today.
+
+When Logfire is active for the current process, runs can be separated by:
 
 - `experiment`
 - `model_name`
@@ -152,7 +159,7 @@ Each run records experiment metadata so runs can be separated by:
 Per-case eval results also include the count metrics from `evaluators.py`, which
 lets you compare where models over-extract, under-extract, or match exactly.
 
-When reviewing Logfire:
+When reviewing Logfire for a run that was actually instrumented:
 
 - compare experiments with the same dataset and prompt version
 - use `todo_count_match` first for pass/fail trend
