@@ -48,7 +48,9 @@ def test_get_agent_uses_configured_gemini_api_key():
 
     with (
         patch("app.extract.get_settings", return_value=fake_settings),
-        patch("app.extract.GoogleProvider", return_value=fake_provider) as mock_provider,
+        patch(
+            "app.extract.GoogleProvider", return_value=fake_provider
+        ) as mock_provider,
         patch("app.extract.GoogleModel", return_value=fake_model) as mock_model,
         patch("app.extract.Agent", return_value=fake_agent) as mock_agent,
     ):
@@ -123,8 +125,13 @@ async def test_extract_todos_uses_override_model():
     fake_provider = object()
 
     with (
-        patch("app.extract.get_settings", return_value=SimpleNamespace(gemini_api_key="test-key")),
-        patch("app.extract.GoogleProvider", return_value=fake_provider) as mock_provider,
+        patch(
+            "app.extract.get_settings",
+            return_value=SimpleNamespace(gemini_api_key="test-key"),
+        ),
+        patch(
+            "app.extract.GoogleProvider", return_value=fake_provider
+        ) as mock_provider,
         patch("app.extract.GoogleModel", return_value=fake_model) as mock_model,
         patch("app.extract.Agent", return_value=fake_agent),
     ):
@@ -153,7 +160,9 @@ def test_extract_todos_passes_model_settings():
 
     with (
         patch("app.extract.get_settings", return_value=fake_settings),
-        patch("app.extract.GoogleProvider", return_value=fake_provider) as mock_provider,
+        patch(
+            "app.extract.GoogleProvider", return_value=fake_provider
+        ) as mock_provider,
         patch("app.extract.GoogleModel", return_value=fake_model) as mock_model,
         patch("app.extract.Agent", return_value=fake_agent) as mock_agent,
     ):
