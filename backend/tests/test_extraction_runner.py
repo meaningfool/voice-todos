@@ -1,5 +1,11 @@
+import json
+from datetime import UTC, datetime
+from importlib import import_module
 from pathlib import Path
 
+from pydantic_evals.reporting import EvaluationReport, ReportCase
+
+from app.models import Todo
 from app.prompts.registry import PromptRef
 from evals.extraction_quality import experiment_configs
 from evals.extraction_quality.experiment_configs import EXPERIMENTS
@@ -50,12 +56,137 @@ def test_experiment_metadata_includes_prompt_identity(monkeypatch):
     )
 
     monkeypatch.setattr(
-        "evals.extraction_quality.run.get_extraction_prompt_ref",
+        "evals.extraction_quality.experiment_configs.get_extraction_prompt_ref",
         lambda config: prompt_ref,
     )
+    monkeypatch.setattr(
+        "evals.extraction_quality.run._get_git_branch",
+        lambda: "codex/item6-extraction-model-evals",
+        raising=False,
+    )
+    monkeypatch.setattr(
+        "evals.extraction_quality.run._get_git_commit_sha",
+        lambda: "65218795562767602eb8d5f9103eebfd9998cbec",
+        raising=False,
+    )
 
-    metadata = _experiment_metadata(EXPERIMENTS["gemini3_flash_default"])
+    metadata = _experiment_metadata(
+        EXPERIMENTS["gemini3_flash_default"],
+        dataset_name="todo_extraction_v1",
+    )
 
+    assert metadata["dataset_name"] == "todo_extraction_v1"
     assert metadata["prompt_family"] == "todo_extraction"
     assert metadata["prompt_version"] == "v1"
     assert metadata["prompt_sha"] == "prompt-sha-123"
+    assert metadata["git_branch"] == "codex/item6-extraction-model-evals"
+    assert metadata["git_commit_sha"] == "65218795562767602eb8d5f9103eebfd9998cbec"
+
+
+def test_write_report_artifact_creates_timestamped_json(tmp_path, monkeypatch):
+    result_artifacts = import_module("evals.extraction_quality.result_artifacts")
+    timestamps = iter(
+        [
+            datetime(2026, 4, 1, 16, 20, 0, tzinfo=UTC),
+            datetime(2026, 4, 1, 16, 20, 1, tzinfo=UTC),
+        ]
+    )
+
+    monkeypatch.setattr(
+        result_artifacts,
+        "_utc_now",
+        lambda: next(timestamps),
+    )
+
+    report = EvaluationReport(
+        name="gemini3_flash_default",
+        cases=[
+            ReportCase(
+                name="case-1",
+                inputs={"transcript": "Pick up milk"},
+                metadata={
+                    "dataset": "todo_extraction_v1",
+                    "case_type": "extraction",
+                    "source_fixture": "fixture-1.json",
+                },
+                expected_output=[Todo(text="Pick up milk")],
+                output=[Todo(text="Pick up milk"), Todo(text="Bring eggs")],
+                metrics={"expected_todo_count": 1, "predicted_todo_count": 2},
+                attributes={},
+                scores={},
+                labels={},
+                assertions={},
+                task_duration=0.1,
+                total_duration=0.2,
+                trace_id="case-trace-id",
+                span_id="case-span-id",
+            )
+        ],
+        experiment_metadata={
+            "experiment": "gemini3_flash_default",
+            "dataset_name": "todo_extraction_v1",
+            "model_name": "gemini-3-flash-preview",
+            "provider": "google-gla",
+            "thinking_mode": "provider_default",
+            "prompt_family": "todo_extraction",
+            "prompt_version": "v1",
+            "prompt_sha": "prompt-sha-123",
+            "git_branch": "codex/item6-extraction-model-evals",
+            "git_commit_sha": "65218795562767602eb8d5f9103eebfd9998cbec",
+        },
+        trace_id="report-trace-id",
+        span_id="report-span-id",
+    )
+
+    first_path = result_artifacts.write_report_artifact(
+        report,
+        output_dir=tmp_path,
+        repeat=2,
+        max_concurrency=3,
+    )
+    second_path = result_artifacts.write_report_artifact(
+        report,
+        output_dir=tmp_path,
+        repeat=2,
+        max_concurrency=3,
+    )
+
+    assert first_path.name == "gemini3_flash_default.json"
+    assert second_path.name == "gemini3_flash_default.json"
+    assert first_path.parent.name == "2026-04-01T16-20-00Z"
+    assert second_path.parent.name == "2026-04-01T16-20-01Z"
+    assert first_path != second_path
+    assert first_path.exists()
+    assert second_path.exists()
+
+    payload = json.loads(first_path.read_text())
+    assert payload["timestamp"] == "2026-04-01T16:20:00Z"
+    assert payload["dataset_name"] == "todo_extraction_v1"
+    assert payload["experiment_id"] == "gemini3_flash_default"
+    assert payload["model"]["name"] == "gemini-3-flash-preview"
+    assert payload["model"]["provider"] == "google-gla"
+    assert payload["prompt"]["family"] == "todo_extraction"
+    assert payload["prompt"]["version"] == "v1"
+    assert payload["prompt"]["sha"] == "prompt-sha-123"
+    assert payload["git"]["branch"] == "codex/item6-extraction-model-evals"
+    assert (
+        payload["git"]["commit_sha"] == "65218795562767602eb8d5f9103eebfd9998cbec"
+    )
+    assert payload["repeat"] == 2
+    assert payload["max_concurrency"] == 3
+    assert payload["aggregate_metrics"] == {
+        "expected_todo_count": 1.0,
+        "predicted_todo_count": 2.0,
+    }
+    assert payload["cases"] == [
+        {
+            "name": "case-1",
+            "source_fixture": "fixture-1.json",
+            "expected_todo_count": 1,
+            "predicted_todo_count": 2,
+            "trace_id": "case-trace-id",
+            "span_id": "case-span-id",
+        }
+    ]
+    assert payload["trace_id"] == "report-trace-id"
+    assert payload["span_id"] == "report-span-id"

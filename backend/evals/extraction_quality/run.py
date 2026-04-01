@@ -5,8 +5,10 @@ from __future__ import annotations
 import argparse
 import asyncio
 import os
+import subprocess
 import sys
 from collections.abc import Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +18,7 @@ if str(BACKEND_ROOT) not in sys.path:
 
 from pydantic_evals import Dataset, set_eval_attribute
 
-from app.extract import extract_todos, get_extraction_prompt_ref
+from app.extract import extract_todos
 from app.models import Todo
 from evals.extraction_quality.dataset_loader import load_extraction_quality_dataset
 from evals.extraction_quality.evaluators import EXTRACTION_QUALITY_EVALUATORS
@@ -24,6 +26,10 @@ from evals.extraction_quality.experiment_configs import (
     EXPERIMENTS,
     ExperimentDefinition,
     _read_backend_env_var,
+)
+from evals.extraction_quality.result_artifacts import (
+    DEFAULT_RESULTS_DIR,
+    write_report_artifact,
 )
 
 
@@ -58,6 +64,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--list-experiments",
         action="store_true",
         help="Print configured experiment names and availability.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=DEFAULT_RESULTS_DIR,
+        help="Directory where JSON result artifacts are written.",
     )
     return parser
 
@@ -113,22 +125,48 @@ def _ensure_provider_env(experiment: ExperimentDefinition) -> None:
         os.environ.setdefault("MISTRAL_API_KEY", mistral_api_key)
 
 
-def _experiment_metadata(experiment: ExperimentDefinition) -> dict[str, str]:
-    prompt_ref = get_extraction_prompt_ref(experiment.extraction_config)
+def _run_git_command(*args: str) -> str | None:
+    completed = subprocess.run(
+        ["git", *args],
+        cwd=BACKEND_ROOT,
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    if completed.returncode != 0:
+        return None
+    value = completed.stdout.strip()
+    return value or None
+
+
+def _get_git_branch() -> str:
+    return _run_git_command("branch", "--show-current") or "unknown"
+
+
+def _get_git_commit_sha() -> str:
+    return _run_git_command("rev-parse", "HEAD") or "unknown"
+
+
+def _experiment_metadata(
+    experiment: ExperimentDefinition,
+    *,
+    dataset_name: str | None = None,
+) -> dict[str, str]:
     return {
-        "experiment": experiment.name,
-        "model_name": experiment.extraction_config.model_name,
-        "prompt_family": prompt_ref.family,
-        "prompt_version": experiment.extraction_config.prompt_version,
-        "prompt_sha": prompt_ref.sha256,
-        "provider": experiment.provider,
-        "thinking_mode": experiment.thinking_mode,
+        **experiment.identity_metadata,
+        "dataset_name": dataset_name or "unknown",
+        "git_branch": _get_git_branch(),
+        "git_commit_sha": _get_git_commit_sha(),
     }
 
 
-def _build_task(experiment: ExperimentDefinition):
+def _build_task(
+    experiment: ExperimentDefinition,
+    *,
+    metadata: dict[str, str],
+):
     async def run_case(inputs: dict[str, Any]) -> list[Todo]:
-        for name, value in _experiment_metadata(experiment).items():
+        for name, value in metadata.items():
             set_eval_attribute(name, value)
 
         return await extract_todos(
@@ -146,12 +184,14 @@ async def _run_experiment(
     *,
     repeat: int,
     max_concurrency: int,
+    output_dir: Path,
+    artifact_timestamp: datetime,
 ) -> None:
     _ensure_provider_env(experiment)
     dataset = _build_eval_dataset()
-    metadata = _experiment_metadata(experiment)
+    metadata = _experiment_metadata(experiment, dataset_name=dataset.name)
     report = await dataset.evaluate(
-        _build_task(experiment),
+        _build_task(experiment, metadata=metadata),
         name=experiment.name,
         task_name="extract_todos",
         metadata=metadata,
@@ -159,9 +199,18 @@ async def _run_experiment(
         max_concurrency=max_concurrency,
     )
     report.print(include_metadata=True)
+    artifact_path = write_report_artifact(
+        report,
+        output_dir=output_dir,
+        repeat=repeat,
+        max_concurrency=max_concurrency,
+        timestamp=artifact_timestamp,
+    )
+    print(f"Wrote artifact: {artifact_path}")
 
 
 async def _run(args: argparse.Namespace) -> int:
+    artifact_timestamp = datetime.now(UTC)
     selected_experiments = _selected_experiments(
         all_experiments=args.all,
         requested_names=args.experiment,
@@ -184,6 +233,8 @@ async def _run(args: argparse.Namespace) -> int:
             experiment,
             repeat=args.repeat,
             max_concurrency=args.max_concurrency,
+            output_dir=args.output_dir,
+            artifact_timestamp=artifact_timestamp,
         )
 
     return 0

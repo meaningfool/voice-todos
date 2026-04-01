@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from app.extract import ExtractionConfig
+from app.extract import ExtractionConfig, get_extraction_prompt_ref
 
 _BACKEND_ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
 
@@ -55,6 +55,25 @@ class ExperimentDefinition:
     extraction_config: ExtractionConfig
     provider: str
     thinking_mode: str
+
+    @property
+    def prompt_metadata(self) -> dict[str, str]:
+        prompt_ref = get_extraction_prompt_ref(self.extraction_config)
+        return {
+            "prompt_family": prompt_ref.family,
+            "prompt_version": prompt_ref.version,
+            "prompt_sha": prompt_ref.sha256,
+        }
+
+    @property
+    def identity_metadata(self) -> dict[str, str]:
+        return {
+            "experiment": self.name,
+            "model_name": self.extraction_config.model_name,
+            "provider": self.provider,
+            "thinking_mode": self.thinking_mode,
+            **self.prompt_metadata,
+        }
 
     def unavailable_reason(self) -> str | None:
         if self.provider == "google-gla":
