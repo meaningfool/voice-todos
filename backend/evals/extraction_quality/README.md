@@ -29,6 +29,23 @@ The v1 evaluator is intentionally narrow. It measures count accuracy only.
 - `experiment_configs.py`: named experiment registry and availability checks
 - `run.py`: CLI runner for listing and executing experiments
 
+## Local Setup
+
+The harness reads provider credentials from `backend/.env` when the variables are
+not already present in the shell. That file is gitignored, so it does not show up
+automatically in a new worktree. Create it by copying the checked-in template:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+If you prefer to share one file across worktrees, symlink `backend/.env` to the
+copy you keep elsewhere instead of duplicating it.
+
+`LOGFIRE_TOKEN` is optional, but it changes the observability experience: when
+it is set, the backend's existing Logfire instrumentation can ship spans and
+traces to Logfire; when it is unset, the runs still work but stay local.
+
 ## Dataset Asset
 
 The dataset is a stable repo asset at
@@ -79,7 +96,7 @@ text or optional fields are correct.
 ## Listing Experiments
 
 ```bash
-cd backend && uv run python evals/extraction_quality/run.py --list-experiments
+cd backend && .venv/bin/python evals/extraction_quality/run.py --list-experiments
 ```
 
 The output lists every configured experiment and whether it is runnable in the
@@ -99,7 +116,7 @@ failing the whole command.
 ## Running One Experiment
 
 ```bash
-cd backend && uv run python evals/extraction_quality/run.py --experiment gemini3_flash_default
+cd backend && .venv/bin/python evals/extraction_quality/run.py --experiment gemini3_flash_default
 ```
 
 Useful flags:
@@ -110,7 +127,7 @@ Useful flags:
 ## Running The Whole Matrix
 
 ```bash
-cd backend && uv run python evals/extraction_quality/run.py --all --repeat 3 --max-concurrency 2
+cd backend && .venv/bin/python evals/extraction_quality/run.py --all --repeat 3 --max-concurrency 2
 ```
 
 The runner:
@@ -119,6 +136,8 @@ The runner:
 - attaches the count-based evaluator set
 - skips experiments whose provider credentials or provider support are missing
 - prints one `pydantic_evals` report per runnable experiment
+- writes JSON artifacts under `backend/evals/extraction_quality/results/` by
+  default, with one timestamped directory per run
 
 ## Comparing Experiments In Logfire
 
@@ -149,6 +168,10 @@ When reviewing Logfire:
 4. Make sure the provider credentials and provider package support are available.
 5. Run `--list-experiments` first to confirm the new config is discoverable.
 6. Run the new experiment alone before adding it to larger comparison runs.
+
+For prompt tweaks, start with one experiment and only move to the full matrix if
+the targeted run looks promising. That keeps the feedback loop short and avoids
+spending time or provider quota on a broad rerun too early.
 
 Prefer small, named configs over ad-hoc code edits. The point of this harness is
 to make model switching a data change, not a production-path change.
