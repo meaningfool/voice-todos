@@ -46,7 +46,7 @@ _SYSTEM_PROMPT = (
 
 @dataclass(frozen=True)
 class ExtractionConfig:
-    model_name: str = "google-gla:gemini-3-flash-preview"
+    model_name: str = "gemini-3-flash-preview"
     model_settings: dict[str, Any] | None = None
     prompt_version: str = "v1"
 

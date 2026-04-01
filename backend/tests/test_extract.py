@@ -57,7 +57,7 @@ def test_get_agent_uses_configured_gemini_api_key():
     assert agent is fake_agent
     mock_provider.assert_called_once_with(api_key="gemini-test-key")
     mock_model.assert_called_once_with(
-        "google-gla:gemini-3-flash-preview",
+        "gemini-3-flash-preview",
         provider=fake_provider,
     )
     mock_agent.assert_called_once_with(
@@ -139,7 +139,7 @@ async def test_extract_todos_uses_override_model():
         provider=fake_provider,
     )
     mock_provider.assert_called_once_with(api_key="test-key")
-    assert _extract_mod.ExtractionConfig().model_name == "google-gla:gemini-3-flash-preview"
+    assert _extract_mod.ExtractionConfig().model_name == "gemini-3-flash-preview"
 
 
 def test_extract_todos_passes_model_settings():
@@ -166,7 +166,7 @@ def test_extract_todos_passes_model_settings():
     assert agent is fake_agent
     mock_provider.assert_called_once_with(api_key="gemini-test-key")
     mock_model.assert_called_once_with(
-        "google-gla:gemini-3-flash-preview",
+        "gemini-3-flash-preview",
         provider=fake_provider,
     )
     mock_agent.assert_called_once_with(
