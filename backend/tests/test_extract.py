@@ -1,4 +1,6 @@
+import builtins
 import os
+import sys
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
@@ -18,6 +20,19 @@ requires_gemini = pytest.mark.skipif(
         "RUN_GEMINI_INTEGRATION=1"
     ),
 )
+
+
+def _guard_optional_mistral_import(
+    name, globals=None, locals=None, fromlist=(), level=0
+):
+    if name.startswith("pydantic_ai.models.mistral") or name.startswith(
+        "pydantic_ai.providers.mistral"
+    ):
+        raise AssertionError(f"unexpected optional import: {name}")
+    return _ORIGINAL_IMPORT(name, globals, locals, fromlist, level)
+
+
+_ORIGINAL_IMPORT = builtins.__import__
 
 
 @pytest.fixture(autouse=True)
@@ -61,6 +76,96 @@ def test_get_agent_uses_configured_gemini_api_key():
     mock_model.assert_called_once_with(
         "gemini-3-flash-preview",
         provider=fake_provider,
+    )
+    mock_agent.assert_called_once_with(
+        fake_model,
+        output_type=ExtractionResult,
+        instructions=_extract_mod.get_extraction_prompt_ref().content,
+        model_settings={
+            "google_thinking_config": {"thinking_level": "minimal"}
+        },
+    )
+
+
+def test_build_model_uses_google_factory_for_gemini():
+    from app import model_providers
+
+    fake_provider = object()
+    fake_model = object()
+
+    with (
+        patch("app.model_providers.GoogleProvider", return_value=fake_provider)
+        as mock_provider,
+        patch("app.model_providers.GoogleModel", return_value=fake_model)
+        as mock_model,
+        patch("builtins.__import__", side_effect=_guard_optional_mistral_import),
+    ):
+        model = model_providers.build_model(
+            "gemini-3-flash-preview",
+            gemini_api_key="gemini-test-key",
+        )
+
+    assert model is fake_model
+    mock_provider.assert_called_once_with(api_key="gemini-test-key")
+    mock_model.assert_called_once_with(
+        "gemini-3-flash-preview",
+        provider=fake_provider,
+    )
+
+
+def test_build_model_uses_mistral_factory_lazily():
+    from app import model_providers
+
+    class FakeMistralProvider:
+        def __init__(self, *, api_key):
+            self.api_key = api_key
+
+    class FakeMistralModel:
+        def __init__(self, model_name, *, provider):
+            self.model_name = model_name
+            self.provider = provider
+
+    fake_mistral_module = SimpleNamespace(MistralModel=FakeMistralModel)
+    fake_provider_module = SimpleNamespace(MistralProvider=FakeMistralProvider)
+
+    with patch.dict(
+        sys.modules,
+        {
+            "pydantic_ai.models.mistral": fake_mistral_module,
+            "pydantic_ai.providers.mistral": fake_provider_module,
+        },
+    ):
+        model = model_providers.build_model(
+            "mistral-small-latest",
+            gemini_api_key="gemini-test-key",
+        )
+
+    assert isinstance(model, FakeMistralModel)
+    assert model.model_name == "mistral-small-latest"
+    assert model.provider.api_key == os.getenv("MISTRAL_API_KEY")
+
+
+def test_build_extraction_agent_delegates_to_model_provider():
+    from app.extract import ExtractionConfig, build_extraction_agent
+
+    fake_model = object()
+    fake_agent = object()
+
+    with (
+        patch("app.extract._get_gemini_api_key", return_value="gemini-test-key"),
+        patch("app.extract.build_model", return_value=fake_model) as mock_build_model,
+        patch("app.extract.Agent", return_value=fake_agent) as mock_agent,
+    ):
+        agent = build_extraction_agent(
+            ExtractionConfig(model_name="gemini-3-flash-preview")
+        )
+
+    assert agent is fake_agent
+    mock_build_model.assert_called_once_with(
+        "gemini-3-flash-preview",
+        gemini_api_key="gemini-test-key",
+        google_model_cls=_extract_mod.GoogleModel,
+        google_provider_cls=_extract_mod.GoogleProvider,
     )
     mock_agent.assert_called_once_with(
         fake_model,

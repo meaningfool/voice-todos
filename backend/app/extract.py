@@ -8,10 +8,9 @@ from pathlib import Path
 from typing import Any
 
 from pydantic_ai import Agent
-from pydantic_ai.models.google import GoogleModel
-from pydantic_ai.providers.google import GoogleProvider
 
 from app.config import get_settings
+from app.model_providers import GoogleModel, GoogleProvider, build_model
 from app.models import ExtractionResult, Todo
 from app.prompts.registry import PromptRef
 from app.prompts.registry import get_prompt_ref as _load_prompt_ref
@@ -105,18 +104,11 @@ def _get_gemini_api_key() -> str:
 
 
 def _build_model(model_name: str) -> Any:
-    if model_name.startswith("mistral-"):
-        from pydantic_ai.models.mistral import MistralModel
-        from pydantic_ai.providers.mistral import MistralProvider
-
-        return MistralModel(
-            model_name,
-            provider=MistralProvider(api_key=os.getenv("MISTRAL_API_KEY")),
-        )
-
-    return GoogleModel(
+    return build_model(
         model_name,
-        provider=GoogleProvider(api_key=_get_gemini_api_key()),
+        gemini_api_key=_get_gemini_api_key(),
+        google_model_cls=GoogleModel,
+        google_provider_cls=GoogleProvider,
     )
 
 
