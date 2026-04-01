@@ -532,3 +532,472 @@ git commit -m "docs: add extraction eval workflow guide"
 - Is `gemini-3.1-flash-lite-preview` competitive enough that it should replace `gemini-3-flash-preview` as the lightweight default?
 - Is `mistral-small-2603` competitive enough to justify expanding the Mistral-oriented stack work?
 - Do we need a second eval track for incremental extraction with `previous_todos`, not just final transcript extraction?
+
+---
+
+## Follow-On Plan For Recommended Amendments After V1
+
+Tasks 1 through 5 cover the first shipped harness. The tasks below implement the
+recommended amendments recorded in
+`docs/superpowers/specs/2026-04-01-item6-extraction-model-evals-design.md`
+under `Recommended Amendments After V1`.
+
+These tasks should preserve the existing dataset and evaluator behavior while
+making prompt changes, metadata, and cross-run comparisons more durable and less
+error-prone.
+
+### Additional File Map For The Follow-On Slice
+
+| File | Responsibility |
+|------|----------------|
+| `backend/app/prompts/todo_extraction/v1.md` | Canonical repo-backed prompt asset for the existing extraction prompt |
+| `backend/app/prompts/registry.py` | Prompt registry that resolves prompt family/version into content and stable metadata |
+| `backend/app/model_providers.py` | Provider-specific model factory helpers with lazy optional-provider loading |
+| `backend/evals/extraction_quality/result_artifacts.py` | Serialize evaluation reports into append-only local artifact files |
+| `backend/.env.example` | Example env file documenting eval-relevant credentials |
+| `backend/tests/test_prompt_registry.py` | Focused tests for prompt loading and prompt fingerprint metadata |
+
+Existing files to extend in this slice:
+
+- `backend/app/extract.py`
+- `backend/evals/extraction_quality/experiment_configs.py`
+- `backend/evals/extraction_quality/run.py`
+- `backend/evals/extraction_quality/README.md`
+- `backend/tests/test_extract.py`
+- `backend/tests/test_extraction_runner.py`
+
+### Task 6: Externalize extraction prompts and introduce prompt references
+
+**Files:**
+- Add: `backend/app/prompts/todo_extraction/v1.md`
+- Add: `backend/app/prompts/registry.py`
+- Add: `backend/tests/test_prompt_registry.py`
+- Modify: `backend/app/extract.py`
+- Modify: `backend/tests/test_extract.py`
+
+The current prompt is still embedded inline in `backend/app/extract.py`, and
+`prompt_version` is only a loose string label. The next step is to make the
+prompt repo-backed, explicitly addressable, and fingerprinted so later runs can
+be compared exactly instead of by convention.
+
+- [ ] **Step 1: Write failing tests for prompt loading and prompt metadata**
+
+Add focused tests that prove:
+
+1. prompt `todo_extraction/v1` is loaded from a repo-backed file
+2. the resolved prompt object exposes `family`, `version`, `path`, `content`,
+   and `sha256`
+3. `build_extraction_agent()` uses resolved prompt content rather than an inline
+   string constant
+4. `extract.py` can reject unknown prompt versions with a clear error
+
+Suggested tests:
+
+```python
+def test_get_prompt_ref_returns_expected_metadata():
+    ...
+
+def test_build_extraction_agent_uses_prompt_ref_content():
+    ...
+
+def test_unknown_prompt_version_raises_value_error():
+    ...
+```
+
+- [ ] **Step 2: Run the prompt-related tests and confirm the new coverage fails**
+
+Run:
+
+```bash
+cd backend && uv run pytest tests/test_prompt_registry.py tests/test_extract.py -v
+```
+
+Expected:
+
+- FAIL because prompts are still inline and no prompt registry exists yet
+
+- [ ] **Step 3: Add the prompt asset and registry**
+
+Create the new prompt asset and registry.
+
+Recommended shape:
+
+```python
+@dataclass(frozen=True)
+class PromptRef:
+    family: str
+    version: str
+    path: Path
+    content: str
+    sha256: str
+```
+
+Recommended helper:
+
+```python
+def get_prompt_ref(*, family: str, version: str) -> PromptRef:
+    ...
+```
+
+Implementation guidance:
+
+- move the existing extraction prompt text into
+  `backend/app/prompts/todo_extraction/v1.md`
+- compute `sha256` from the exact file content
+- keep `version` human-facing and stable
+- use `sha256` for exact-content identity in later metadata
+- keep the registry small and explicit rather than dynamically scanning the
+  filesystem
+
+- [ ] **Step 4: Refactor extraction to consume prompt references**
+
+Update `backend/app/extract.py` so `ExtractionConfig` no longer treats
+`prompt_version` as a loose inline-string selector.
+
+Recommended direction:
+
+```python
+@dataclass(frozen=True)
+class ExtractionConfig:
+    model_name: str = "gemini-3-flash-preview"
+    model_settings: dict[str, Any] | None = None
+    prompt_family: str = "todo_extraction"
+    prompt_version: str = "v1"
+```
+
+Implementation guidance:
+
+- resolve prompt content via the prompt registry
+- stop storing the extraction prompt text inline in `extract.py`
+- preserve the current v1 behavior exactly
+- thread prompt reference metadata through a helper so the runner can reuse it
+
+- [ ] **Step 5: Prefer `instructions` over `system_prompt`**
+
+Update agent construction to use Pydantic AI `instructions=` unless a concrete
+need for `system_prompt=` remains after the refactor.
+
+Implementation guidance:
+
+- keep the prompt static for now; do not introduce dynamic instructions unless
+  required by the current extraction task
+- make this a behavior-preserving change
+- keep the switch tightly covered by tests so the agent still receives the same
+  extraction guidance
+
+- [ ] **Step 6: Run the prompt and extractor tests to verify the refactor**
+
+Run:
+
+```bash
+cd backend && uv run pytest tests/test_prompt_registry.py tests/test_extract.py -v
+```
+
+Expected:
+
+- PASS
+
+- [ ] **Step 7: Commit the prompt-registry slice**
+
+```bash
+git add backend/app/prompts/todo_extraction/v1.md backend/app/prompts/registry.py backend/app/extract.py backend/tests/test_prompt_registry.py backend/tests/test_extract.py
+git commit -m "refactor: externalize extraction prompts"
+```
+
+### Task 7: Isolate provider-specific model construction
+
+**Files:**
+- Add: `backend/app/model_providers.py`
+- Modify: `backend/app/extract.py`
+- Modify: `backend/tests/test_extract.py`
+
+The current extractor still contains provider-specific model construction logic.
+That is serviceable for the first slice, but it mixes extraction orchestration
+with provider bootstrapping and makes the optional-provider story harder to
+reason about.
+
+- [ ] **Step 1: Add failing tests for provider factory boundaries**
+
+Extend the extractor tests so they prove:
+
+1. Google model construction remains available without importing optional
+   Mistral modules
+2. Mistral construction stays lazy and only executes when a Mistral model is
+   requested
+3. `extract.py` delegates provider selection instead of assembling provider
+   objects inline
+
+Suggested tests:
+
+```python
+def test_build_model_uses_google_factory_for_gemini():
+    ...
+
+def test_build_model_uses_mistral_factory_lazily():
+    ...
+```
+
+- [ ] **Step 2: Run the extractor tests and confirm the new coverage fails**
+
+Run:
+
+```bash
+cd backend && uv run pytest tests/test_extract.py -v
+```
+
+Expected:
+
+- FAIL because provider construction still lives directly in `extract.py`
+
+- [ ] **Step 3: Move provider construction into focused helpers**
+
+Create `backend/app/model_providers.py` with explicit helpers such as:
+
+```python
+def build_google_model(model_name: str, *, api_key: str) -> Any:
+    ...
+
+def build_mistral_model(model_name: str, *, api_key: str | None) -> Any:
+    ...
+
+def build_model(model_name: str, *, gemini_api_key: str) -> Any:
+    ...
+```
+
+Implementation guidance:
+
+- keep lazy imports for optional providers inside the provider-specific helper
+- keep required-provider imports at module top level only when they are truly
+  part of the always-available path
+- make `extract.py` responsible for choosing config, formatting input, and
+  requesting a model object from the provider module
+
+- [ ] **Step 4: Re-run the extractor tests**
+
+Run:
+
+```bash
+cd backend && uv run pytest tests/test_extract.py -v
+```
+
+Expected:
+
+- PASS
+
+- [ ] **Step 5: Commit the provider-boundary refactor**
+
+```bash
+git add backend/app/model_providers.py backend/app/extract.py backend/tests/test_extract.py
+git commit -m "refactor: split extraction provider factories"
+```
+
+### Task 8: Enrich experiment metadata and persist local result artifacts
+
+**Files:**
+- Add: `backend/evals/extraction_quality/result_artifacts.py`
+- Modify: `backend/evals/extraction_quality/experiment_configs.py`
+- Modify: `backend/evals/extraction_quality/run.py`
+- Modify: `backend/tests/test_extraction_runner.py`
+
+The current runner prints a report and relies primarily on Logfire for durable
+inspection. That is not enough for clean long-term comparison if we start
+running many prompt variants or work across multiple worktrees.
+
+- [ ] **Step 1: Add failing tests for richer metadata and local artifact export**
+
+Extend `backend/tests/test_extraction_runner.py` so it proves:
+
+1. experiment metadata includes prompt family, prompt version, and prompt sha
+2. experiment metadata includes git branch and commit sha
+3. successful runs write a local artifact to a timestamped result directory
+4. artifact writing does not overwrite previous runs
+
+Suggested tests:
+
+```python
+def test_experiment_metadata_includes_prompt_identity():
+    ...
+
+def test_write_report_artifact_creates_timestamped_json(tmp_path):
+    ...
+```
+
+- [ ] **Step 2: Run the runner tests and confirm the new coverage fails**
+
+Run:
+
+```bash
+cd backend && uv run pytest tests/test_extraction_runner.py -v
+```
+
+Expected:
+
+- FAIL because metadata and local artifact writing are not implemented yet
+
+- [ ] **Step 3: Extend the experiment config object and metadata helpers**
+
+Implementation guidance:
+
+- derive prompt metadata from the same configuration object used to build the
+  extraction agent
+- add helpers that capture git branch and commit sha at run time
+- keep metadata generation centralized so the console report, Logfire metadata,
+  and artifact output all share the same source of truth
+
+Minimum metadata fields:
+
+- `experiment`
+- `dataset_name`
+- `model_name`
+- `provider`
+- `thinking_mode`
+- `prompt_family`
+- `prompt_version`
+- `prompt_sha`
+- `git_branch`
+- `git_commit_sha`
+
+- [ ] **Step 4: Implement append-only local artifact export**
+
+Create `backend/evals/extraction_quality/result_artifacts.py`.
+
+Recommended output layout:
+
+```text
+backend/evals/extraction_quality/results/
+  2026-04-01T16-20-00Z/
+    gemini3_flash_default.json
+    gemini3_flash_minimal_thinking.json
+```
+
+Each experiment artifact should record:
+
+- timestamp
+- dataset name
+- experiment id
+- model/provider summary
+- prompt family, version, and sha
+- git branch and commit sha
+- repeat count and max concurrency
+- aggregate metrics
+- per-case expected and predicted todo counts
+- trace id and span id when available
+
+Implementation guidance:
+
+- make the results directory append-only
+- prefer JSON so artifacts stay diffable and easy to inspect
+- keep artifact serialization separate from the CLI parsing logic
+- if helpful, add `--output-dir` with the default pointing to the standard
+  results path
+
+- [ ] **Step 5: Re-run the runner tests and perform a manual smoke run**
+
+Run:
+
+```bash
+cd backend && uv run pytest tests/test_extraction_runner.py -v
+cd backend && .venv/bin/python evals/extraction_quality/run.py --experiment gemini3_flash_default
+```
+
+Expected:
+
+- tests PASS
+- the manual run writes a JSON artifact even if only one experiment is run
+- the artifact metadata matches the console and Logfire metadata
+
+- [ ] **Step 6: Commit the metadata and artifact slice**
+
+```bash
+git add backend/evals/extraction_quality/result_artifacts.py backend/evals/extraction_quality/experiment_configs.py backend/evals/extraction_quality/run.py backend/tests/test_extraction_runner.py
+git commit -m "feat: persist extraction eval run artifacts"
+```
+
+### Task 9: Document worktree credentials and local run workflow
+
+**Files:**
+- Add: `backend/.env.example`
+- Modify: `backend/evals/extraction_quality/README.md`
+
+The current harness assumes the reader already understands that `backend/.env`
+is gitignored, per-worktree, and required for provider discovery. That is too
+easy to miss, especially once multiple worktrees exist.
+
+- [ ] **Step 1: Add the example env file**
+
+Create `backend/.env.example` documenting the variables relevant to this eval
+suite.
+
+Minimum contents:
+
+```dotenv
+GEMINI_API_KEY=
+LOGFIRE_TOKEN=
+MISTRAL_API_KEY=
+```
+
+Implementation guidance:
+
+- keep secrets empty
+- add brief comments explaining which variables are required now versus optional
+- do not include provider keys that are not supported anywhere in the current
+  harness
+
+- [ ] **Step 2: Update the eval README with worktree and artifact guidance**
+
+Document:
+
+1. why `backend/.env` does not automatically appear in new worktrees
+2. how to copy or symlink `.env` into a worktree
+3. how `LOGFIRE_TOKEN` changes the observability experience
+4. where local result artifacts are written
+5. the recommended iteration loop:
+   run one experiment after a prompt change, then rerun the full matrix only
+   after the targeted run looks promising
+
+- [ ] **Step 3: Manually verify the docs against the current branch workflow**
+
+Run:
+
+```bash
+cd backend && .venv/bin/python evals/extraction_quality/run.py --list-experiments
+```
+
+Expected:
+
+- the docs match the actual command names and file paths
+- the env file guidance reflects the current worktree behavior accurately
+
+- [ ] **Step 4: Commit the workflow docs**
+
+```bash
+git add backend/.env.example backend/evals/extraction_quality/README.md
+git commit -m "docs: clarify extraction eval setup and workflow"
+```
+
+## Extended Validation Checklist
+
+- [ ] extraction prompts live in repo-backed assets instead of inline extractor
+      constants
+- [ ] prompt metadata includes prompt family, version, path, and sha-derived
+      identity
+- [ ] the extraction agent uses `instructions` unless a specific
+      `system_prompt` need remains
+- [ ] provider-specific model construction is isolated from extraction
+      orchestration
+- [ ] Logfire metadata and local artifact metadata come from the same
+      configuration source of truth
+- [ ] the runner writes append-only local JSON artifacts for each experiment run
+- [ ] run metadata includes git branch and commit sha
+- [ ] `backend/.env.example` documents the credentials needed for this harness
+- [ ] the README explains worktree-specific `.env` behavior and the recommended
+      prompt-iteration loop
+
+## Recommended Execution Order For The Follow-On Slice
+
+1. Externalize the current extraction prompt and introduce prompt references.
+2. Switch the extraction agent to prompt-registry-backed `instructions`.
+3. Split provider-specific model construction out of `extract.py`.
+4. Enrich experiment metadata and add local result artifact export.
+5. Document `.env` handling, artifact locations, and the recommended rerun
+   workflow.
