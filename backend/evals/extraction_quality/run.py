@@ -16,7 +16,7 @@ if str(BACKEND_ROOT) not in sys.path:
 
 from pydantic_evals import Dataset, set_eval_attribute
 
-from app.extract import extract_todos
+from app.extract import extract_todos, get_extraction_prompt_ref
 from app.models import Todo
 from evals.extraction_quality.dataset_loader import load_extraction_quality_dataset
 from evals.extraction_quality.evaluators import EXTRACTION_QUALITY_EVALUATORS
@@ -114,10 +114,13 @@ def _ensure_provider_env(experiment: ExperimentDefinition) -> None:
 
 
 def _experiment_metadata(experiment: ExperimentDefinition) -> dict[str, str]:
+    prompt_ref = get_extraction_prompt_ref(experiment.extraction_config)
     return {
         "experiment": experiment.name,
         "model_name": experiment.extraction_config.model_name,
+        "prompt_family": prompt_ref.family,
         "prompt_version": experiment.extraction_config.prompt_version,
+        "prompt_sha": prompt_ref.sha256,
         "provider": experiment.provider,
         "thinking_mode": experiment.thinking_mode,
     }

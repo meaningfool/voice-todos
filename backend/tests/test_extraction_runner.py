@@ -1,6 +1,9 @@
+from pathlib import Path
+
+from app.prompts.registry import PromptRef
 from evals.extraction_quality import experiment_configs
 from evals.extraction_quality.experiment_configs import EXPERIMENTS
-from evals.extraction_quality.run import main
+from evals.extraction_quality.run import _experiment_metadata, main
 
 EXPECTED_EXPERIMENTS = [
     "gemini3_flash_default",
@@ -35,3 +38,24 @@ def test_mistral_experiment_reports_provider_unavailability(monkeypatch):
         EXPERIMENTS["mistral_small_4_default"].unavailable_reason()
         == "mistral provider unavailable"
     )
+
+
+def test_experiment_metadata_includes_prompt_identity(monkeypatch):
+    prompt_ref = PromptRef(
+        family="todo_extraction",
+        version="v1",
+        path=Path("/tmp/todo_extraction_v1.md"),
+        content="prompt body",
+        sha256="prompt-sha-123",
+    )
+
+    monkeypatch.setattr(
+        "evals.extraction_quality.run.get_extraction_prompt_ref",
+        lambda config: prompt_ref,
+    )
+
+    metadata = _experiment_metadata(EXPERIMENTS["gemini3_flash_default"])
+
+    assert metadata["prompt_family"] == "todo_extraction"
+    assert metadata["prompt_version"] == "v1"
+    assert metadata["prompt_sha"] == "prompt-sha-123"
