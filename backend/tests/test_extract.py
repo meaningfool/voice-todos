@@ -65,7 +65,7 @@ def test_get_agent_uses_configured_gemini_api_key():
     mock_agent.assert_called_once_with(
         fake_model,
         output_type=ExtractionResult,
-        system_prompt=_extract_mod._SYSTEM_PROMPT,
+        instructions=_extract_mod.get_extraction_prompt_ref().content,
         model_settings={
             "google_thinking_config": {"thinking_level": "minimal"}
         },
@@ -181,11 +181,22 @@ def test_extract_todos_passes_model_settings():
     mock_agent.assert_called_once_with(
         fake_model,
         output_type=ExtractionResult,
-        system_prompt=_extract_mod._SYSTEM_PROMPT,
+        instructions=_extract_mod.get_extraction_prompt_ref(
+            ExtractionConfig(
+                model_settings={"google_thinking_config": {"thinking_level": "high"}}
+            )
+        ).content,
         model_settings={
             "google_thinking_config": {"thinking_level": "high"}
         },
     )
+
+
+def test_unknown_prompt_version_raises_value_error():
+    from app.extract import ExtractionConfig, build_extraction_agent
+
+    with pytest.raises(ValueError, match="Unsupported prompt version"):
+        build_extraction_agent(ExtractionConfig(prompt_version="v9"))
 
 
 def test_get_agent_does_not_reuse_different_model_config():

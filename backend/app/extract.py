@@ -13,52 +13,20 @@ from pydantic_ai.providers.google import GoogleProvider
 
 from app.config import get_settings
 from app.models import ExtractionResult, Todo
-
-_SYSTEM_PROMPT = (
-    "You extract actionable todo items from a voice transcript.\n\n"
-    "Rules:\n"
-    "- Extract only clearly actionable tasks, not observations or commentary.\n"
-    "- Write each todo as a clean, concise imperative sentence (not verbatim speech).\n"
-    "- Only set optional fields "
-    "(priority, category, due_date, notification, assign_to) "
-    "when the speaker clearly indicates them.\n"
-    "- priority: 'high' for urgent/important emphasis, 'medium' for moderate, "
-    "'low' for minor.\n"
-    "- due_date: extract dates/deadlines as ISO format (YYYY-MM-DD). "
-    "Resolve relative dates "
-    "(e.g., 'tomorrow', 'next Friday') relative to the current date.\n"
-    "- notification: extract reminder times as ISO datetime "
-    "(YYYY-MM-DDTHH:MM:SS).\n"
-    "- assign_to: extract person names when the speaker delegates a task.\n"
-    "- category: infer a short category label only when the context is clear.\n"
-    "- If no actionable todos are found, return an empty list.\n"
-    "\n"
-    "Incremental extraction rules:\n"
-    "- You may receive a list of previously extracted todos. "
-    "Return the updated complete list.\n"
-    "- Preserve the order of existing todos where that order still makes sense. "
-    "Append genuinely new todos at the end.\n"
-    "- If new speech adds details to an existing todo, update it in place.\n"
-    "- If later context shows an earlier todo was over-split, duplicated, misheard, "
-    "or should be absorbed into another todo, merge or remove it.\n"
-    "- Explicit cancellation is one reason to remove a todo, but not the only one.\n"
-    "- If no previous todos are provided, extract from scratch.\n"
-)
+from app.prompts.registry import PromptRef
+from app.prompts.registry import get_prompt_ref as _load_prompt_ref
 
 
 @dataclass(frozen=True)
 class ExtractionConfig:
     model_name: str = "gemini-3-flash-preview"
     model_settings: dict[str, Any] | None = None
+    prompt_family: str = "todo_extraction"
     prompt_version: str = "v1"
 
 
 _DEFAULT_MODEL_SETTINGS: dict[str, Any] = {
     "google_thinking_config": {"thinking_level": "minimal"}
-}
-
-_PROMPT_VERSIONS: dict[str, str] = {
-    "v1": _SYSTEM_PROMPT,
 }
 
 _agent_cache: dict[tuple[Any, ...], Agent[None, ExtractionResult]] = {}
@@ -82,20 +50,20 @@ def _freeze_for_cache(value: Any) -> Any:
 def _config_cache_key(config: ExtractionConfig) -> tuple[Any, ...]:
     return (
         config.model_name,
+        config.prompt_family,
         config.prompt_version,
         _freeze_for_cache(config.model_settings),
     )
 
 
-def _resolve_system_prompt(prompt_version: str) -> str:
-    try:
-        return _PROMPT_VERSIONS[prompt_version]
-    except KeyError as exc:
-        available = ", ".join(sorted(_PROMPT_VERSIONS))
-        raise ValueError(
-            f"Unsupported extraction prompt version: {prompt_version!r}. "
-            f"Available versions: {available}"
-        ) from exc
+def get_extraction_prompt_ref(
+    config: ExtractionConfig | None = None,
+) -> PromptRef:
+    resolved_config = config or ExtractionConfig()
+    return _load_prompt_ref(
+        family=resolved_config.prompt_family,
+        version=resolved_config.prompt_version,
+    )
 
 
 def _resolve_model_settings(config: ExtractionConfig) -> dict[str, Any]:
@@ -148,10 +116,11 @@ def _build_model(model_name: str) -> Any:
 
 
 def build_extraction_agent(config: ExtractionConfig) -> Agent[None, ExtractionResult]:
+    prompt_ref = get_extraction_prompt_ref(config)
     return Agent(
         _build_model(config.model_name),
         output_type=ExtractionResult,
-        system_prompt=_resolve_system_prompt(config.prompt_version),
+        instructions=prompt_ref.content,
         model_settings=_resolve_model_settings(config),
     )
 
