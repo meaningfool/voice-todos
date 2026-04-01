@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from copy import deepcopy
+from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from pydantic_ai import Agent
 from pydantic_ai.models.google import GoogleModel
@@ -40,26 +43,88 @@ _SYSTEM_PROMPT = (
     "- If no previous todos are provided, extract from scratch.\n"
 )
 
-_agent: Agent[None, ExtractionResult] | None = None
+
+@dataclass(frozen=True)
+class ExtractionConfig:
+    model_name: str = "google-gla:gemini-3-flash-preview"
+    model_settings: dict[str, Any] | None = None
+    prompt_version: str = "v1"
 
 
-def _get_agent() -> Agent[None, ExtractionResult]:
-    global _agent
-    if _agent is None:
-        settings = get_settings()
+_DEFAULT_MODEL_SETTINGS: dict[str, Any] = {
+    "google_thinking_config": {"thinking_level": "minimal"}
+}
 
-        _agent = Agent(
-            GoogleModel(
-                "gemini-3-flash-preview",
-                provider=GoogleProvider(api_key=settings.gemini_api_key),
-            ),
-            output_type=ExtractionResult,
-            system_prompt=_SYSTEM_PROMPT,
-            model_settings={
-                "google_thinking_config": {"thinking_level": "minimal"},
-            },
+_PROMPT_VERSIONS: dict[str, str] = {
+    "v1": _SYSTEM_PROMPT,
+}
+
+_agent_cache: dict[tuple[Any, ...], Agent[None, ExtractionResult]] = {}
+
+
+def _freeze_for_cache(value: Any) -> Any:
+    if isinstance(value, dict):
+        return tuple(
+            sorted((key, _freeze_for_cache(inner)) for key, inner in value.items())
         )
-    return _agent
+    if isinstance(value, list):
+        return tuple(_freeze_for_cache(item) for item in value)
+    if isinstance(value, tuple):
+        return tuple(_freeze_for_cache(item) for item in value)
+    if isinstance(value, set):
+        return tuple(sorted(_freeze_for_cache(item) for item in value))
+    return value
+
+
+def _config_cache_key(config: ExtractionConfig) -> tuple[Any, ...]:
+    return (
+        config.model_name,
+        config.prompt_version,
+        _freeze_for_cache(config.model_settings),
+    )
+
+
+def _resolve_system_prompt(prompt_version: str) -> str:
+    try:
+        return _PROMPT_VERSIONS[prompt_version]
+    except KeyError as exc:
+        available = ", ".join(sorted(_PROMPT_VERSIONS))
+        raise ValueError(
+            f"Unsupported extraction prompt version: {prompt_version!r}. "
+            f"Available versions: {available}"
+        ) from exc
+
+
+def _resolve_model_settings(config: ExtractionConfig) -> dict[str, Any]:
+    if config.model_settings is not None:
+        return deepcopy(config.model_settings)
+    return deepcopy(_DEFAULT_MODEL_SETTINGS)
+
+
+def build_extraction_agent(config: ExtractionConfig) -> Agent[None, ExtractionResult]:
+    settings = get_settings()
+
+    return Agent(
+        GoogleModel(
+            config.model_name,
+            provider=GoogleProvider(api_key=settings.gemini_api_key),
+        ),
+        output_type=ExtractionResult,
+        system_prompt=_resolve_system_prompt(config.prompt_version),
+        model_settings=_resolve_model_settings(config),
+    )
+
+
+def _get_agent(
+    config: ExtractionConfig | None = None,
+) -> Agent[None, ExtractionResult]:
+    resolved_config = config or ExtractionConfig()
+    cache_key = _config_cache_key(resolved_config)
+
+    if cache_key not in _agent_cache:
+        _agent_cache[cache_key] = build_extraction_agent(resolved_config)
+
+    return _agent_cache[cache_key]
 
 
 def _format_previous_todos(previous_todos: list[Todo]) -> str:
@@ -115,6 +180,7 @@ async def extract_todos(
     *,
     reference_dt: datetime | None = None,
     previous_todos: list[Todo] | None = None,
+    config: ExtractionConfig | None = None,
 ) -> list[Todo]:
     """Extract structured todos from a transcript using Gemini."""
     if not transcript.strip():
@@ -123,7 +189,7 @@ async def extract_todos(
     if reference_dt is None:
         reference_dt = datetime.now().astimezone()
 
-    agent = _get_agent()
+    agent = _get_agent(config)
     result = await agent.run(
         _build_extraction_input(transcript, reference_dt, previous_todos)
     )

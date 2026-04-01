@@ -28,9 +28,15 @@ def _reset_agent():
     holds an httpx client bound to the previous loop. Clearing it forces a
     fresh client on each test's loop.
     """
-    _extract_mod._agent = None
+    if hasattr(_extract_mod, "_agent_cache"):
+        _extract_mod._agent_cache.clear()
+    if hasattr(_extract_mod, "_agent"):
+        _extract_mod._agent = None
     yield
-    _extract_mod._agent = None
+    if hasattr(_extract_mod, "_agent_cache"):
+        _extract_mod._agent_cache.clear()
+    if hasattr(_extract_mod, "_agent"):
+        _extract_mod._agent = None
 
 
 def test_get_agent_uses_configured_gemini_api_key():
@@ -51,7 +57,7 @@ def test_get_agent_uses_configured_gemini_api_key():
     assert agent is fake_agent
     mock_provider.assert_called_once_with(api_key="gemini-test-key")
     mock_model.assert_called_once_with(
-        "gemini-3-flash-preview",
+        "google-gla:gemini-3-flash-preview",
         provider=fake_provider,
     )
     mock_agent.assert_called_once_with(
@@ -103,6 +109,96 @@ async def test_extract_todos_from_clear_transcript():
     # Should find something about groceries and dentist
     assert any("grocer" in t for t in texts)
     assert any("dentist" in t for t in texts)
+
+
+@pytest.mark.asyncio
+async def test_extract_todos_uses_override_model():
+    """A runtime config override should drive agent model selection."""
+    from app.extract import ExtractionConfig, extract_todos
+
+    fake_agent = SimpleNamespace(
+        run=AsyncMock(return_value=SimpleNamespace(output=ExtractionResult(todos=[])))
+    )
+    fake_model = object()
+    fake_provider = object()
+
+    with (
+        patch("app.extract.get_settings", return_value=SimpleNamespace(gemini_api_key="test-key")),
+        patch("app.extract.GoogleProvider", return_value=fake_provider) as mock_provider,
+        patch("app.extract.GoogleModel", return_value=fake_model) as mock_model,
+        patch("app.extract.Agent", return_value=fake_agent),
+    ):
+        await extract_todos(
+            "Call Marie tomorrow.",
+            reference_dt=datetime(2026, 3, 23, 9, 30, tzinfo=UTC),
+            config=ExtractionConfig(model_name="google-gla:gemini-3-pro-preview"),
+        )
+
+    mock_model.assert_called_once_with(
+        "google-gla:gemini-3-pro-preview",
+        provider=fake_provider,
+    )
+    mock_provider.assert_called_once_with(api_key="test-key")
+    assert _extract_mod.ExtractionConfig().model_name == "google-gla:gemini-3-flash-preview"
+
+
+def test_extract_todos_passes_model_settings():
+    """Provider-specific settings should be forwarded into agent creation."""
+    from app.extract import ExtractionConfig, build_extraction_agent
+
+    fake_settings = SimpleNamespace(gemini_api_key="gemini-test-key")
+    fake_provider = object()
+    fake_model = object()
+    fake_agent = object()
+
+    with (
+        patch("app.extract.get_settings", return_value=fake_settings),
+        patch("app.extract.GoogleProvider", return_value=fake_provider) as mock_provider,
+        patch("app.extract.GoogleModel", return_value=fake_model) as mock_model,
+        patch("app.extract.Agent", return_value=fake_agent) as mock_agent,
+    ):
+        agent = build_extraction_agent(
+            ExtractionConfig(
+                model_settings={"google_thinking_config": {"thinking_level": "high"}}
+            )
+        )
+
+    assert agent is fake_agent
+    mock_provider.assert_called_once_with(api_key="gemini-test-key")
+    mock_model.assert_called_once_with(
+        "google-gla:gemini-3-flash-preview",
+        provider=fake_provider,
+    )
+    mock_agent.assert_called_once_with(
+        fake_model,
+        output_type=ExtractionResult,
+        system_prompt=_extract_mod._SYSTEM_PROMPT,
+        model_settings={
+            "google_thinking_config": {"thinking_level": "high"}
+        },
+    )
+
+
+def test_get_agent_does_not_reuse_different_model_config():
+    """Agent caching should distinguish different extraction configs."""
+    from app.extract import ExtractionConfig, _get_agent
+
+    fake_settings = SimpleNamespace(gemini_api_key="gemini-test-key")
+    first_agent = object()
+    second_agent = object()
+
+    with (
+        patch("app.extract.get_settings", return_value=fake_settings),
+        patch("app.extract.GoogleProvider", return_value=object()),
+        patch("app.extract.GoogleModel", return_value=object()),
+        patch("app.extract.Agent", side_effect=[first_agent, second_agent]),
+    ):
+        agent_one = _get_agent(ExtractionConfig(model_name="model-a"))
+        agent_two = _get_agent(ExtractionConfig(model_name="model-b"))
+
+    assert agent_one is first_agent
+    assert agent_two is second_agent
+    assert agent_one is not agent_two
 
 
 @requires_gemini
