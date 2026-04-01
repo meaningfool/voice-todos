@@ -22,6 +22,7 @@ sessions/recent/
 
 # Superpowers
 .superpowers/
+.codex/superpowers/
 
 # Local git worktrees
 .worktrees/

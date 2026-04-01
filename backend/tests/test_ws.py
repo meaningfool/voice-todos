@@ -91,6 +91,7 @@ def test_ws_start_configures_extraction_loop_with_token_threshold():
             ws.send_json({"type": "start"})
             assert ws.receive_json() == {"type": "started"}
 
+        assert TOKEN_THRESHOLD == 15
         assert mock_loop_cls.call_args.kwargs["token_threshold"] == TOKEN_THRESHOLD
 
 
@@ -180,8 +181,11 @@ def test_ws_stop_sends_todos_before_stopped():
         transcript,
         _extraction_loop,
         _recorder=None,
+        *,
+        finalized_event,
     ):
         transcript.final_parts.append("Buy groceries. ")
+        finalized_event.set()
 
     with (
         patch("app.ws.get_settings", return_value=_settings()),
@@ -209,6 +213,65 @@ def test_ws_stop_sends_todos_before_stopped():
 
             stopped_msg = ws.receive_json()
             assert stopped_msg["type"] == "stopped"
+
+
+def test_ws_stop_emits_stop_timing_events():
+    from starlette.websockets import WebSocket as StarletteWebSocket
+
+    async def relay_with_finalized_transcript(
+        _soniox_ws,
+        _browser_ws,
+        transcript,
+        _extraction_loop,
+        _recorder=None,
+        *,
+        finalized_event,
+    ):
+        transcript.final_parts.append("Buy groceries. ")
+        finalized_event.set()
+
+    timeline: list[str] = []
+    original_send_json = StarletteWebSocket.send_json
+
+    async def recording_send_json(self, message, *args, **kwargs):
+        if isinstance(message, dict) and message.get("type") in {"todos", "stopped"}:
+            timeline.append(f"send:{message['type']}")
+        return await original_send_json(self, message, *args, **kwargs)
+
+    def recording_logfire_info(event_name, *args, **kwargs):
+        if event_name in {"ws.stop_received", "ws.stopped_sent"}:
+            timeline.append(f"log:{event_name}")
+
+    with (
+        patch("app.ws.logfire.info", side_effect=recording_logfire_info) as mock_logfire_info,
+        patch("app.ws.get_settings", return_value=_settings()),
+        patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
+        patch(
+            "app.ws._relay_soniox_to_browser",
+            side_effect=relay_with_finalized_transcript,
+        ),
+        patch("app.ws.extract_todos", new_callable=AsyncMock, return_value=[]),
+        patch("app.ws.WebSocket.send_json", new=recording_send_json),
+    ):
+        mock_connect.return_value = _mock_soniox(messages=[])
+
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json()["type"] == "started"
+
+            ws.send_json({"type": "stop"})
+            _ = ws.receive_json()
+            _ = ws.receive_json()
+
+    event_names = [call.args[0] for call in mock_logfire_info.call_args_list]
+    assert event_names == ["ws.stop_received", "ws.stopped_sent"]
+    assert timeline == [
+        "log:ws.stop_received",
+        "send:todos",
+        "log:ws.stopped_sent",
+        "send:stopped",
+    ]
 
 
 def test_ws_sends_todos_during_recording():
@@ -251,8 +314,11 @@ def test_ws_stop_uses_finalized_transcript_for_final_pass():
         transcript,
         _extraction_loop,
         _recorder=None,
+        *,
+        finalized_event,
     ):
         transcript.final_parts.append("Buy groceries. Call the dentist. ")
+        finalized_event.set()
 
     with (
         patch("app.ws.get_settings", return_value=_settings()),
@@ -293,8 +359,11 @@ def test_ws_stop_surfaces_final_extraction_failure():
         transcript,
         _extraction_loop,
         _recorder=None,
+        *,
+        finalized_event,
     ):
         transcript.final_parts.append("Buy groceries. ")
+        finalized_event.set()
 
     with (
         patch("app.ws.get_settings", return_value=_settings()),
@@ -325,6 +394,65 @@ def test_ws_stop_surfaces_final_extraction_failure():
         assert stopped_msg["warning"] == "Todo extraction failed."
 
 
+def test_ws_stop_reuses_latest_snapshot_without_rerunning_final_extraction():
+    """When stop sees an unchanged transcript, it still re-sends the latest snapshot."""
+
+    async def relay_with_finalized_transcript(
+        _soniox_ws,
+        _browser_ws,
+        transcript,
+        extraction_loop,
+        _recorder=None,
+        *,
+        finalized_event,
+    ):
+        transcript.final_parts.append("Buy groceries. ")
+        await extraction_loop.on_endpoint()
+        finalized_event.set()
+
+    with (
+        patch("app.ws.get_settings", return_value=_settings()),
+        patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
+        patch(
+            "app.ws._relay_soniox_to_browser",
+            side_effect=relay_with_finalized_transcript,
+        ),
+        patch(
+            "app.ws.extract_todos",
+            new_callable=AsyncMock,
+            side_effect=[
+                [Todo(text="Buy groceries")],
+                RuntimeError("should not re-extract"),
+            ],
+        ) as mock_extract,
+    ):
+        mock_connect.return_value = _mock_soniox(messages=[])
+
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            assert ws.receive_json() == {
+                "type": "todos",
+                "items": [{"text": "Buy groceries"}],
+            }
+
+            ws.send_json({"type": "stop"})
+
+            assert ws.receive_json() == {
+                "type": "todos",
+                "items": [{"text": "Buy groceries"}],
+            }
+            stopped_msg = ws.receive_json()
+
+        assert stopped_msg == {
+            "type": "stopped",
+            "transcript": "Buy groceries. ",
+        }
+        assert mock_extract.await_count == 1
+
+
 def test_ws_audio_frames_forward_without_session_recorder():
     """Binary audio frames still stream when recording is disabled."""
     with (
@@ -349,11 +477,69 @@ def test_ws_audio_frames_forward_without_session_recorder():
             mock_soniox.send.assert_any_await(b"\x00\x01")
 
 
+def test_ws_stop_waits_for_fin_not_finished():
+    """Stop proceeds once finalization completes, even if relay shutdown lags behind."""
+    release_relay = asyncio.Event()
+
+    async def relay_with_fin(
+        _soniox_ws,
+        _browser_ws,
+        transcript,
+        _extraction_loop,
+        _recorder=None,
+        *,
+        finalized_event,
+    ):
+        transcript.final_parts.append("Buy groceries. ")
+        finalized_event.set()
+        await release_relay.wait()
+
+    with (
+        patch("app.ws.get_settings", return_value=_settings()),
+        patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
+        patch("app.ws._relay_soniox_to_browser", side_effect=relay_with_fin),
+        patch(
+            "app.ws.extract_todos",
+            new_callable=AsyncMock,
+            return_value=[Todo(text="Buy groceries")],
+        ),
+    ):
+        mock_connect.return_value = _mock_soniox(messages=[])
+
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            ws.send_json({"type": "stop"})
+
+            todos_msg = ws.receive_json()
+            stopped_msg = ws.receive_json()
+
+        assert todos_msg["type"] == "todos"
+        assert todos_msg["items"][0]["text"] == "Buy groceries"
+        assert stopped_msg["type"] == "stopped"
+
+
 def test_ws_stop_timeout_skips_extraction_and_surfaces_warning():
     """A finalize timeout returns a warning instead of silent partial extraction."""
+    relay_cancelled = asyncio.Event()
 
-    async def slow_relay(*args, **kwargs):
-        await asyncio.sleep(1)
+    async def slow_relay(
+        _soniox_ws,
+        _browser_ws,
+        _transcript,
+        _extraction_loop,
+        _recorder=None,
+        *,
+        finalized_event,
+    ):
+        del finalized_event
+        try:
+            await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            relay_cancelled.set()
+            raise
 
     with (
         patch(
@@ -375,6 +561,7 @@ def test_ws_stop_timeout_skips_extraction_and_surfaces_warning():
 
             todos_msg = ws.receive_json()
             assert todos_msg == {"type": "todos", "items": []}
+            assert relay_cancelled.is_set()
 
             stopped_msg = ws.receive_json()
             assert stopped_msg["type"] == "stopped"

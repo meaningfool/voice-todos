@@ -115,7 +115,7 @@ Browser captures audio via `getUserMedia`. The exact encoding (raw PCM 16-bit 16
 
 - Todo extraction (Item 2)
 - Turn detection / automatic slicing (Item 3)
-- Tentative/confirmed todo states (Item 4)
+- Later todo presentation-state refinements
 - Error handling beyond basic connection errors
 - Mobile support
 - Authentication

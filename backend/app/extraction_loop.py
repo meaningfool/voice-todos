@@ -31,6 +31,7 @@ class ExtractionLoop:
         self._stopping = False
         self._generation = 0
         self._in_flight_task: asyncio.Task[None] | None = None
+        self._last_successful_transcript: str | None = None
 
     async def on_endpoint(self) -> None:
         self._trigger_background_extraction(trigger_reason="endpoint")
@@ -66,6 +67,7 @@ class ExtractionLoop:
         self._stopping = False
         self._tokens_since_last_extraction = 0
         self._previous_todos = []
+        self._last_successful_transcript = None
 
     def _trigger_background_extraction(self, *, trigger_reason: str) -> None:
         if self._stopping or not self._transcript_text().strip():
@@ -115,6 +117,12 @@ class ExtractionLoop:
         if not transcript_text.strip():
             return False
 
+        if (
+            trigger_reason == "stop"
+            and transcript_text == self._last_successful_transcript
+        ):
+            return False
+
         try:
             previous_todos = list(self._previous_todos) or None
             with logfire.span(
@@ -139,6 +147,7 @@ class ExtractionLoop:
 
             self._previous_todos = list(todos)
             self._tokens_since_last_extraction = 0
+            self._last_successful_transcript = transcript_text
             return True
         except asyncio.CancelledError:
             raise

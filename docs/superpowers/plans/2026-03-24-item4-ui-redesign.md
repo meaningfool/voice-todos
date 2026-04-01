@@ -38,23 +38,23 @@
 
 | File | Change |
 |------|--------|
-| `frontend/src/App.tsx` | Replace the barebones layout with the phone-shell UI and state routing from the reference |
-| `frontend/src/App.test.tsx` | Update app-level state rendering tests for the new shell, empty states, warnings, and post-session result state |
+| `frontend/src/App.tsx` | Replace the barebones layout with the phone-shell UI, state routing from the reference, and progressive processing placeholders while voice work is still in flight |
+| `frontend/src/App.test.tsx` | Update app-level state rendering tests for the new shell, empty states, warnings, post-session result state, and progressive placeholder coverage |
 | `frontend/src/components/RecordButton.tsx` | Rebuild as the bottom dock with waveform, state-aware CTA labels, and disabled connect/extract states |
 | `frontend/src/components/RecordButton.test.tsx` | Update button copy and recording/extracting behavior tests |
 | `frontend/src/components/TodoList.tsx` | Remove the old heading and add transient change highlighting behavior |
 | `frontend/src/components/TodoList.test.tsx` | Remove count-heading expectations and add highlight behavior coverage |
 | `frontend/src/components/TodoCard.tsx` | Rebuild cards to match the reference card layout and metadata chips |
 | `frontend/src/components/TodoCard.test.tsx` | Update rendering expectations for the new card presentation |
-| `frontend/src/components/TodoSkeleton.tsx` | Restyle skeletons so they match the new card system |
-| `frontend/src/components/TodoSkeleton.test.tsx` | Keep skeleton-count coverage against the new structure |
+| `frontend/src/components/TodoSkeleton.tsx` | Restyle skeletons so they match the new card system and support variable placeholder counts while voice is still processing |
+| `frontend/src/components/TodoSkeleton.test.tsx` | Cover placeholder counts and the skeleton component contract used by the app shell |
 | `frontend/src/index.css` | Import reference fonts and add shared motion/theme classes (`spring-entry`, `wave-bar`, `flash-orange`, shell styling) |
 
 ### Frontend — Leave untouched
 
 | File | Reason |
 |------|--------|
-| `frontend/src/hooks/useTranscript.ts` | The hook contract already exposes the states and data needed for this redesign |
+| `frontend/src/hooks/useTranscript.ts` | The hook contract already exposes the states and data needed for this redesign; use `recording` / `extracting` as the processing proxy instead of adding a new protocol signal in this plan |
 | `frontend/src/components/TranscriptArea.tsx` | No longer used in the main flow; leave untouched unless cleanup is needed at the end |
 
 ---
@@ -820,7 +820,236 @@ git commit -m "feat: rebuild Voice-Todos app shell from reference"
 
 ---
 
-## Task 4: Full verification against the approved reference
+## Task 4: Add progressive processing placeholders while voice work is in flight
+
+**Files:**
+- Modify: `frontend/src/App.tsx`
+- Modify: `frontend/src/App.test.tsx`
+- Modify: `frontend/src/components/TodoSkeleton.tsx`
+- Modify: `frontend/src/components/TodoSkeleton.test.tsx`
+- Modify: `frontend/src/index.css`
+
+This task intentionally supersedes the earlier extracting-only skeleton behavior from Task 3. The new requirement is to keep animated placeholder todo cards visible while voice work is still in flight, using the existing frontend status model as the proxy:
+
+- `recording` = assume more audio is still being spoken / processed, so keep placeholders visible
+- `extracting` = backend-confirmed post-stop processing is still underway, so keep placeholders visible
+- `idle` / `connecting` = do not show processing placeholders
+
+Placeholder counts are progressive:
+
+- `0` todos -> show `3` skeleton placeholders
+- `1` todo -> show `2` skeleton placeholders
+- `2` todos -> show `1` skeleton placeholder
+- `3+` todos -> keep `1` skeleton placeholder while processing continues
+
+This plan keeps the implementation frontend-only. Do **not** add a new backend message type or change `useTranscript()` state names for this slice.
+
+- [ ] **Step 1: Write the failing placeholder tests**
+
+Update `frontend/src/App.test.tsx` to cover the new processing-placeholder behavior:
+
+```tsx
+it("shows 3 placeholders while recording before any todos arrive", () => {
+  mockUseTranscript.mockReturnValue({
+    ...baseHook,
+    status: "recording",
+    todos: [],
+  });
+
+  const { container } = render(<App />);
+
+  expect(container.querySelectorAll("[data-testid='todo-skeleton-card']")).toHaveLength(3);
+});
+
+it("keeps 2 placeholders when 1 todo is visible during recording", () => {
+  mockUseTranscript.mockReturnValue({
+    ...baseHook,
+    status: "recording",
+    todos: [{ text: "Draft agenda" }],
+  });
+
+  const { container } = render(<App />);
+
+  expect(screen.getByText("Draft agenda")).toBeInTheDocument();
+  expect(container.querySelectorAll("[data-testid='todo-skeleton-card']")).toHaveLength(2);
+});
+
+it("keeps 1 placeholder when 2 todos are visible during recording", () => {
+  mockUseTranscript.mockReturnValue({
+    ...baseHook,
+    status: "recording",
+    todos: [{ text: "Draft agenda" }, { text: "Email Alex" }],
+  });
+
+  const { container } = render(<App />);
+
+  expect(container.querySelectorAll("[data-testid='todo-skeleton-card']")).toHaveLength(1);
+});
+
+it("keeps 1 placeholder when 3 todos are visible during recording", () => {
+  mockUseTranscript.mockReturnValue({
+    ...baseHook,
+    status: "recording",
+    todos: [{ text: "One" }, { text: "Two" }, { text: "Three" }],
+  });
+
+  const { container } = render(<App />);
+
+  expect(container.querySelectorAll("[data-testid='todo-skeleton-card']")).toHaveLength(1);
+});
+
+it("keeps 1 placeholder during extracting even when todos already exist", () => {
+  mockUseTranscript.mockReturnValue({
+    ...baseHook,
+    status: "extracting",
+    todos: [{ text: "Review budget" }, { text: "Send notes" }],
+  });
+
+  const { container } = render(<App />);
+
+  expect(screen.getByText("Review budget")).toBeInTheDocument();
+  expect(container.querySelectorAll("[data-testid='todo-skeleton-card']")).toHaveLength(1);
+});
+
+it("does not show processing placeholders once the app returns to idle", () => {
+  mockUseTranscript.mockReturnValue({
+    ...baseHook,
+    finalText: "Review budget and send notes",
+    todos: [{ text: "Review budget" }],
+  });
+
+  const { container } = render(<App />);
+
+  expect(container.querySelector("[data-testid='todo-skeleton-card']")).toBeNull();
+});
+```
+
+Update `frontend/src/components/TodoSkeleton.test.tsx` so the skeleton component covers the new API:
+
+```tsx
+it("renders 3 skeleton placeholder cards by default", () => {
+  const { container } = render(<TodoSkeleton />);
+  expect(container.querySelectorAll("[data-testid='todo-skeleton-card']")).toHaveLength(3);
+});
+
+it("renders the requested number of placeholder cards", () => {
+  const { container } = render(<TodoSkeleton count={2} />);
+  expect(container.querySelectorAll("[data-testid='todo-skeleton-card']")).toHaveLength(2);
+});
+```
+
+- [ ] **Step 2: Run the placeholder tests to verify they fail**
+
+Run: `cd frontend && pnpm test:run -- src/App.test.tsx src/components/TodoSkeleton.test.tsx`
+
+Expected: FAIL because `App.tsx` still only shows skeletons for `extracting` with zero todos, and `TodoSkeleton.tsx` does not accept a `count` prop or expose stable test IDs.
+
+- [ ] **Step 3: Implement the progressive placeholder behavior**
+
+Update `frontend/src/App.tsx` to compute placeholder counts from the existing status model:
+
+```tsx
+const isProcessingVoice = status === "recording" || status === "extracting";
+const skeletonCount = isProcessingVoice ? Math.max(1, 3 - todos.length) : 0;
+
+return (
+  <main className="voice-page-shell">
+    <section className="voice-device-shell" aria-label="Voice-Todos app shell">
+      <header className="voice-header">
+        <h1>Voice Todos</h1>
+      </header>
+
+      <div className="voice-task-container">
+        {showInitialEmptyState ? (
+          // ...
+        ) : null}
+
+        {warningMessage ? (
+          <div className="voice-warning-card" role="alert">
+            {warningMessage}
+          </div>
+        ) : null}
+
+        {todos.length > 0 ? <TodoList todos={todos} /> : null}
+        {skeletonCount > 0 ? (
+          <TodoSkeleton count={skeletonCount} compact={todos.length > 0} />
+        ) : null}
+        {showNoTodosState ? (
+          <div className="voice-result-state">No todos found in this recording.</div>
+        ) : null}
+      </div>
+    </section>
+  </main>
+);
+```
+
+Update `frontend/src/components/TodoSkeleton.tsx` so it can render a variable number of placeholders and tighten spacing when real todos are already present:
+
+```tsx
+import { cn } from "../lib/utils";
+
+interface Props {
+  count?: number;
+  compact?: boolean;
+}
+
+export function TodoSkeleton({ count = 3, compact = false }: Props) {
+  return (
+    <div className={cn("voice-todo-feed", compact && "voice-todo-feed--compact")}>
+      {Array.from({ length: count }).map((_, index) => (
+        <div
+          key={index}
+          data-testid="todo-skeleton-card"
+          className="spring-entry voice-todo-card voice-todo-card--skeleton animate-pulse"
+        >
+          <div className="voice-todo-card__body">
+            <div className="voice-todo-circle voice-todo-circle--skeleton" />
+            <div className="voice-todo-content">
+              <div className="voice-todo-skeleton-line voice-todo-skeleton-line--title" />
+              <div className="voice-meta-row">
+                <div className="voice-todo-skeleton-chip voice-todo-skeleton-chip--wide" />
+                <div className="voice-todo-skeleton-chip" />
+                <div className="voice-todo-skeleton-chip voice-todo-skeleton-chip--wide" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+Add a compact feed variant to `frontend/src/index.css` so the placeholder stack sits naturally beneath real todos:
+
+```css
+.voice-todo-feed--compact {
+  margin-top: 0.875rem;
+}
+```
+
+- [ ] **Step 4: Run the placeholder tests to verify they pass**
+
+Run: `cd frontend && pnpm test:run -- src/App.test.tsx src/components/TodoSkeleton.test.tsx`
+
+Expected: PASS
+
+- [ ] **Step 5: Run the full frontend test suite and build after the placeholder change**
+
+Run: `cd frontend && pnpm test:run && pnpm build`
+
+Expected: PASS
+
+- [ ] **Step 6: Commit the placeholder slice**
+
+```bash
+git add frontend/src/App.tsx frontend/src/App.test.tsx frontend/src/components/TodoSkeleton.tsx frontend/src/components/TodoSkeleton.test.tsx frontend/src/index.css
+git commit -m "feat: keep progressive placeholders while voice processing"
+```
+
+---
+
+## Task 5: Full verification against the approved reference
 
 **Files:**
 - Verify: `docs/superpowers/specs/2026-03-24-item4-ui-redesign-design.md`
@@ -889,6 +1118,7 @@ git commit -m "feat: implement item 4 Voice-Todos UI redesign"
 ## Notes For The Implementer
 
 - Keep `RecordButton` waveform visible only while `status === "recording"` so the UI does not imply active listening during `connecting` or `extracting`.
+- Use `status === "recording" || status === "extracting"` as the placeholder proxy for “voice work still in flight.” This is intentionally a frontend heuristic for this slice, not a new backend protocol contract.
 - Use best-effort index-based diffing for highlight behavior. Do not try to invent stable todo identities on the frontend.
 - Keep warnings inside the phone-shell feed, but keep transcript/raw audio outside the shell in `SessionDetails`.
 - Do not reintroduce the old transcript-first layout or the `Extracted Todos (N)` heading.

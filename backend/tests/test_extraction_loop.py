@@ -204,6 +204,39 @@ async def test_on_stop_waits_for_in_flight_then_runs_exactly_one_final_pass():
 
 
 @pytest.mark.asyncio
+async def test_on_stop_skips_redundant_final_pass_when_transcript_is_unchanged():
+    transcript = TranscriptAccumulator(final_parts=["Buy milk"])
+    send_fn = AsyncMock()
+    started = asyncio.Event()
+    release_first = asyncio.Event()
+    call_texts: list[str] = []
+
+    async def extract_fn(text: str, *, previous_todos: list[Todo]) -> list[Todo]:
+        call_texts.append(text)
+        started.set()
+        await release_first.wait()
+        return [Todo(text="Buy milk")]
+
+    loop = ExtractionLoop(
+        transcript=transcript,
+        send_fn=send_fn,
+        extract_fn=extract_fn,
+    )
+
+    await loop.on_endpoint()
+    await started.wait()
+
+    stop_task = asyncio.create_task(loop.on_stop())
+    await asyncio.sleep(0)
+
+    release_first.set()
+    await stop_task
+
+    assert call_texts == ["Buy milk"]
+    assert send_fn.await_count == 1
+
+
+@pytest.mark.asyncio
 async def test_on_stop_without_in_flight_runs_one_pass():
     transcript = TranscriptAccumulator(final_parts=["Buy milk"])
     extract_fn = AsyncMock(return_value=[Todo(text="Buy milk")])

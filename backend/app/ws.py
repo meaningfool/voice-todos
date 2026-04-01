@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 SONIOX_WS_URL = "wss://stt-rt.soniox.com/transcribe-websocket"
-TOKEN_THRESHOLD = 10
+TOKEN_THRESHOLD = 15
 
 
 async def _relay_soniox_to_browser(
@@ -28,47 +28,51 @@ async def _relay_soniox_to_browser(
     transcript: TranscriptAccumulator,
     extraction_loop: ExtractionLoop,
     recorder: SessionRecorder | None = None,
+    *,
+    finalized_event: asyncio.Event,
 ):
     """Read transcript events from Soniox and forward to browser."""
-    try:
-        async for message in soniox_ws:
-            if recorder:
-                recorder.write_soniox_message(
-                    message if isinstance(message, str) else message.decode()
-                )
-            event = json.loads(message)
-            with logfire.span(
-                "ws.soniox_event",
-                finished=bool(event.get("finished")),
-            ):
+    soniox_event_count = 0
+    browser_relay_count = 0
+    with logfire.span("ws.soniox_relay") as relay_span:
+        try:
+            async for message in soniox_ws:
+                if recorder:
+                    recorder.write_soniox_message(
+                        message if isinstance(message, str) else message.decode()
+                    )
+                event = json.loads(message)
+                soniox_event_count += 1
+
                 if event.get("finished"):
                     return
 
                 result = transcript.apply_event(event)
+                if result.has_fin:
+                    finalized_event.set()
                 tokens = result.tokens
                 if tokens:
-                    with logfire.span(
-                        "ws.browser_relay",
-                        token_count=len(tokens),
-                        final_token_count=result.final_token_count,
-                    ):
-                        await browser_ws.send_json(
-                            {
-                                "type": "transcript",
-                                "tokens": tokens,
-                            }
-                        )
+                    browser_relay_count += 1
+                    await browser_ws.send_json(
+                        {
+                            "type": "transcript",
+                            "tokens": tokens,
+                        }
+                    )
 
                 if result.has_endpoint:
                     await extraction_loop.on_endpoint()
                 elif result.final_token_count > 0:
                     extraction_loop.on_tokens(result.final_token_count)
-    except websockets.ConnectionClosed:
-        logger.warning("Soniox connection closed unexpectedly during relay")
-    except Exception as e:
-        logger.exception("Error relaying from Soniox")
-        with contextlib.suppress(Exception):
-            await browser_ws.send_json({"type": "error", "message": str(e)})
+        except websockets.ConnectionClosed:
+            logger.warning("Soniox connection closed unexpectedly during relay")
+        except Exception as e:
+            logger.exception("Error relaying from Soniox")
+            with contextlib.suppress(Exception):
+                await browser_ws.send_json({"type": "error", "message": str(e)})
+        finally:
+            relay_span.set_attribute("soniox_event_count", soniox_event_count)
+            relay_span.set_attribute("browser_relay_count", browser_relay_count)
 
 
 @router.websocket("/ws")
@@ -78,6 +82,7 @@ async def websocket_endpoint(browser_ws: WebSocket):
     settings = get_settings()
     soniox_ws = None
     relay_task = None
+    finalized_event = asyncio.Event()
     transcript = TranscriptAccumulator()
     extraction_loop: ExtractionLoop | None = None
     recorder = SessionRecorder() if settings.record_sessions else None
@@ -141,6 +146,7 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             with contextlib.suppress(Exception):
                                 await soniox_ws.close()
                             soniox_ws = None
+                        finalized_event = asyncio.Event()
                         if extraction_loop is not None:
                             extraction_loop.cancel()
                             extraction_loop = None
@@ -192,6 +198,7 @@ async def websocket_endpoint(browser_ws: WebSocket):
                                     transcript,
                                     extraction_loop,
                                     recorder,
+                                    finalized_event=finalized_event,
                                 )
                             )
                             ws_phase = "sending_started"
@@ -209,6 +216,7 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             )
 
                     elif msg_type == "stop" and soniox_ws:
+                        logfire.info("ws.stop_received", connection_id=connection_id)
                         ws_phase = "stop_finalize"
                         # Finalize forces Soniox to emit all pending interim
                         # tokens as final, then sends a <fin> marker token.
@@ -217,25 +225,26 @@ async def websocket_endpoint(browser_ws: WebSocket):
                         ws_phase = "stop_eos"
                         await soniox_ws.send(b"")  # Empty frame = end of stream
                         warning_message: str | None = None
-                        if relay_task:
-                            try:
-                                ws_phase = "stop_waiting_for_relay"
-                                await asyncio.wait_for(
-                                    relay_task,
-                                    timeout=settings.soniox_stop_timeout_seconds,
-                                )
-                            except TimeoutError:
-                                warning_message = (
-                                    "Timed out waiting for the final transcript; "
-                                    "todos were not extracted."
-                                )
-                                logger.warning(
-                                    "Timed out waiting for Soniox relay to finish"
-                                )
+                        try:
+                            # <fin> means Soniox has finalized transcript state for all
+                            # prior audio; `finished` and socket close can happen later.
+                            ws_phase = "stop_waiting_for_fin"
+                            await asyncio.wait_for(
+                                finalized_event.wait(),
+                                timeout=settings.soniox_stop_timeout_seconds,
+                            )
+                        except TimeoutError:
+                            warning_message = (
+                                "Timed out waiting for the final transcript; "
+                                "todos were not extracted."
+                            )
+                            logger.warning(
+                                "Timed out waiting for Soniox finalization to finish"
+                            )
+                            if relay_task and not relay_task.done():
                                 relay_task.cancel()
                                 with contextlib.suppress(asyncio.CancelledError):
                                     await relay_task
-                            finally:
                                 relay_task = None
 
                         full_transcript = transcript.full_text
@@ -277,6 +286,12 @@ async def websocket_endpoint(browser_ws: WebSocket):
                         if warning_message:
                             stopped_payload["warning"] = warning_message
                         ws_phase = "stop_sending_stopped"
+                        logfire.info(
+                            "ws.stopped_sent",
+                            connection_id=connection_id,
+                            transcript_chars=len(full_transcript),
+                            warning=warning_message,
+                        )
                         await browser_ws.send_json(stopped_payload)
 
                         if extraction_loop is not None:
@@ -285,6 +300,11 @@ async def websocket_endpoint(browser_ws: WebSocket):
                         ws_phase = "stop_closing_soniox"
                         with contextlib.suppress(Exception):
                             await soniox_ws.close()
+                        if relay_task and not relay_task.done():
+                            relay_task.cancel()
+                            with contextlib.suppress(asyncio.CancelledError):
+                                await relay_task
+                        relay_task = None
                         soniox_ws = None
 
                 # Binary message = audio frame

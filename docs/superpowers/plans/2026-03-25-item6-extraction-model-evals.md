@@ -1,14 +1,16 @@
-# Extraction Model Evals Implementation Plan
+# Item 6: Extraction Model Evals Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Spec:** `docs/superpowers/specs/2026-04-01-item6-extraction-model-evals-design.md`
 
 **Goal:** Add a repeatable, config-driven eval harness for todo extraction so we can compare multiple LLM models and Gemini thinking settings against the same labeled dataset without editing production code between runs.
 
 **Architecture:** The production extractor currently hardcodes a singleton `Agent("google-gla:gemini-3-flash-preview", ...)` in `backend/app/extract.py`. We will refactor that path so model choice and model settings are injectable, then build a code-first eval runner using Pydantic Evals. The plan now assumes a dedicated `extraction_quality` eval suite under `backend/evals/`, with one stable dataset file (`todo_extraction_v1.json`), one dataset loader module, one count-based evaluator module, one experiment-config module, and one runner module.
 
-**Tech Stack:** FastAPI backend code, PydanticAI, Pydantic Evals, Logfire, pytest, Gemini via Google GLA, optional OpenAI / Anthropic providers later
+**Tech Stack:** FastAPI backend code, PydanticAI, Pydantic Evals, Logfire, pytest, Gemini via Google GLA, Mistral APIs, optional OpenAI / Anthropic providers later
 
-**References:** `backend/app/extract.py`, `backend/app/models.py`, `backend/tests/test_extract.py`, `backend/tests/fixtures/`, `docs/references/logfire-trace-analysis.md`
+**References:** `backend/app/extract.py`, `backend/app/models.py`, `backend/tests/test_extract.py`, `backend/tests/fixtures/`, `docs/references/logfire-trace-analysis.md`, `docs/references/eval-models-and-stacks.md`
 
 ---
 
@@ -45,9 +47,11 @@ We will treat this as an extraction-task eval, not a full pipeline eval.
 - First experiment matrix:
   - `google-gla:gemini-3-flash-preview` with provider defaults
   - `google-gla:gemini-3-flash-preview` with minimal thinking
-  - `google-gla:gemini-2.5-flash` with thinking disabled
-  - `google-gla:gemini-2.5-flash-lite` with thinking disabled
+  - `google-gla:gemini-3.1-flash-lite-preview` with provider defaults
+  - `google-gla:gemini-3.1-flash-lite-preview` with minimal thinking
+  - `mistral-small-2603` with provider defaults
 - Later experiment matrix:
+  - additional Gemini variants to be defined later
   - OpenAI / Anthropic variants once keys are available
 
 The initial goal is not to find a perfect scoring system. It is to create a stable harness that lets us compare quality, latency, token use, and cost on the same cases.
@@ -357,10 +361,11 @@ cd backend && uv run python evals/extraction_quality/run.py --list-experiments
 
 Expected output includes:
 
-- `gemini3_default`
-- `gemini3_minimal_thinking`
-- `gemini25_flash_no_thinking`
-- `gemini25_flash_lite_no_thinking`
+- `gemini3_flash_default`
+- `gemini3_flash_minimal_thinking`
+- `gemini31_flash_lite_default`
+- `gemini31_flash_lite_minimal_thinking`
+- `mistral_small_4_default`
 
 - [ ] **Step 2: Implement named experiment configs**
 
@@ -368,14 +373,20 @@ Define a small experiment-config registry in `backend/evals/extraction_quality/e
 
 ```python
 EXPERIMENTS = {
-    "gemini3_default": ExtractionConfig(...),
-    "gemini3_minimal_thinking": ExtractionConfig(
+    "gemini3_flash_default": ExtractionConfig(...),
+    "gemini3_flash_minimal_thinking": ExtractionConfig(
         model_name="google-gla:gemini-3-flash-preview",
         model_settings={"google_thinking_config": {"thinking_level": "minimal"}},
     ),
-    "gemini25_flash_no_thinking": ExtractionConfig(
-        model_name="google-gla:gemini-2.5-flash",
-        model_settings={"google_thinking_config": {"thinking_budget": 0}},
+    "gemini31_flash_lite_default": ExtractionConfig(
+        model_name="google-gla:gemini-3.1-flash-lite-preview",
+    ),
+    "gemini31_flash_lite_minimal_thinking": ExtractionConfig(
+        model_name="google-gla:gemini-3.1-flash-lite-preview",
+        model_settings={"google_thinking_config": {"thinking_level": "minimal"}},
+    ),
+    "mistral_small_4_default": ExtractionConfig(
+        model_name="mistral-small-2603",
     ),
     ...
 }
@@ -411,7 +422,7 @@ Important behavior:
 
 - if a required provider key is missing, skip that experiment with a clear message
 - do not require any code edit to switch models
-- default to Google-only experiments if only `GEMINI_API_KEY` is present
+- run only the subset of experiments whose provider keys are available
 
 - [ ] **Step 4: Manually run the first experiment set**
 
@@ -460,7 +471,7 @@ Include example commands:
 
 ```bash
 cd backend && uv run python evals/extraction_quality/run.py --list-experiments
-cd backend && uv run python evals/extraction_quality/run.py --experiment gemini3_default
+cd backend && uv run python evals/extraction_quality/run.py --experiment gemini3_flash_default
 cd backend && uv run python evals/extraction_quality/run.py --all --repeat 3 --max-concurrency 2
 ```
 
@@ -500,7 +511,7 @@ git commit -m "docs: add extraction eval workflow guide"
 1. Implement the extraction-config refactor.
 2. Create the dataset asset and loader using the resolved `todo_extraction_v1.json` design.
 3. Implement the count-based evaluator.
-4. Add the Google-only experiment matrix and run it.
+4. Add the initial LLM experiment matrix and run it.
 5. Review Logfire results and sample outputs before adding non-Google providers.
 
 ---
@@ -510,5 +521,6 @@ git commit -m "docs: add extraction eval workflow guide"
 - Are the current nine fixtures enough seed material for `todo_extraction_v1.json`?
 - When should we add field-level evaluators for `due_date`, `assign_to`, or `category` after the prompt and schema are tightened?
 - Do we need separate scoring for transcript-noise robustness versus extraction count accuracy?
-- Is `gemini-3-flash-preview` with minimal thinking competitive enough that a provider switch is unnecessary?
+- Is `gemini-3.1-flash-lite-preview` competitive enough that it should replace `gemini-3-flash-preview` as the lightweight default?
+- Is `mistral-small-2603` competitive enough to justify expanding the Mistral-oriented stack work?
 - Do we need a second eval track for incremental extraction with `previous_todos`, not just final transcript extraction?

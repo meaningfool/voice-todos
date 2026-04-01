@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 
 from pydantic_ai import Agent
+from pydantic_ai.models.google import GoogleModel
+from pydantic_ai.providers.google import GoogleProvider
 
 from app.config import get_settings
 from app.models import ExtractionResult, Todo
@@ -44,12 +46,18 @@ _agent: Agent[None, ExtractionResult] | None = None
 def _get_agent() -> Agent[None, ExtractionResult]:
     global _agent
     if _agent is None:
-        get_settings()  # ensures .env is loaded before the provider is used
+        settings = get_settings()
 
         _agent = Agent(
-            "google-gla:gemini-3-flash-preview",
+            GoogleModel(
+                "gemini-3-flash-preview",
+                provider=GoogleProvider(api_key=settings.gemini_api_key),
+            ),
             output_type=ExtractionResult,
             system_prompt=_SYSTEM_PROMPT,
+            model_settings={
+                "google_thinking_config": {"thinking_level": "minimal"},
+            },
         )
     return _agent
 

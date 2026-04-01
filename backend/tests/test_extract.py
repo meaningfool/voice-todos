@@ -33,6 +33,60 @@ def _reset_agent():
     _extract_mod._agent = None
 
 
+def test_get_agent_uses_configured_gemini_api_key():
+    """The cached agent should be built with the configured Gemini API key."""
+    fake_settings = SimpleNamespace(gemini_api_key="gemini-test-key")
+    fake_provider = object()
+    fake_model = object()
+    fake_agent = object()
+
+    with (
+        patch("app.extract.get_settings", return_value=fake_settings),
+        patch("app.extract.GoogleProvider", return_value=fake_provider) as mock_provider,
+        patch("app.extract.GoogleModel", return_value=fake_model) as mock_model,
+        patch("app.extract.Agent", return_value=fake_agent) as mock_agent,
+    ):
+        agent = _extract_mod._get_agent()
+
+    assert agent is fake_agent
+    mock_provider.assert_called_once_with(api_key="gemini-test-key")
+    mock_model.assert_called_once_with(
+        "gemini-3-flash-preview",
+        provider=fake_provider,
+    )
+    mock_agent.assert_called_once_with(
+        fake_model,
+        output_type=ExtractionResult,
+        system_prompt=_extract_mod._SYSTEM_PROMPT,
+        model_settings={
+            "google_thinking_config": {"thinking_level": "minimal"}
+        },
+    )
+
+
+def test_get_agent_uses_minimal_google_thinking():
+    """The cached agent should request minimal Google thinking."""
+    fake_provider = object()
+    fake_model = object()
+    fake_agent = object()
+
+    with (
+        patch(
+            "app.extract.get_settings",
+            return_value=SimpleNamespace(gemini_api_key="test-key"),
+        ),
+        patch("app.extract.GoogleProvider", return_value=fake_provider),
+        patch("app.extract.GoogleModel", return_value=fake_model),
+        patch("app.extract.Agent", return_value=fake_agent) as mock_agent,
+    ):
+        _extract_mod._agent = None
+        _extract_mod._get_agent()
+
+    assert mock_agent.call_args.kwargs["model_settings"] == {
+        "google_thinking_config": {"thinking_level": "minimal"}
+    }
+
+
 @requires_gemini
 @pytest.mark.asyncio
 async def test_extract_todos_from_clear_transcript():

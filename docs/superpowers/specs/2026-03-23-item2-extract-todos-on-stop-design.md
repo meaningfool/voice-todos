@@ -1,4 +1,4 @@
-# Item 2: Extract Todos on Stop
+# Item 2 Design: Extract Todos on Stop
 
 User clicks Stop. Todos are extracted from the full transcript and appear as a Todoist-style card list below the transcript.
 
@@ -181,7 +181,7 @@ End-to-end test that verifies no audio bytes are dropped between the browser's A
 ## Out of Scope
 
 - Real-time extraction while speaking (item 3)
-- Tentative/confirmed todo states (item 4)
+- Later todo presentation-state refinements
 - Todo persistence or database
 - Todo editing or deletion
 - Authentication
