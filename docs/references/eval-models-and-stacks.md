@@ -8,15 +8,30 @@ These evals run locally. The tables below summarize the current model candidates
 
 | Block | Candidates |
 |------|------------|
-| STT | `stt-rt-v4`, `gemini-3.1-flash-live-preview`, `qwen3.5-omni-plus-realtime`, `voxtral-mini-transcribe-realtime-2602` |
+| STT | `stt-rt-v4`, `chirp_3`, `voxtral-mini-transcribe-realtime-2602` |
 | LLM extraction | `gemini-3-flash-preview` (default), `gemini-3-flash-preview` (`thinking_level="minimal"`), `gemini-3.1-flash-lite-preview` (default), `gemini-3.1-flash-lite-preview` (`thinking_level="minimal"`), `mistral-small-2603` |
 
 | Stack | App host | STT | LLM |
 |------|----------|-----|-----|
 | Mistral | Koyeb | `voxtral-mini-transcribe-realtime-2602` | `mistral-small-2603` |
-| Google | Cloud Run | `gemini-3.1-flash-live-preview` | `gemini-3-flash-preview` |
+| Google | Cloud Run | `chirp_3` | `gemini-3-flash-preview` |
 
-Soniox and Qwen stay in the candidate list as comparison baselines outside the two main colocated stacks.
+Soniox stays in the candidate list as the current baseline outside the two main colocated stacks.
+
+## Current Decisions
+
+This reference doc reflects the decisions captured in this thread and recorded in the source-of-truth docs:
+
+- STT evals now focus on dedicated transcription models rather than conversational live/omni models
+- `qwen3.5-omni-plus-realtime` is removed from the current STT eval matrix
+- Google STT moves from Gemini Live to Google Cloud Speech-to-Text `chirp_3`
+- Item 7 should optimize for WER and speed, with provider capability differences recorded explicitly
+
+Decision records:
+
+- `docs/superpowers/specs/2026-04-01-item7-stt-model-evals-design.md`
+- `docs/superpowers/plans/2026-04-01-item7-stt-model-evals.md`
+- `docs/superpowers/plans/2026-03-25-item6-extraction-model-evals.md`
 
 ## STT Candidates
 
@@ -41,26 +56,15 @@ Soniox and Qwen stay in the candidate list as comparison baselines outside the t
   - Realtime transcription guide: https://docs.mistral.ai/capabilities/audio_transcription/realtime_transcription
   - Audio overview: https://docs.mistral.ai/capabilities/audio/
 
-### Google Gemini 3.1 Flash Live Preview
+### Google Cloud Chirp 3
 
-- **Model:** `gemini-3.1-flash-live-preview`
-- **Role in evals:** Primary Google-side live speech candidate.
-- **Quick description:** Realtime multimodal live model. For our evals, the relevant part is using it as a live speech-to-text candidate.
+- **Model:** `chirp_3`
+- **Role in evals:** Primary Google dedicated STT candidate.
+- **Quick description:** Google Cloud Speech-to-Text transcription model positioned for better accuracy and speed than earlier Chirp versions.
 - **Official docs:**
-  - Model page: https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-live-preview
-  - Live API capabilities: https://ai.google.dev/gemini-api/docs/live-api/capabilities
-  - Live API guide: https://ai.google.dev/gemini-api/docs/live-guide
-  - Announcement: https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-1-flash-live/
-
-### Qwen Omni Realtime
-
-- **Model:** `qwen3.5-omni-plus-realtime`
-- **Role in evals:** Additional live STT candidate to compare against Soniox, Gemini Live, and Voxtral.
-- **Quick description:** Realtime omni model with speech input/output support. For our evals, the relevant part is using it as a live speech-to-text candidate.
-- **Official docs:**
-  - Realtime API: https://www.alibabacloud.com/help/en/model-studio/realtime
-  - Model catalog: https://www.alibabacloud.com/help/en/model-studio/models
-  - Qwen Omni repo: https://github.com/QwenLM/Qwen3-Omni
+  - Chirp 3 model docs: https://docs.cloud.google.com/speech-to-text/v2/docs/chirp-model
+  - Transcription models overview: https://docs.cloud.google.com/speech-to-text/docs/transcription-model
+  - Speech-to-Text overview: https://docs.cloud.google.com/speech-to-text/docs/basics
 
 ## LLM Candidates
 
@@ -137,12 +141,12 @@ Soniox and Qwen stay in the candidate list as comparison baselines outside the t
 ### Google Stack
 
 - **App host:** Cloud Run
-- **STT:** `gemini-3.1-flash-live-preview`
+- **STT:** `chirp_3`
 - **LLM:** `gemini-3-flash-preview`
-- **Direction:** Cloud Run-hosted Python app plus Google-managed live speech and LLM APIs
-- **Notes:** This is the Google-oriented stack we want to test, centered on a live Gemini speech path rather than Chirp.
+- **Direction:** Cloud Run-hosted Python app plus Google Cloud Speech-to-Text and Gemini-managed LLM APIs
+- **Notes:** This is the Google-oriented stack we want to test, centered on dedicated Google STT rather than Gemini Live.
 - **Official docs:**
   - Cloud Run overview: https://docs.cloud.google.com/run/docs/overview/what-is-cloud-run
-  - Gemini 3.1 Flash Live Preview: https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-live-preview
-  - Live API guide: https://ai.google.dev/gemini-api/docs/live-guide
+  - Chirp 3 model docs: https://docs.cloud.google.com/speech-to-text/v2/docs/chirp-model
+  - Speech-to-Text overview: https://docs.cloud.google.com/speech-to-text/docs/basics
   - Gemini 3 guide: https://ai.google.dev/gemini-api/docs/gemini-3

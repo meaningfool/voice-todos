@@ -4,11 +4,11 @@
 
 **Spec:** `docs/superpowers/specs/2026-04-01-item7-stt-model-evals-design.md`
 
-**Goal:** Add a repeatable, config-driven STT eval harness so we can compare Soniox and candidate Google, Qwen, and Mistral speech models on the same recorded audio fixtures without editing application code between runs.
+**Goal:** Add a repeatable, config-driven STT eval harness so we can compare Soniox, Google Cloud Speech-to-Text `chirp_3`, and Voxtral on the same recorded audio fixtures using WER and speed as the main outputs.
 
-**Architecture:** Keep the production `/ws` path focused on Soniox for now. Build a dedicated `stt_quality` eval suite under `backend/evals/` with one stable manifest file, one fixture loader, one transcript-metrics module, one provider-adapter module, one experiment-config module, and one runner module. The runner should replay saved PCM fixtures through provider-specific adapters, capture transcript and timing signals in a common result shape, and report deterministic metrics plus optional Logfire metadata.
+**Architecture:** Keep the production `/ws` path focused on Soniox for now. Build a dedicated `stt_quality` eval suite under `backend/evals/` with one stable manifest file, one fixture loader, one transcript-metrics module, one provider-capability map, one provider-adapter module, one experiment-config module, and one runner module. The runner should replay saved PCM fixtures through each provider path, compute WER plus timing metrics, and record capability differences explicitly instead of pretending every provider has the same endpointing or finalization signals.
 
-**Tech Stack:** FastAPI backend code, websockets, provider HTTP / realtime clients as needed, pytest, Logfire, recorded PCM fixtures, existing transcript accumulation behavior as reference
+**Tech Stack:** FastAPI backend code, websockets, Google Cloud Speech-to-Text, Soniox realtime STT, Mistral realtime transcription APIs, pytest, Logfire, recorded PCM fixtures
 
 **References:** `backend/app/ws.py`, `backend/app/config.py`, `backend/app/transcript_accumulator.py`, `backend/tests/test_replay.py`, `backend/tests/test_soniox_integration.py`, `backend/tests/fixtures/`, `docs/references/soniox.md`, `docs/references/eval-models-and-stacks.md`
 
@@ -20,7 +20,7 @@ This plan covers exactly five deliverables:
 
 1. Add an eval-only settings surface for non-Soniox STT providers.
 2. Create and maintain a dedicated STT fixture manifest asset.
-3. Implement deterministic transcript and timing metrics for STT runs.
+3. Implement a provider capability map plus deterministic WER and timing metrics for STT runs.
 4. Add a config-driven STT runner with provider adapters and named experiment configs.
 5. Document how to run and compare STT experiments locally.
 
@@ -30,37 +30,35 @@ Out of scope for this plan:
 - downstream todo extraction scoring
 - browser microphone end-to-end testing
 - automatic fixture capture from live sessions
-- collapsing STT quality into one blended score
+- conversational voice-agent evals
 - deciding the final deployment stack
 
 ---
 
 ## Eval Strategy
 
-We will treat this as a replay-driven STT eval, not an end-to-end pipeline eval.
+We will treat this as a replay-driven dedicated-STT eval, not an end-to-end pipeline eval.
 
 - Input: recorded PCM fixture audio plus deterministic audio metadata
-- Output: final transcript, partial/final timing signals when exposed, and provider status
+- Output: final transcript, WER, timing metrics, provider capability notes, and provider status
 - Ground truth: a stable dedicated STT manifest plus existing audio assets
 - Initial seed material: `backend/tests/fixtures/*/audio.pcm`, `result.json`, and optional `soniox.jsonl` for Soniox-only debugging
 - First candidate matrix:
   - `soniox_baseline` -> `stt-rt-v4`
-  - `gemini31_flash_live` -> `gemini-3.1-flash-live-preview`
-  - `qwen_omni_realtime` -> `qwen3.5-omni-plus-realtime`
+  - `google_chirp3` -> `chirp_3`
   - `voxtral_realtime` -> `voxtral-mini-transcribe-realtime-2602`
 - Initial reporting dimensions:
-  - normalized final transcript exact match against the saved transcript reference
-  - explicit `reference_transcript` and `predicted_transcript` for inspection
-  - `finalization_success`
-  - `first_partial_latency_ms` where available
+  - `word_error_rate`
+  - explicit `reference_transcript` and `predicted_transcript`
   - `final_latency_ms`
+  - `first_partial_latency_ms` where available
+  - provider capability flags for endpointing / manual finalization / partial text
   - provider/runtime status for skipped or failed runs
 - Later reporting dimensions:
-  - WER or CER if normalized exact match proves too brittle
-  - partial transcript quality scoring
+  - CER if WER alone proves insufficient
   - end-to-end stack comparisons with the extraction eval harness
 
-The initial goal is not to produce one master score. It is to create a stable harness that lets us compare transcript quality, stop behavior, latency, and operational stability on the same cases.
+The initial goal is not to produce one master score. It is to create a stable harness that lets us compare transcript quality and speed on the same cases while documenting feature mismatches honestly.
 
 ---
 
@@ -84,14 +82,15 @@ Decision:
 
 Decision:
 
-- use a deterministic normalized transcript exact-match metric as the first transcript-quality metric
-- report `reference_transcript` and `predicted_transcript` alongside the metric
-- track `finalization_success`, `first_partial_latency_ms`, and `final_latency_ms` separately
-- log partial event counts and provider status as diagnostics when available
+- use `word_error_rate` as the first transcript-quality metric
+- report `reference_transcript` and `predicted_transcript` alongside WER
+- track `final_latency_ms` as the primary speed metric
+- track `first_partial_latency_ms` only when the provider exposes partial transcript events
+- record provider capability flags for endpointing, manual finalization, partial text, and final transcript markers
 - do not use an LLM judge
-- do not collapse transcript quality, latency, and stop behavior into one total score in v1
+- do not collapse WER and latency into one total score in v1
 
-This keeps the first STT harness explainable: it answers "did the provider reproduce the saved transcript, and how quickly and cleanly did it do it?" without hiding tradeoffs inside one composite number.
+This keeps the first STT harness explainable: it answers "how accurate was the final transcript, how fast did it arrive, and what streaming features did the provider actually expose?"
 
 ---
 
@@ -103,20 +102,21 @@ This keeps the first STT harness explainable: it answers "did the provider repro
 |------|----------------|
 | `backend/evals/stt_quality/stt_fixture_manifest_v1.json` | Dedicated stable manifest file for STT-quality experiments; canonical source for eval runs |
 | `backend/evals/stt_quality/fixture_loader.py` | Load the STT manifest into deterministic eval cases with audio metadata and reference transcript |
-| `backend/evals/stt_quality/transcript_metrics.py` | Normalize transcripts and compute deterministic transcript/timing result fields |
+| `backend/evals/stt_quality/transcript_metrics.py` | Compute WER and deterministic timing result fields |
+| `backend/evals/stt_quality/provider_capabilities.py` | Static capability map for endpointing, manual finalization, partial text, and final transcript markers |
 | `backend/evals/stt_quality/provider_adapters.py` | Provider-specific replay adapters normalized behind one common STT result interface |
-| `backend/evals/stt_quality/experiment_configs.py` | Named experiment-config registry for Soniox, Gemini Live, Qwen, and Voxtral runs |
+| `backend/evals/stt_quality/experiment_configs.py` | Named experiment-config registry for Soniox, Google Chirp 3, and Voxtral runs |
 | `backend/evals/stt_quality/run.py` | CLI runner for STT-quality experiment configs and repeated replay runs |
 | `backend/evals/stt_quality/README.md` | Short usage guide for running this STT eval suite and comparing outputs |
 | `backend/tests/test_stt_fixture_loader.py` | Focused tests for the STT manifest schema and loader behavior |
-| `backend/tests/test_stt_transcript_metrics.py` | Deterministic tests for transcript normalization and metric construction |
+| `backend/tests/test_stt_transcript_metrics.py` | Deterministic tests for WER and timing metric construction |
 | `backend/tests/test_stt_experiment_configs.py` | Smoke-level tests for the STT experiment registry and skip logic |
 
 ### Backend - Modified files
 
 | File | Change |
 |------|--------|
-| `backend/app/config.py` | Add optional API-key settings and runner defaults needed by non-Soniox STT evals |
+| `backend/app/config.py` | Add optional settings for Google Cloud STT and Mistral auth needed by the STT eval runner |
 | `backend/tests/test_config.py` | Add tests for the new optional STT-eval settings without changing production requirements |
 
 ### Backend - Existing files to reference while implementing
@@ -144,7 +144,7 @@ The current settings surface only covers Soniox and the existing Gemini extracti
 Extend `backend/tests/test_config.py` with focused tests that prove:
 
 1. the existing Soniox + Gemini env still loads unchanged
-2. optional STT-eval keys such as `MISTRAL_API_KEY` and `QWEN_API_KEY` default to `None`
+2. optional STT-eval settings such as `MISTRAL_API_KEY` and `GOOGLE_CLOUD_PROJECT_ID` default to `None`
 3. those optional keys load when present without becoming required for app startup
 
 Suggested cases:
@@ -173,8 +173,8 @@ Recommended shape:
 class Settings(BaseSettings):
     soniox_api_key: str
     gemini_api_key: str
+    google_cloud_project_id: str | None = None
     mistral_api_key: str | None = None
-    qwen_api_key: str | None = None
     record_sessions: bool = False
     soniox_stop_timeout_seconds: float = 30.0
 ```
@@ -183,6 +183,7 @@ Implementation guidance:
 
 - keep `soniox_api_key` and `gemini_api_key` required exactly as they are today
 - add only the optional fields needed by the STT eval runner
+- rely on Google ADC / service-account auth for Chirp 3 instead of trying to reuse `GEMINI_API_KEY`
 - avoid coupling these new settings to production websocket startup logic
 
 - [ ] **Step 4: Run config tests to verify they pass**
@@ -291,30 +292,31 @@ git commit -m "feat: add dedicated stt eval manifest"
 
 ---
 
-## Task 3: Implement transcript and timing metrics
+## Task 3: Implement provider capability mapping plus WER and timing metrics
 
 **Files:**
 - Add: `backend/evals/stt_quality/transcript_metrics.py`
+- Add: `backend/evals/stt_quality/provider_capabilities.py`
 - Add: `backend/tests/test_stt_transcript_metrics.py`
 
-The first STT eval pass should stay deterministic and easy to read. We want one normalized transcript-quality metric plus separate timing and finalization fields, not a blended score.
+The first STT eval pass should stay deterministic and easy to read. We want WER plus speed, with provider capability differences recorded explicitly rather than hidden in one generic adapter contract.
 
 - [ ] **Step 1: Write failing tests for transcript normalization and metrics**
 
 Add `backend/tests/test_stt_transcript_metrics.py` with focused tests that prove:
 
-1. transcript normalization ignores case, punctuation, and redundant whitespace
-2. normalized exact match passes for semantically identical transcript strings
-3. `finalization_success` stays separate from transcript exact match
-4. timing fields preserve `None` when a provider does not expose partials
+1. WER is zero for identical transcripts
+2. WER reflects word-level insertions, deletions, and substitutions
+3. timing fields preserve `None` when a provider does not expose partials
+4. provider capability records remain separate from transcript metrics
 
 Suggested cases:
 
 ```python
-def test_normalize_transcript_ignores_case_punctuation_and_spacing():
+def test_word_error_rate_is_zero_for_identical_transcripts():
     ...
 
-def test_build_transcript_metrics_reports_exact_match_and_latencies():
+def test_build_transcript_metrics_reports_wer_and_latencies():
     ...
 ```
 
@@ -326,31 +328,30 @@ Expected: FAIL because the metric module does not exist yet
 
 - [ ] **Step 3: Implement the transcript metric module**
 
-Add `backend/evals/stt_quality/transcript_metrics.py`.
+Add `backend/evals/stt_quality/transcript_metrics.py` and `backend/evals/stt_quality/provider_capabilities.py`.
 
 Recommended shape:
 
 ```python
-def normalize_transcript(text: str) -> str:
+def word_error_rate(reference: str, hypothesis: str) -> float:
     ...
 
 def build_transcript_metrics(
     *,
     reference_transcript: str,
     predicted_transcript: str,
-    finalization_success: bool,
     first_partial_latency_ms: float | None,
     final_latency_ms: float | None,
-    partial_event_count: int | None = None,
+    capability_flags: dict[str, bool | str | None],
 ) -> dict[str, object]:
     ...
 ```
 
 Implementation guidance:
 
-- keep normalization deterministic and documented
+- compute WER deterministically in repo code
 - include raw reference/predicted transcripts in the output record
-- do not compute WER or CER in v1 unless exact-match brittleness blocks progress
+- keep capability mapping separate from metric computation
 - keep the result shape generic enough for all providers
 
 - [ ] **Step 4: Run the metric tests to verify they pass**
@@ -362,7 +363,7 @@ Expected: PASS
 - [ ] **Step 5: Commit the metric module**
 
 ```bash
-git add backend/evals/stt_quality/transcript_metrics.py backend/tests/test_stt_transcript_metrics.py
+git add backend/evals/stt_quality/transcript_metrics.py backend/evals/stt_quality/provider_capabilities.py backend/tests/test_stt_transcript_metrics.py
 git commit -m "feat: add stt transcript metrics"
 ```
 
@@ -391,8 +392,7 @@ cd backend && uv run python evals/stt_quality/run.py --list-experiments
 Expected output includes:
 
 - `soniox_baseline`
-- `gemini31_flash_live`
-- `qwen_omni_realtime`
+- `google_chirp3`
 - `voxtral_realtime`
 
 - [ ] **Step 2: Implement named STT experiment configs**
@@ -414,8 +414,7 @@ class SttExperimentConfig:
 
 EXPERIMENTS = {
     "soniox_baseline": SttExperimentConfig(...),
-    "gemini31_flash_live": SttExperimentConfig(...),
-    "qwen_omni_realtime": SttExperimentConfig(...),
+    "google_chirp3": SttExperimentConfig(...),
     "voxtral_realtime": SttExperimentConfig(...),
 }
 ```
@@ -424,6 +423,7 @@ Implementation guidance:
 
 - keep the registry generic enough to add later STT candidates without rewriting the runner
 - include the required env-var set for clean skip behavior
+- record whether the provider is streaming websocket STT or API-based streaming recognition
 - keep replay pacing configurable but deterministic by default
 
 - [ ] **Step 3: Implement provider adapters with one shared result shape**
@@ -444,9 +444,10 @@ class SttAdapter(Protocol):
 
 Implementation guidance:
 
-- normalize all providers into one `SttRunResult` shape with transcript, timing fields, status, and raw metadata
+- normalize all providers into one `SttRunResult` shape with transcript, timing fields, capability flags, status, and raw metadata
 - keep Soniox adapter behavior aligned with the current finalize -> wait -> end ordering described in `backend/app/ws.py` and `docs/references/soniox.md`
 - stream PCM in realtime-style chunks for providers that expect live audio input
+- map Google Chirp 3 through Cloud Speech-to-Text streaming recognition rather than the Gemini Live API
 - skip experiments with missing provider keys and print a clear reason instead of crashing
 
 - [ ] **Step 4: Wire the runner and reporting flow**
@@ -455,7 +456,7 @@ Add `backend/evals/stt_quality/run.py` that:
 
 - loads the manifest once
 - runs one or many named experiments against the selected cases
-- uses `transcript_metrics.py` to build per-case result records
+- uses `transcript_metrics.py` plus `provider_capabilities.py` to build per-case result records
 - prints comparable per-case summaries
 - attaches provider/model metadata to Logfire when configured
 
@@ -515,7 +516,7 @@ Document:
 4. how to list experiments
 5. how to run one experiment against one case
 6. how to run the whole matrix
-7. how to interpret transcript and timing fields
+7. how to interpret WER, latency, and capability fields
 8. how to add a new STT provider config safely
 
 Include example commands:
@@ -532,7 +533,7 @@ Document the main traps explicitly:
 
 - the manifest is canonical, but the raw audio still lives under `backend/tests/fixtures/`
 - Soniox finalize ordering matters and should remain the adapter reference behavior
-- normalized transcript exact match is intentionally simple and may be tightened later
+- WER and final latency are the primary metrics; capability flags explain what is or is not comparable across providers
 - providers expose different timing signals, so missing partial metrics should be represented explicitly rather than guessed
 - STT eval results are decision support, not rollout automation
 
@@ -549,10 +550,11 @@ git commit -m "docs: add stt eval workflow guide"
 
 - [ ] optional STT-eval provider settings load without changing the current production requirements
 - [ ] the STT manifest decision is documented and implemented as a stable repo asset
-- [ ] transcript and timing metrics are deterministic and provider-agnostic
+- [ ] WER and timing metrics are deterministic and provider-agnostic
+- [ ] provider capability differences are recorded explicitly
 - [ ] the runner can compare multiple STT configs without code edits
 - [ ] skipped experiments are reported clearly when provider keys are missing
-- [ ] transcript quality, finalization success, and latency remain separate outputs
+- [ ] transcript quality and latency remain separate outputs
 - [ ] no production websocket changes are required to switch STT eval experiments
 
 ---
@@ -561,15 +563,15 @@ git commit -m "docs: add stt eval workflow guide"
 
 1. Add the optional STT-eval provider settings.
 2. Create the manifest and fixture loader from the existing audio fixtures.
-3. Implement transcript and timing metrics.
+3. Implement the capability map plus WER and timing metrics.
 4. Build the experiment registry and validate the Soniox baseline first.
-5. Add the remaining provider adapters and compare outputs on the same seed cases.
+5. Add the Chirp 3 and Voxtral adapters and compare outputs on the same seed cases.
 
 ---
 
 ## Open Questions To Revisit After The First STT Eval Run
 
-- Is normalized transcript exact match sufficient, or do we need WER or CER next?
+- Is WER sufficient, or do we need CER or per-language scoring next?
 - Which providers expose timing signals that are comparable enough for the same report layout?
 - Do we need a second STT-focused fixture wave for accents, correction-heavy speech, or longer continuous dictation?
 - When are both the STT and extraction eval tracks stable enough to justify end-to-end stack comparisons?

@@ -56,6 +56,12 @@ We will treat this as an extraction-task eval, not a full pipeline eval.
 
 The initial goal is not to find a perfect scoring system. It is to create a stable harness that lets us compare quality, latency, token use, and cost on the same cases.
 
+Experiment availability note:
+
+- the four Gemini experiments should work with the existing Google routing and `GEMINI_API_KEY`
+- the Mistral experiment is intentionally listed, but it requires explicit Mistral provider wiring plus `MISTRAL_API_KEY`
+- if the Mistral provider dependency or key is missing, the runner should skip that experiment clearly rather than fail the whole run
+
 ---
 
 ## Design Gates
@@ -394,6 +400,8 @@ EXPERIMENTS = {
 
 Implementation guidance:
 
+- the Gemini configs should use the existing Google path and current API key setup
+- the Mistral config should only be enabled when `MISTRAL_API_KEY` and the Mistral provider dependency are available
 - keep the runner generic enough to add OpenAI / Anthropic configs later
 - include a stable `prompt_version` field in experiment metadata
 - allow `--repeat N` and `--max-concurrency N`
