@@ -47,11 +47,16 @@ def _freeze_for_cache(value: Any) -> Any:
     return value
 
 
-def _config_cache_key(config: ExtractionConfig) -> tuple[Any, ...]:
+def _config_cache_key(
+    config: ExtractionConfig,
+    *,
+    prompt_sha256: str,
+) -> tuple[Any, ...]:
     return (
         config.model_name,
         config.prompt_family,
         config.prompt_version,
+        prompt_sha256,
         _freeze_for_cache(config.model_settings),
     )
 
@@ -115,12 +120,16 @@ def _build_model(model_name: str) -> Any:
     )
 
 
-def build_extraction_agent(config: ExtractionConfig) -> Agent[None, ExtractionResult]:
-    prompt_ref = get_extraction_prompt_ref(config)
+def build_extraction_agent(
+    config: ExtractionConfig,
+    *,
+    prompt_ref: PromptRef | None = None,
+) -> Agent[None, ExtractionResult]:
+    resolved_prompt_ref = prompt_ref or get_extraction_prompt_ref(config)
     return Agent(
         _build_model(config.model_name),
         output_type=ExtractionResult,
-        instructions=prompt_ref.content,
+        instructions=resolved_prompt_ref.content,
         model_settings=_resolve_model_settings(config),
     )
 
@@ -129,10 +138,17 @@ def _get_agent(
     config: ExtractionConfig | None = None,
 ) -> Agent[None, ExtractionResult]:
     resolved_config = config or ExtractionConfig()
-    cache_key = _config_cache_key(resolved_config)
+    prompt_ref = get_extraction_prompt_ref(resolved_config)
+    cache_key = _config_cache_key(
+        resolved_config,
+        prompt_sha256=prompt_ref.sha256,
+    )
 
     if cache_key not in _agent_cache:
-        _agent_cache[cache_key] = build_extraction_agent(resolved_config)
+        _agent_cache[cache_key] = build_extraction_agent(
+            resolved_config,
+            prompt_ref=prompt_ref,
+        )
 
     return _agent_cache[cache_key]
 

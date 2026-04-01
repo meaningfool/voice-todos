@@ -221,6 +221,53 @@ def test_get_agent_does_not_reuse_different_model_config():
     assert agent_one is not agent_two
 
 
+def test_get_agent_rebuilds_when_prompt_sha_changes():
+    """Changing prompt content should invalidate the cached agent."""
+    from pathlib import Path
+
+    from app.extract import ExtractionConfig, _get_agent
+    from app.prompts.registry import PromptRef
+
+    fake_settings = SimpleNamespace(gemini_api_key="gemini-test-key")
+    first_agent = object()
+    second_agent = object()
+    first_prompt = PromptRef(
+        family="todo_extraction",
+        version="v1",
+        path=Path("/tmp/todo_extraction_v1.md"),
+        content="prompt one",
+        sha256="sha-one",
+    )
+    second_prompt = PromptRef(
+        family="todo_extraction",
+        version="v1",
+        path=Path("/tmp/todo_extraction_v1.md"),
+        content="prompt two",
+        sha256="sha-two",
+    )
+
+    with (
+        patch("app.extract.get_settings", return_value=fake_settings),
+        patch(
+            "app.extract.get_extraction_prompt_ref",
+            side_effect=[first_prompt, second_prompt],
+        ),
+        patch("app.extract.GoogleProvider", return_value=object()),
+        patch("app.extract.GoogleModel", return_value=object()),
+        patch(
+            "app.extract.Agent",
+            side_effect=[first_agent, second_agent],
+        ) as mock_agent,
+    ):
+        agent_one = _get_agent(ExtractionConfig(model_name="model-a"))
+        agent_two = _get_agent(ExtractionConfig(model_name="model-a"))
+
+    assert agent_one is first_agent
+    assert agent_two is second_agent
+    assert agent_one is not agent_two
+    assert mock_agent.call_count == 2
+
+
 @requires_gemini
 @pytest.mark.asyncio
 async def test_extract_todos_with_priority_and_deadline():
