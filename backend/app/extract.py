@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import os
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from pydantic_ai import Agent
@@ -60,6 +62,7 @@ _PROMPT_VERSIONS: dict[str, str] = {
 }
 
 _agent_cache: dict[tuple[Any, ...], Agent[None, ExtractionResult]] = {}
+_BACKEND_ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
 
 
 def _freeze_for_cache(value: Any) -> Any:
@@ -101,14 +104,52 @@ def _resolve_model_settings(config: ExtractionConfig) -> dict[str, Any]:
     return deepcopy(_DEFAULT_MODEL_SETTINGS)
 
 
-def build_extraction_agent(config: ExtractionConfig) -> Agent[None, ExtractionResult]:
-    settings = get_settings()
+def _read_backend_env_var(name: str) -> str | None:
+    value = os.getenv(name)
+    if value:
+        return value
 
+    if not _BACKEND_ENV_PATH.exists():
+        return None
+
+    for line in _BACKEND_ENV_PATH.read_text().splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, raw_value = stripped.split("=", 1)
+        if key.strip() != name:
+            continue
+        return raw_value.strip().strip('"').strip("'")
+
+    return None
+
+
+def _get_gemini_api_key() -> str:
+    gemini_api_key = _read_backend_env_var("GEMINI_API_KEY")
+    if gemini_api_key:
+        return gemini_api_key
+    return get_settings().gemini_api_key
+
+
+def _build_model(model_name: str) -> Any:
+    if model_name.startswith("mistral-"):
+        from pydantic_ai.models.mistral import MistralModel
+        from pydantic_ai.providers.mistral import MistralProvider
+
+        return MistralModel(
+            model_name,
+            provider=MistralProvider(api_key=os.getenv("MISTRAL_API_KEY")),
+        )
+
+    return GoogleModel(
+        model_name,
+        provider=GoogleProvider(api_key=_get_gemini_api_key()),
+    )
+
+
+def build_extraction_agent(config: ExtractionConfig) -> Agent[None, ExtractionResult]:
     return Agent(
-        GoogleModel(
-            config.model_name,
-            provider=GoogleProvider(api_key=settings.gemini_api_key),
-        ),
+        _build_model(config.model_name),
         output_type=ExtractionResult,
         system_prompt=_resolve_system_prompt(config.prompt_version),
         model_settings=_resolve_model_settings(config),
