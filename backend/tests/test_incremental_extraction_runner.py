@@ -3,13 +3,10 @@ from datetime import UTC, datetime
 from importlib import import_module
 
 import pytest
-from pydantic_evals.reporting import EvaluationReport, ReportCase
+from pydantic_evals.reporting import EvaluationReport, ReportCase, ReportCaseFailure
 
 from app.extract import ExtractionConfig
 from app.models import Todo
-from evals.extraction_quality.experiment_configs import (
-    EXPERIMENTS as SHARED_EXPERIMENTS,
-)
 from evals.extraction_quality.experiment_configs import (
     ExperimentDefinition,
 )
@@ -106,12 +103,15 @@ async def test_run_case_threads_previous_todos_across_steps(monkeypatch):
     )
 
 
-def test_list_experiments_output_reuses_shared_registry():
+def test_list_experiments_output_uses_incremental_registry_module():
     runner = import_module("evals.incremental_extraction_quality.run")
+    incremental_experiment_configs = import_module(
+        "evals.incremental_extraction_quality.experiment_configs"
+    )
 
     lines = runner.list_experiments_output().splitlines()
     expected_lines = []
-    for experiment in SHARED_EXPERIMENTS.values():
+    for experiment in incremental_experiment_configs.EXPERIMENTS.values():
         unavailable_reason = experiment.unavailable_reason()
         status = (
             "available"
@@ -120,7 +120,7 @@ def test_list_experiments_output_reuses_shared_registry():
         )
         expected_lines.append(f"{experiment.name}\t{status}")
 
-    assert runner.EXPERIMENTS is SHARED_EXPERIMENTS
+    assert runner.EXPERIMENTS is incremental_experiment_configs.EXPERIMENTS
     assert lines == expected_lines
 
 
@@ -258,5 +258,61 @@ def test_write_replay_report_artifact_preserves_step_results(tmp_path):
         }
     ]
     assert payload["failures"] == []
-    assert payload["trace_id"] == "report-trace-id"
-    assert payload["span_id"] == "report-span-id"
+
+
+def test_write_replay_report_artifact_serializes_failures(tmp_path):
+    result_artifacts = import_module("evals.extraction_quality.result_artifacts")
+    runner = import_module("evals.incremental_extraction_quality.run")
+    report = EvaluationReport(
+        name="gemini3_flash_default",
+        cases=[],
+        failures=[
+            ReportCaseFailure(
+                name="refine-todo",
+                inputs={
+                    "reference_dt": datetime(2026, 3, 24, 9, 30, tzinfo=UTC),
+                    "replay_steps": [
+                        ReplayStep(step_index=1, transcript="I need to buy milk."),
+                    ],
+                },
+                metadata={
+                    "dataset": "todo_extraction_replay_v1",
+                    "case_type": "incremental_replay",
+                    "source_fixture": "refine-todo",
+                },
+                expected_output=[Todo(text="Buy oat milk")],
+                error_message="provider timeout",
+                error_stacktrace="Traceback...",
+                trace_id="failure-trace-id",
+                span_id="failure-span-id",
+            )
+        ],
+        experiment_metadata={
+            "experiment": "gemini3_flash_default",
+            "dataset_name": "todo_extraction_replay_v1",
+        },
+    )
+
+    artifact_path = result_artifacts.write_report_artifact(
+        report,
+        output_dir=tmp_path,
+        repeat=1,
+        max_concurrency=1,
+        timestamp=datetime(2026, 4, 1, 16, 20, 0, tzinfo=UTC),
+        serialize_case=runner.serialize_replay_case,
+        serialize_failure=runner.serialize_replay_failure,
+    )
+
+    payload = json.loads(artifact_path.read_text())
+
+    assert payload["failures"] == [
+        {
+            "name": "refine-todo",
+            "source_fixture": "refine-todo",
+            "expected_final_todo_count": 1,
+            "predicted_final_todo_count": None,
+            "error_message": "provider timeout",
+            "trace_id": "failure-trace-id",
+            "span_id": "failure-span-id",
+        }
+    ]

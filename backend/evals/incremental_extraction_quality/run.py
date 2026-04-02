@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
+import subprocess
 import sys
 from collections.abc import Sequence
 from datetime import UTC, datetime
@@ -21,25 +23,21 @@ from pydantic_evals.reporting import ReportCase, ReportCaseFailure
 from app.extract import extract_todos
 from app.logfire_setup import configure_logfire
 from app.models import Todo
-from evals.extraction_quality.experiment_configs import (
-    EXPERIMENTS,
-    ExperimentDefinition,
-)
 from evals.extraction_quality.result_artifacts import (
     DEFAULT_RESULTS_DIR,
     reserve_result_dir,
     write_report_artifact,
-)
-from evals.extraction_quality.run import (
-    _ensure_provider_env,
-    _experiment_metadata,
-    _selected_experiments,
 )
 from evals.incremental_extraction_quality.dataset_loader import (
     load_incremental_replay_dataset,
 )
 from evals.incremental_extraction_quality.evaluators import (
     INCREMENTAL_EXTRACTION_QUALITY_EVALUATORS,
+)
+from evals.incremental_extraction_quality.experiment_configs import (
+    EXPERIMENTS,
+    ExperimentDefinition,
+    _read_backend_env_var,
 )
 from evals.incremental_extraction_quality.models import (
     ReplayRunResult,
@@ -99,6 +97,70 @@ def list_experiments_output() -> str:
         )
         lines.append(f"{experiment.name}\t{status}")
     return "\n".join(lines)
+
+
+def _selected_experiments(
+    *,
+    all_experiments: bool,
+    requested_names: Sequence[str],
+) -> list[ExperimentDefinition]:
+    names = list(EXPERIMENTS) if all_experiments else list(requested_names)
+    deduped_names: list[str] = []
+    for name in names:
+        if name not in deduped_names:
+            deduped_names.append(name)
+
+    unknown_names = [name for name in deduped_names if name not in EXPERIMENTS]
+    if unknown_names:
+        raise ValueError(
+            f"Unknown experiment name(s): {', '.join(sorted(unknown_names))}"
+        )
+
+    return [EXPERIMENTS[name] for name in deduped_names]
+
+
+def _ensure_provider_env(experiment: ExperimentDefinition) -> None:
+    if experiment.provider != "mistral":
+        return
+
+    mistral_api_key = _read_backend_env_var("MISTRAL_API_KEY")
+    if mistral_api_key:
+        os.environ.setdefault("MISTRAL_API_KEY", mistral_api_key)
+
+
+def _run_git_command(*args: str) -> str | None:
+    completed = subprocess.run(
+        ["git", *args],
+        cwd=BACKEND_ROOT,
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    if completed.returncode != 0:
+        return None
+    value = completed.stdout.strip()
+    return value or None
+
+
+def _get_git_branch() -> str:
+    return _run_git_command("branch", "--show-current") or "unknown"
+
+
+def _get_git_commit_sha() -> str:
+    return _run_git_command("rev-parse", "HEAD") or "unknown"
+
+
+def _experiment_metadata(
+    experiment: ExperimentDefinition,
+    *,
+    dataset_name: str | None = None,
+) -> dict[str, str]:
+    return {
+        **experiment.identity_metadata,
+        "dataset_name": dataset_name or "unknown",
+        "git_branch": _get_git_branch(),
+        "git_commit_sha": _get_git_commit_sha(),
+    }
 
 
 def _build_eval_dataset() -> Dataset[dict[str, Any], ReplayRunResult, dict[str, str]]:
