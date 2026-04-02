@@ -1,0 +1,2 @@
+[mcp_servers.logfire]
+url = "https://logfire-eu.pydantic.dev/mcp"

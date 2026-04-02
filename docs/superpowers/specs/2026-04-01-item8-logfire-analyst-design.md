@@ -1,4 +1,4 @@
-# Design: Logfire Analyst Subagent
+# Item 8 Design: Logfire Analyst Subagent
 
 Scope: define a project-scoped custom Codex subagent that specializes in Logfire-based observability analysis, code-path correlation, and remediation guidance without making code changes.
 
