@@ -146,3 +146,45 @@ def test_replay_case_builder_writes_canonical_dataset_content(tmp_path: Path):
     assert output_path.read_text(encoding="utf-8") == DATASET_PATH.read_text(
         encoding="utf-8"
     )
+
+
+def test_replay_case_builder_rejects_mismatched_result_transcript(
+    tmp_path: Path,
+):
+    fixture_name = "refine-todo"
+    source_dir = FIXTURES_DIR / fixture_name
+    fixture_dir = tmp_path / fixture_name
+    fixture_dir.mkdir()
+    fixture_dir.joinpath("soniox.jsonl").write_text(
+        source_dir.joinpath("soniox.jsonl").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    fixture_dir.joinpath("result.json").write_text(
+        json.dumps(
+            {
+                "transcript": "This transcript does not match the trace.",
+                "todos": [
+                    {
+                        "text": "Buy oat milk from the organic store",
+                        "category": "Shopping",
+                    }
+                ],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    try:
+        build_replay_case_from_fixture(
+            fixture_name=fixture_name,
+            fixtures_root=tmp_path,
+        )
+    except ValueError as exc:
+        assert str(exc) == (
+            "Fixture refine-todo terminal transcript does not match result.json "
+            "transcript"
+        )
+    else:
+        raise AssertionError("Expected build_replay_case_from_fixture() to fail")

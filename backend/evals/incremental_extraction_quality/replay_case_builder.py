@@ -7,6 +7,7 @@ from typing import Any
 
 from app.extraction_thresholds import EXTRACTION_TOKEN_THRESHOLD
 from app.models import Todo
+from app.transcript_accumulator import TranscriptAccumulator
 from evals.incremental_extraction_quality.models import ReplayCase, ReplayStep
 from evals.incremental_extraction_quality.provider_trace_adapters.soniox import (
     build_soniox_checkpoint_candidates,
@@ -21,6 +22,7 @@ def build_replay_steps(
     *,
     final_transcript: str,
 ) -> list[str]:
+    """Build the canonical replay sequence from checkpoints plus terminal transcript."""
     replay_steps: list[str] = []
 
     for snapshot in checkpoint_candidates:
@@ -47,11 +49,18 @@ def build_replay_case_from_fixture(
 ) -> ReplayCase:
     fixture_dir = fixtures_root / fixture_name
     messages = _load_jsonl(fixture_dir / "soniox.jsonl")
-    result = json.loads((fixture_dir / "result.json").read_text())
+    result = json.loads((fixture_dir / "result.json").read_text(encoding="utf-8"))
+    terminal_transcript = _derive_terminal_transcript(messages)
+
+    if terminal_transcript != result["transcript"]:
+        raise ValueError(
+            f"Fixture {fixture_name} terminal transcript does not match "
+            "result.json transcript"
+        )
 
     replay_transcripts = build_replay_steps(
         build_soniox_checkpoint_candidates(messages, token_threshold=token_threshold),
-        final_transcript=result["transcript"],
+        final_transcript=terminal_transcript,
     )
 
     return ReplayCase(
@@ -115,10 +124,19 @@ def write_replay_dataset_payload(
 
 def _load_jsonl(path: Path) -> list[dict[str, Any]]:
     messages: list[dict[str, Any]] = []
-    for line in path.read_text().splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         if line.strip():
             messages.append(json.loads(line))
     return messages
+
+
+def _derive_terminal_transcript(messages: list[dict[str, Any]]) -> str:
+    transcript = TranscriptAccumulator()
+    for event in messages:
+        if event.get("finished"):
+            break
+        transcript.apply_event(event)
+    return transcript.full_text
 
 
 def _serialize_replay_case(case: ReplayCase) -> dict[str, Any]:

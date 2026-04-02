@@ -11,6 +11,12 @@ def build_soniox_checkpoint_candidates(
     *,
     token_threshold: int = EXTRACTION_TOKEN_THRESHOLD,
 ) -> list[str]:
+    """Return deterministic checkpoint candidates for replay dataset seeding.
+
+    These snapshots mirror the transcript states that could trigger extraction in the
+    live Soniox path, but they intentionally do not model 1:1 runtime extraction
+    invocations when live backpressure collapses in-flight triggers.
+    """
     transcript = TranscriptAccumulator()
     tokens_since_last_extraction = 0
     checkpoint_candidates: list[str] = []
