@@ -86,8 +86,13 @@ Example shape:
 }
 ```
 
-Keep the dataset human-reviewable. Update the JSON directly instead of teaching
-the runner to regenerate it implicitly.
+Keep the dataset human-reviewable, but do not treat the checked-in JSON as an
+independent hand-edited artifact. Fixture-backed replay cases should stay in
+sync with the canonical payload produced by
+`evals/incremental_extraction_quality/replay_case_builder.py`, and the parity
+tests in `tests/test_incremental_replay_case_builder.py` enforce that contract.
+When you add or revise replay cases, update the fixture seed material and
+confirm the checked-in dataset still matches the builder output.
 
 ## How Replay Works
 
@@ -164,8 +169,9 @@ in the trace UI.
 
 - Item 6.5 is a replay harness, not a new scoring framework for todo wording or
   field completeness.
-- The dataset contract depends on ordered replay steps. Do not renumber or
-  reshuffle them without updating the expected final output.
+- The dataset contract depends on replay step order. Do not reorder replay
+  steps without updating the expected final output. Keep `step_index` aligned
+  with that order so artifacts and traces stay readable.
 - Cross-provider experiments still need the relevant API keys and provider
   packages available.
 - Eval scores are decision support, not automatic rollout criteria.
