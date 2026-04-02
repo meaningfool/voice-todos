@@ -343,3 +343,55 @@ def test_write_report_artifact_serializes_failures(tmp_path):
             "span_id": "failure-span-id",
         }
     ]
+
+
+def test_build_report_artifact_keeps_transcript_only_case_shape(tmp_path):
+    result_artifacts = import_module("evals.extraction_quality.result_artifacts")
+
+    report = EvaluationReport(
+        name="gemini3_flash_default",
+        cases=[
+            ReportCase(
+                name="case-1",
+                inputs={"transcript": "Pick up milk"},
+                metadata={
+                    "dataset": "todo_extraction_v1",
+                    "case_type": "extraction",
+                    "source_fixture": "fixture-1.json",
+                },
+                expected_output=[Todo(text="Pick up milk")],
+                output=[Todo(text="Pick up milk")],
+                metrics={"expected_todo_count": 1, "predicted_todo_count": 1},
+                attributes={},
+                scores={},
+                labels={},
+                assertions={},
+                task_duration=0.1,
+                total_duration=0.2,
+                trace_id="case-trace-id",
+                span_id="case-span-id",
+            )
+        ],
+        experiment_metadata={
+            "experiment": "gemini3_flash_default",
+            "dataset_name": "todo_extraction_v1",
+        },
+    )
+
+    payload = result_artifacts.build_report_artifact(
+        report,
+        repeat=1,
+        max_concurrency=1,
+        timestamp=datetime(2026, 4, 1, 16, 20, 0, tzinfo=UTC),
+    )
+
+    assert payload["cases"] == [
+        {
+            "name": "case-1",
+            "source_fixture": "fixture-1.json",
+            "expected_todo_count": 1,
+            "predicted_todo_count": 1,
+            "trace_id": "case-trace-id",
+            "span_id": "case-span-id",
+        }
+    ]

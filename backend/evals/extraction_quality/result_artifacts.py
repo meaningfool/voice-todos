@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -64,9 +65,15 @@ def build_report_artifact(
     repeat: int,
     max_concurrency: int,
     timestamp: datetime,
+    serialize_case: Callable[[ReportCase[Any, Any, Any]], dict[str, Any]] | None = None,
+    serialize_failure: (
+        Callable[[ReportCaseFailure[Any, Any, Any]], dict[str, Any]] | None
+    ) = None,
 ) -> dict[str, Any]:
     metadata = report.experiment_metadata or {}
     averages = report.averages()
+    case_serializer = serialize_case or _serialize_case
+    failure_serializer = serialize_failure or _serialize_failure
 
     return {
         "timestamp": _format_timestamp(timestamp),
@@ -89,8 +96,8 @@ def build_report_artifact(
         "repeat": repeat,
         "max_concurrency": max_concurrency,
         "aggregate_metrics": averages.metrics if averages else {},
-        "cases": [_serialize_case(case) for case in report.cases],
-        "failures": [_serialize_failure(case) for case in report.failures],
+        "cases": [case_serializer(case) for case in report.cases],
+        "failures": [failure_serializer(case) for case in report.failures],
         "trace_id": report.trace_id,
         "span_id": report.span_id,
     }
@@ -123,6 +130,10 @@ def write_report_artifact(
     repeat: int,
     max_concurrency: int,
     timestamp: datetime | None = None,
+    serialize_case: Callable[[ReportCase[Any, Any, Any]], dict[str, Any]] | None = None,
+    serialize_failure: (
+        Callable[[ReportCaseFailure[Any, Any, Any]], dict[str, Any]] | None
+    ) = None,
 ) -> Path:
     artifact_timestamp = timestamp or _utc_now()
     resolved_result_dir = result_dir or reserve_result_dir(
@@ -138,6 +149,8 @@ def write_report_artifact(
         repeat=repeat,
         max_concurrency=max_concurrency,
         timestamp=artifact_timestamp,
+        serialize_case=serialize_case,
+        serialize_failure=serialize_failure,
     )
     with artifact_path.open("x", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2, sort_keys=True)
