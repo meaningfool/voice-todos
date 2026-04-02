@@ -1,9 +1,15 @@
 import json
 from datetime import UTC, datetime
+from inspect import signature
 from pathlib import Path
 
+from app.extraction_thresholds import EXTRACTION_TOKEN_THRESHOLD
 from app.models import Todo
+from app.ws import TOKEN_THRESHOLD
 from evals.incremental_extraction_quality.models import ReplayCase, ReplayStep
+from evals.incremental_extraction_quality.provider_trace_adapters.soniox import (
+    build_soniox_checkpoint_candidates,
+)
 from evals.incremental_extraction_quality.replay_case_builder import (
     build_replay_case_from_fixture,
     build_replay_dataset_payload,
@@ -37,6 +43,34 @@ def test_replay_case_builder_returns_ordered_transcript_snapshots():
     ]
 
 
+def test_replay_seed_and_live_paths_share_the_same_token_threshold():
+    assert EXTRACTION_TOKEN_THRESHOLD == TOKEN_THRESHOLD
+    assert (
+        signature(build_soniox_checkpoint_candidates).parameters[
+            "token_threshold"
+        ].default
+        == EXTRACTION_TOKEN_THRESHOLD
+    )
+    assert (
+        signature(build_replay_case_from_fixture).parameters[
+            "token_threshold"
+        ].default
+        == EXTRACTION_TOKEN_THRESHOLD
+    )
+    assert (
+        signature(build_replay_dataset_payload).parameters[
+            "token_threshold"
+        ].default
+        == EXTRACTION_TOKEN_THRESHOLD
+    )
+    assert (
+        signature(write_replay_dataset_payload).parameters[
+            "token_threshold"
+        ].default
+        == EXTRACTION_TOKEN_THRESHOLD
+    )
+
+
 def test_replay_case_builder_appends_final_transcript_once():
     replay_steps = build_replay_steps(
         [
@@ -66,7 +100,10 @@ def test_replay_case_builder_compiles_fixture_into_replay_case():
             ReplayStep(step_index=1, transcript="I need to buy milk."),
             ReplayStep(
                 step_index=2,
-                transcript="I need to buy milk. Actually, mais exact oud milk from the organic store.",
+                transcript=(
+                    "I need to buy milk. Actually, mais exact oud milk "
+                    "from the organic store."
+                ),
             ),
         ],
         expected_final_todos=[
@@ -106,4 +143,6 @@ def test_replay_case_builder_writes_canonical_dataset_content(tmp_path: Path):
         output_path=output_path,
     )
 
-    assert output_path.read_text() == DATASET_PATH.read_text()
+    assert output_path.read_text(encoding="utf-8") == DATASET_PATH.read_text(
+        encoding="utf-8"
+    )

@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.extraction_thresholds import EXTRACTION_TOKEN_THRESHOLD
 from app.transcript_accumulator import TranscriptAccumulator
 
 
 def build_soniox_checkpoint_candidates(
     messages: list[dict[str, Any]],
     *,
-    token_threshold: int = 15,
+    token_threshold: int = EXTRACTION_TOKEN_THRESHOLD,
 ) -> list[str]:
     transcript = TranscriptAccumulator()
     tokens_since_last_extraction = 0

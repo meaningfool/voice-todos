@@ -10,6 +10,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.config import get_settings
 from app.extract import extract_todos
 from app.extraction_loop import ExtractionLoop
+from app.extraction_thresholds import EXTRACTION_TOKEN_THRESHOLD
 from app.models import Todo
 from app.session_recorder import SessionRecorder
 from app.transcript_accumulator import TranscriptAccumulator
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 SONIOX_WS_URL = "wss://stt-rt.soniox.com/transcribe-websocket"
-TOKEN_THRESHOLD = 15
+TOKEN_THRESHOLD = EXTRACTION_TOKEN_THRESHOLD
 
 
 async def _relay_soniox_to_browser(

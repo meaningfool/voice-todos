@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 from starlette.testclient import TestClient
 
+from app.extraction_thresholds import EXTRACTION_TOKEN_THRESHOLD
 from app.main import app
 from app.models import Todo
 from app.ws import TOKEN_THRESHOLD
@@ -91,7 +92,7 @@ def test_ws_start_configures_extraction_loop_with_token_threshold():
             ws.send_json({"type": "start"})
             assert ws.receive_json() == {"type": "started"}
 
-        assert TOKEN_THRESHOLD == 15
+        assert TOKEN_THRESHOLD == EXTRACTION_TOKEN_THRESHOLD
         assert mock_loop_cls.call_args.kwargs["token_threshold"] == TOKEN_THRESHOLD
 
 
@@ -133,11 +134,15 @@ def test_ws_stop_without_start():
 
 def test_ws_invalid_json_returns_error():
     """Malformed JSON is rejected without crashing the server."""
-    client = TestClient(app)
-    with client.websocket_connect("/ws") as ws:
-        ws.send_text("not-json")
-        response = ws.receive_json()
-        assert response == {"type": "error", "message": "Invalid control message"}
+    with patch("app.ws.get_settings", return_value=_settings()):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_text("not-json")
+            response = ws.receive_json()
+            assert response == {
+                "type": "error",
+                "message": "Invalid control message",
+            }
 
 
 def test_ws_unknown_message_keeps_connection_alive():
@@ -243,7 +248,10 @@ def test_ws_stop_emits_stop_timing_events():
             timeline.append(f"log:{event_name}")
 
     with (
-        patch("app.ws.logfire.info", side_effect=recording_logfire_info) as mock_logfire_info,
+        patch(
+            "app.ws.logfire.info",
+            side_effect=recording_logfire_info,
+        ) as mock_logfire_info,
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
         patch(

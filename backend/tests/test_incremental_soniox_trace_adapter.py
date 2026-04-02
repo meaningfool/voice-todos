@@ -44,5 +44,8 @@ def test_soniox_adapter_emits_expected_checkpoint_candidates():
 
     assert checkpoint_candidates == [
         "Call mom tonight. Send memo soon. Check quote now. Buy oat milk",
-        "Call mom tonight. Send memo soon. Check quote now. Buy oat milk please today. Also email Sam.",
+        (
+            "Call mom tonight. Send memo soon. Check quote now. "
+            "Buy oat milk please today. Also email Sam."
+        ),
     ]

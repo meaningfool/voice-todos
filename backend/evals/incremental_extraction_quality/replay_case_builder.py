@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from app.extraction_thresholds import EXTRACTION_TOKEN_THRESHOLD
 from app.models import Todo
 from evals.incremental_extraction_quality.models import ReplayCase, ReplayStep
 from evals.incremental_extraction_quality.provider_trace_adapters.soniox import (
@@ -13,6 +14,7 @@ from evals.incremental_extraction_quality.provider_trace_adapters.soniox import 
 
 DEFAULT_REFERENCE_DT = datetime(2026, 3, 24, 9, 30, tzinfo=UTC)
 DEFAULT_DATASET_NAME = "todo_extraction_replay_v1"
+
 
 def build_replay_steps(
     checkpoint_candidates: list[str],
@@ -41,7 +43,7 @@ def build_replay_case_from_fixture(
     fixture_name: str,
     fixtures_root: Path,
     reference_dt: datetime = DEFAULT_REFERENCE_DT,
-    token_threshold: int = 15,
+    token_threshold: int = EXTRACTION_TOKEN_THRESHOLD,
 ) -> ReplayCase:
     fixture_dir = fixtures_root / fixture_name
     messages = _load_jsonl(fixture_dir / "soniox.jsonl")
@@ -72,7 +74,7 @@ def build_replay_dataset_payload(
     fixtures_root: Path,
     dataset_name: str = DEFAULT_DATASET_NAME,
     reference_dt: datetime = DEFAULT_REFERENCE_DT,
-    token_threshold: int = 15,
+    token_threshold: int = EXTRACTION_TOKEN_THRESHOLD,
 ) -> dict[str, Any]:
     cases = [
         build_replay_case_from_fixture(
@@ -96,7 +98,7 @@ def write_replay_dataset_payload(
     output_path: Path,
     dataset_name: str = DEFAULT_DATASET_NAME,
     reference_dt: datetime = DEFAULT_REFERENCE_DT,
-    token_threshold: int = 15,
+    token_threshold: int = EXTRACTION_TOKEN_THRESHOLD,
 ) -> None:
     payload = build_replay_dataset_payload(
         fixture_names=fixture_names,
@@ -105,7 +107,10 @@ def write_replay_dataset_payload(
         reference_dt=reference_dt,
         token_threshold=token_threshold,
     )
-    output_path.write_text(json.dumps(payload, indent=2) + "\n")
+    output_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
 
 
 def _load_jsonl(path: Path) -> list[dict[str, Any]]:

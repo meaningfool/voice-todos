@@ -33,7 +33,10 @@ def test_load_incremental_replay_dataset_returns_expected_cases():
         ReplayStep(step_index=1, transcript="I need to buy milk."),
         ReplayStep(
             step_index=2,
-            transcript="I need to buy milk. Actually, mais exact oud milk from the organic store.",
+            transcript=(
+                "I need to buy milk. Actually, mais exact oud milk "
+                "from the organic store."
+            ),
         ),
     ]
     assert refine_case.expected_output == [
@@ -51,7 +54,9 @@ def test_load_incremental_replay_dataset_returns_expected_cases():
     stop_case = next(
         case for case in dataset.cases if case.name == "stop-final-sweep-single-todo"
     )
-    assert all(isinstance(step, ReplayStep) for step in stop_case.inputs["replay_steps"])
+    assert all(
+        isinstance(step, ReplayStep) for step in stop_case.inputs["replay_steps"]
+    )
     assert all(isinstance(todo, Todo) for todo in stop_case.expected_output)
     assert stop_case.expected_output == [
         Todo(
