@@ -2,13 +2,10 @@ import logfire
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.logfire_setup import configure_logfire
 from app.ws import router as ws_router
 
-logfire.configure(
-    service_name="voice-todos-backend",
-    send_to_logfire="if-token-present",
-)
-logfire.instrument_pydantic_ai()
+configure_logfire(instrument_pydantic_ai=True)
 
 app = FastAPI()
 logfire.instrument_fastapi(app)
