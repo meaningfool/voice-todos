@@ -8,6 +8,7 @@ from evals.incremental_extraction_quality.replay_case_builder import (
     build_replay_case_from_fixture,
     build_replay_dataset_payload,
     build_replay_steps,
+    write_replay_dataset_payload,
 )
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -89,3 +90,20 @@ def test_replay_case_builder_compiles_seed_fixtures_into_canonical_dataset_paylo
     )
 
     assert payload == json.loads(DATASET_PATH.read_text())
+
+
+def test_replay_case_builder_writes_canonical_dataset_content(tmp_path: Path):
+    output_path = tmp_path / "todo_extraction_replay_v1.json"
+
+    write_replay_dataset_payload(
+        fixture_names=[
+            "call-mom-memo-supplier",
+            "refine-todo",
+            "while-speaking-two-todos",
+            "stop-final-sweep-single-todo",
+        ],
+        fixtures_root=FIXTURES_DIR,
+        output_path=output_path,
+    )
+
+    assert output_path.read_text() == DATASET_PATH.read_text()

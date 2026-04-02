@@ -89,6 +89,25 @@ def build_replay_dataset_payload(
     }
 
 
+def write_replay_dataset_payload(
+    *,
+    fixture_names: list[str],
+    fixtures_root: Path,
+    output_path: Path,
+    dataset_name: str = DEFAULT_DATASET_NAME,
+    reference_dt: datetime = DEFAULT_REFERENCE_DT,
+    token_threshold: int = 15,
+) -> None:
+    payload = build_replay_dataset_payload(
+        fixture_names=fixture_names,
+        fixtures_root=fixtures_root,
+        dataset_name=dataset_name,
+        reference_dt=reference_dt,
+        token_threshold=token_threshold,
+    )
+    output_path.write_text(json.dumps(payload, indent=2) + "\n")
+
+
 def _load_jsonl(path: Path) -> list[dict[str, Any]]:
     messages: list[dict[str, Any]] = []
     for line in path.read_text().splitlines():
