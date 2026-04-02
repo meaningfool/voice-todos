@@ -19,6 +19,7 @@ if str(BACKEND_ROOT) not in sys.path:
 from pydantic_evals import Dataset, set_eval_attribute
 
 from app.extract import extract_todos
+from app.logfire_setup import configure_logfire
 from app.models import Todo
 from evals.extraction_quality.dataset_loader import load_extraction_quality_dataset
 from evals.extraction_quality.evaluators import EXTRACTION_QUALITY_EVALUATORS
@@ -211,6 +212,10 @@ async def _run_experiment(
 
 
 async def _run(args: argparse.Namespace) -> int:
+    configure_logfire(
+        service_name="voice-todos-backend",
+        instrument_pydantic_ai=True,
+    )
     artifact_timestamp = datetime.now(UTC)
     selected_experiments = _selected_experiments(
         all_experiments=args.all,

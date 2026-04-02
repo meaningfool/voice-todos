@@ -83,6 +83,71 @@ def test_experiment_metadata_includes_prompt_identity(monkeypatch):
     assert metadata["git_commit_sha"] == "65218795562767602eb8d5f9103eebfd9998cbec"
 
 
+def test_main_configures_logfire_before_running_experiments(monkeypatch, tmp_path):
+    import evals.extraction_quality.run as runner
+
+    events: list[tuple[str, object]] = []
+
+    class FakeExperiment:
+        name = "fake-experiment"
+
+        def unavailable_reason(self) -> None:
+            return None
+
+    monkeypatch.setattr(
+        runner,
+        "_selected_experiments",
+        lambda **kwargs: [FakeExperiment()],
+    )
+    monkeypatch.setattr(
+        runner,
+        "reserve_result_dir",
+        lambda **kwargs: tmp_path / "results",
+    )
+    monkeypatch.setattr(
+        runner,
+        "configure_logfire",
+        lambda **kwargs: events.append(("configure", kwargs)),
+    )
+
+    async def fake_run_experiment(
+        experiment,
+        *,
+        repeat,
+        max_concurrency,
+        result_dir,
+        artifact_timestamp,
+    ) -> None:
+        assert events == [
+            (
+                "configure",
+                {
+                    "service_name": "voice-todos-backend",
+                    "instrument_pydantic_ai": True,
+                },
+            )
+        ]
+        events.append(("run", experiment.name))
+
+    monkeypatch.setattr(runner, "_run_experiment", fake_run_experiment)
+
+    exit_code = runner.main(
+        ["--experiment", "fake-experiment", "--output-dir", str(tmp_path)]
+    )
+
+    assert exit_code == 0
+    assert events == [
+        (
+            "configure",
+            {
+                "service_name": "voice-todos-backend",
+                "instrument_pydantic_ai": True,
+            },
+        ),
+        ("run", "fake-experiment"),
+    ]
+
+
 def test_write_report_artifact_creates_timestamped_json(tmp_path, monkeypatch):
     result_artifacts = import_module("evals.extraction_quality.result_artifacts")
     timestamps = iter(

@@ -42,11 +42,19 @@ cp backend/.env.example backend/.env
 If you prefer to share one file across worktrees, symlink `backend/.env` to the
 copy you keep elsewhere instead of duplicating it.
 
-`LOGFIRE_TOKEN` is optional, but it changes the observability experience: when
-it is set, backend processes that already configure Logfire can ship spans and
-traces to Logfire. The standalone `evals/extraction_quality/run.py` CLI does
-not auto-configure Logfire from `backend/.env` today, so setting the token
-there alone does not make this command path send remote Logfire traces.
+Logfire credentials are separate from `backend/.env`. The Logfire CLI stores
+them under `backend/.logfire/logfire_credentials.json` by default, and that
+directory is also local to each worktree unless you copy or symlink it:
+
+```bash
+ln -s /absolute/path/to/shared/backend/.logfire backend/.logfire
+```
+
+The standalone `evals/extraction_quality/run.py` CLI now configures Logfire on
+startup. If `backend/.logfire` is present, `LOGFIRE_CREDENTIALS_DIR` points to a
+shared location, or `LOGFIRE_TOKEN` is set, the runner can ship traces
+remotely. Without credentials it still creates local trace/span IDs, but you
+will not see the run in the hosted Logfire UI.
 
 ## Dataset Asset
 
@@ -143,12 +151,12 @@ The runner:
 
 ## Comparing Experiments In Logfire
 
-The runner still attaches experiment metadata with `set_eval_attribute`, but you
-only see it in Logfire if Logfire has already been configured for the current
-process by some other path. `LOGFIRE_TOKEN` in `backend/.env` alone is not
-enough for `evals/extraction_quality/run.py` today.
+The runner configures Logfire itself and still attaches experiment metadata with
+`set_eval_attribute`, so the main remaining requirement is having credentials
+available to the process through `backend/.logfire`,
+`LOGFIRE_CREDENTIALS_DIR`, or `LOGFIRE_TOKEN`.
 
-When Logfire is active for the current process, runs can be separated by:
+When Logfire credentials are available, runs can be separated by:
 
 - `experiment`
 - `model_name`

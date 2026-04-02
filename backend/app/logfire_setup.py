@@ -1,0 +1,29 @@
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+import logfire
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _logfire_data_dir() -> Path:
+    override = os.getenv("LOGFIRE_CREDENTIALS_DIR")
+    if override:
+        return Path(override)
+    return BACKEND_ROOT / ".logfire"
+
+
+def configure_logfire(
+    *,
+    service_name: str = "voice-todos-backend",
+    instrument_pydantic_ai: bool = False,
+) -> None:
+    logfire.configure(
+        service_name=service_name,
+        send_to_logfire="if-token-present",
+        data_dir=_logfire_data_dir(),
+    )
+    if instrument_pydantic_ai:
+        logfire.instrument_pydantic_ai()
