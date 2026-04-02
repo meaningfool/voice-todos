@@ -45,3 +45,26 @@ def test_configure_logfire_respects_credentials_dir_override(monkeypatch, tmp_pa
     logfire_setup.configure_logfire()
 
     assert captured["data_dir"] == Path(tmp_path / "shared-logfire")
+
+
+def test_configure_logfire_reads_token_from_backend_env(monkeypatch, tmp_path):
+    env_file = tmp_path / ".env"
+    env_file.write_text("LOGFIRE_TOKEN=logfire-token-from-env-file\n")
+    captured: dict[str, object] = {}
+
+    monkeypatch.delenv("LOGFIRE_TOKEN", raising=False)
+    monkeypatch.setattr(logfire_setup, "BACKEND_ENV_PATH", env_file)
+    monkeypatch.setattr(
+        logfire_setup.logfire,
+        "configure",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    monkeypatch.setattr(
+        logfire_setup.logfire,
+        "instrument_pydantic_ai",
+        lambda: None,
+    )
+
+    logfire_setup.configure_logfire()
+
+    assert captured["token"] == "logfire-token-from-env-file"
