@@ -103,15 +103,36 @@ async def test_run_case_threads_previous_todos_across_steps(monkeypatch):
     )
 
 
-def test_list_experiments_output_uses_incremental_registry_module():
+def test_incremental_registry_reuses_shared_experiment_registry():
+    incremental_experiment_configs = import_module(
+        "evals.incremental_extraction_quality.experiment_configs"
+    )
+    shared_experiment_configs = import_module(
+        "evals.extraction_quality.experiment_configs"
+    )
+
+    assert (
+        incremental_experiment_configs.EXPERIMENTS
+        is shared_experiment_configs.EXPERIMENTS
+    )
+    assert (
+        incremental_experiment_configs.ExperimentDefinition
+        is shared_experiment_configs.ExperimentDefinition
+    )
+
+
+def test_list_experiments_output_uses_shared_registry():
     runner = import_module("evals.incremental_extraction_quality.run")
     incremental_experiment_configs = import_module(
         "evals.incremental_extraction_quality.experiment_configs"
     )
+    shared_experiment_configs = import_module(
+        "evals.extraction_quality.experiment_configs"
+    )
 
     lines = runner.list_experiments_output().splitlines()
     expected_lines = []
-    for experiment in incremental_experiment_configs.EXPERIMENTS.values():
+    for experiment in shared_experiment_configs.EXPERIMENTS.values():
         unavailable_reason = experiment.unavailable_reason()
         status = (
             "available"
@@ -121,6 +142,7 @@ def test_list_experiments_output_uses_incremental_registry_module():
         expected_lines.append(f"{experiment.name}\t{status}")
 
     assert runner.EXPERIMENTS is incremental_experiment_configs.EXPERIMENTS
+    assert runner.EXPERIMENTS is shared_experiment_configs.EXPERIMENTS
     assert lines == expected_lines
 
 
