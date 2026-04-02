@@ -123,6 +123,12 @@ async def websocket_endpoint(browser_ws: WebSocket):
                 ws_phase = "waiting_for_browser_message"
                 message = await browser_ws.receive()
 
+                if message.get("type") == "websocket.disconnect":
+                    raise WebSocketDisconnect(
+                        code=message.get("code", 1000),
+                        reason=message.get("reason"),
+                    )
+
                 # Text message = JSON control signal
                 if "text" in message:
                     try:

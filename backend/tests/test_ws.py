@@ -176,6 +176,43 @@ def test_ws_disconnect_without_stop():
         # The endpoint should clean up without raising.
 
 
+def test_ws_disconnect_message_does_not_call_receive_again():
+    """A disconnect frame should stop the receive loop before RuntimeError noise."""
+    from app.ws import websocket_endpoint
+
+    class FakeBrowserWebSocket:
+        def __init__(self):
+            self.receive_calls = 0
+
+        async def accept(self):
+            return None
+
+        async def receive(self):
+            self.receive_calls += 1
+            if self.receive_calls == 1:
+                return {"text": json.dumps({"type": "start"})}
+            if self.receive_calls == 2:
+                return {"type": "websocket.disconnect"}
+            raise RuntimeError("receive called after disconnect")
+
+        async def send_json(self, _payload):
+            return None
+
+    browser_ws = FakeBrowserWebSocket()
+
+    with (
+        patch("app.ws.get_settings", return_value=_settings()),
+        patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
+        patch("app.ws.logger.exception") as mock_logger_exception,
+    ):
+        mock_connect.return_value = _mock_soniox()
+
+        asyncio.run(websocket_endpoint(browser_ws))
+
+    assert browser_ws.receive_calls == 2
+    mock_logger_exception.assert_not_called()
+
+
 def test_ws_stop_sends_todos_before_stopped():
     """After stop, server sends todos then stopped — verifying the protocol sequence."""
     mock_todos = [Todo(text="Buy groceries", priority="high")]
