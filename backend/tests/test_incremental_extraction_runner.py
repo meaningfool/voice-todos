@@ -252,6 +252,10 @@ def test_write_replay_report_artifact_preserves_step_results(tmp_path):
     }
     assert payload["repeat"] == 2
     assert payload["max_concurrency"] == 3
+    assert payload["completed_cases"] == 1
+    assert payload["failure_count"] == 0
+    assert payload["overall_case_success_rate"] == 1.0
+    assert payload["failure_counts_by_category"] == {}
     assert payload["aggregate_metrics"] == {
         "final_todo_count_match": 1.0,
         "expected_final_todo_count": 1.0,
@@ -327,6 +331,12 @@ def test_write_replay_report_artifact_serializes_failures(tmp_path):
 
     payload = json.loads(artifact_path.read_text())
 
+    assert payload["completed_cases"] == 0
+    assert payload["failure_count"] == 1
+    assert payload["overall_case_success_rate"] == 0.0
+    assert payload["failure_counts_by_category"] == {
+        "provider_transport_failure": 1
+    }
     assert payload["failures"] == [
         {
             "name": "refine-todo",
@@ -334,6 +344,7 @@ def test_write_replay_report_artifact_serializes_failures(tmp_path):
             "expected_final_todo_count": 1,
             "predicted_final_todo_count": None,
             "error_message": "provider timeout",
+            "failure_category": "provider_transport_failure",
             "trace_id": "failure-trace-id",
             "span_id": "failure-span-id",
         }

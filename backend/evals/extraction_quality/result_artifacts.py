@@ -8,6 +8,8 @@ from typing import Any
 
 from pydantic_evals.reporting import EvaluationReport, ReportCase, ReportCaseFailure
 
+from evals.common.failure_classification import classify_failure_category
+
 DEFAULT_RESULTS_DIR = Path(__file__).with_name("results")
 
 
@@ -59,6 +61,16 @@ def _serialize_failure(case: ReportCaseFailure[Any, Any, Any]) -> dict[str, Any]
     }
 
 
+def _count_failure_categories(
+    failures: list[ReportCaseFailure[Any, Any, Any]],
+) -> dict[str, int]:
+    failure_counts: dict[str, int] = {}
+    for failure in failures:
+        category = classify_failure_category(failure.error_message)
+        failure_counts[category] = failure_counts.get(category, 0) + 1
+    return failure_counts
+
+
 def build_report_artifact(
     report: EvaluationReport[Any, Any, Any],
     *,
@@ -74,6 +86,12 @@ def build_report_artifact(
     averages = report.averages()
     case_serializer = serialize_case or _serialize_case
     failure_serializer = serialize_failure or _serialize_failure
+    completed_cases = len(report.cases)
+    failure_count = len(report.failures)
+    total_cases = completed_cases + failure_count
+    overall_case_success_rate = (
+        completed_cases / total_cases if total_cases else 0.0
+    )
 
     return {
         "timestamp": _format_timestamp(timestamp),
@@ -95,9 +113,19 @@ def build_report_artifact(
         },
         "repeat": repeat,
         "max_concurrency": max_concurrency,
+        "completed_cases": completed_cases,
+        "failure_count": failure_count,
+        "overall_case_success_rate": overall_case_success_rate,
+        "failure_counts_by_category": _count_failure_categories(report.failures),
         "aggregate_metrics": averages.metrics if averages else {},
         "cases": [case_serializer(case) for case in report.cases],
-        "failures": [failure_serializer(case) for case in report.failures],
+        "failures": [
+            {
+                **failure_serializer(case),
+                "failure_category": classify_failure_category(case.error_message),
+            }
+            for case in report.failures
+        ],
         "trace_id": report.trace_id,
         "span_id": report.span_id,
     }
