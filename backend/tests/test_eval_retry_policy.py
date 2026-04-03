@@ -1,3 +1,4 @@
+from httpx import ConnectError, PoolTimeout, ReadTimeout
 from pydantic_ai.exceptions import ModelHTTPError, UnexpectedModelBehavior
 
 from evals.common.retry_policy import (
@@ -20,9 +21,27 @@ def test_transient_provider_transport_errors_are_retryable():
     )
 
 
+def test_direct_httpx_connect_error_is_retryable():
+    assert is_transient_task_failure(ConnectError("connect failed"))
+
+
+def test_direct_httpx_read_timeout_is_retryable():
+    assert is_transient_task_failure(ReadTimeout("read timed out"))
+
+
+def test_httpx_pool_timeout_is_not_retryable():
+    assert not is_transient_task_failure(PoolTimeout("connection pool exhausted"))
+
+
 def test_generic_model_http_5xx_without_transport_markers_is_not_retryable():
     assert not is_transient_task_failure(
         ModelHTTPError(500, "test-model", "internal server error")
+    )
+
+
+def test_generic_model_http_overflow_without_transport_markers_is_not_retryable():
+    assert not is_transient_task_failure(
+        ModelHTTPError(503, "test-model", "overflow")
     )
 
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from httpx import NetworkError, TimeoutException
+from httpx import ConnectError, ConnectTimeout, PoolTimeout, ReadTimeout, WriteTimeout
 from pydantic_ai.exceptions import ModelHTTPError, UnexpectedModelBehavior
 from pydantic_ai.retries import RetryConfig
 from pydantic_evals.evaluators import EvaluatorFailure
@@ -13,7 +13,13 @@ _MODEL_HTTP_TRANSPORT_MARKERS = (
     "connection refused",
     "connection timed out",
     "reset reason: overflow",
-    "overflow",
+)
+
+_HTTPX_TRANSPORT_EXCEPTIONS = (
+    ConnectError,
+    ConnectTimeout,
+    ReadTimeout,
+    WriteTimeout,
 )
 
 
@@ -38,7 +44,10 @@ def is_transient_task_failure(error: Exception) -> bool:
             error
         )
 
-    return isinstance(error, (NetworkError, TimeoutException))
+    if isinstance(error, PoolTimeout):
+        return False
+
+    return isinstance(error, _HTTPX_TRANSPORT_EXCEPTIONS)
 
 
 def _is_transport_flavored_model_http_error(error: ModelHTTPError) -> bool:
