@@ -406,3 +406,104 @@ def test_build_report_artifact_keeps_transcript_only_case_shape(tmp_path):
             "span_id": "case-span-id",
         }
     ]
+
+
+def test_build_report_artifact_tracks_mixed_case_and_failure_categories():
+    result_artifacts = import_module("evals.extraction_quality.result_artifacts")
+
+    report = EvaluationReport(
+        name="gemini3_flash_default",
+        cases=[
+            ReportCase(
+                name="case-1",
+                inputs={"transcript": "Pick up milk"},
+                metadata={
+                    "dataset": "todo_extraction_v1",
+                    "case_type": "extraction",
+                    "source_fixture": "fixture-1.json",
+                },
+                expected_output=[Todo(text="Pick up milk")],
+                output=[Todo(text="Pick up milk")],
+                metrics={"expected_todo_count": 1, "predicted_todo_count": 1},
+                attributes={},
+                scores={},
+                labels={},
+                assertions={},
+                task_duration=0.1,
+                total_duration=0.2,
+                trace_id="case-trace-id",
+                span_id="case-span-id",
+            )
+        ],
+        failures=[
+            ReportCaseFailure(
+                name="case-2",
+                inputs={"transcript": "Schedule dentist"},
+                metadata={
+                    "dataset": "todo_extraction_v1",
+                    "case_type": "extraction",
+                    "source_fixture": "fixture-2.json",
+                },
+                expected_output=[Todo(text="Schedule dentist")],
+                error_message="ConnectError: [Errno 8] nodename nor servname provided, or not known",
+                error_stacktrace="Traceback...",
+                trace_id="failure-trace-id-1",
+                span_id="failure-span-id-1",
+            ),
+            ReportCaseFailure(
+                name="case-3",
+                inputs={"transcript": "Book flight"},
+                metadata={
+                    "dataset": "todo_extraction_v1",
+                    "case_type": "extraction",
+                    "source_fixture": "fixture-3.json",
+                },
+                expected_output=[Todo(text="Book flight")],
+                error_message="UnexpectedModelBehavior: output validation failed",
+                error_stacktrace="Traceback...",
+                trace_id="failure-trace-id-2",
+                span_id="failure-span-id-2",
+            ),
+        ],
+        experiment_metadata={
+            "experiment": "gemini3_flash_default",
+            "dataset_name": "todo_extraction_v1",
+        },
+    )
+
+    payload = result_artifacts.build_report_artifact(
+        report,
+        repeat=1,
+        max_concurrency=1,
+        timestamp=datetime(2026, 4, 1, 16, 20, 0, tzinfo=UTC),
+    )
+
+    assert payload["completed_cases"] == 1
+    assert payload["failure_count"] == 2
+    assert payload["overall_case_success_rate"] == 1 / 3
+    assert payload["failure_counts_by_category"] == {
+        "provider_transport_failure": 1,
+        "output_validation_failure": 1,
+    }
+    assert payload["failures"] == [
+        {
+            "name": "case-2",
+            "source_fixture": "fixture-2.json",
+            "expected_todo_count": 1,
+            "predicted_todo_count": None,
+            "error_message": "ConnectError: [Errno 8] nodename nor servname provided, or not known",
+            "failure_category": "provider_transport_failure",
+            "trace_id": "failure-trace-id-1",
+            "span_id": "failure-span-id-1",
+        },
+        {
+            "name": "case-3",
+            "source_fixture": "fixture-3.json",
+            "expected_todo_count": 1,
+            "predicted_todo_count": None,
+            "error_message": "UnexpectedModelBehavior: output validation failed",
+            "failure_category": "output_validation_failure",
+            "trace_id": "failure-trace-id-2",
+            "span_id": "failure-span-id-2",
+        },
+    ]

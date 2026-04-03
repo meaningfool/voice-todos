@@ -16,6 +16,12 @@ def test_classify_failure_category_handles_provider_transport_failure():
     assert classify_failure_category(error_message) == "provider_transport_failure"
 
 
+def test_classify_failure_category_handles_connectivity_dns_failure():
+    error_message = "ConnectError: [Errno 8] nodename nor servname provided, or not known"
+
+    assert classify_failure_category(error_message) == "provider_transport_failure"
+
+
 def test_classify_failure_category_handles_output_validation_failure():
     error_message = str(
         UnexpectedModelBehavior("output validation failed: expected list of todos")

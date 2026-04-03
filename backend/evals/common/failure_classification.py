@@ -24,6 +24,10 @@ def _is_provider_transport_failure(normalized_message: str) -> bool:
         for marker in (
             "provider timeout",
             "upstream connect error",
+            "connecterror",
+            "nodename nor servname provided",
+            "name or service not known",
+            "temporary failure in name resolution",
             "connection reset",
             "connection refused",
             "connection timed out",
