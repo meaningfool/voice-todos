@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from importlib import import_module
 from pathlib import Path
 
+import pytest
 from pydantic_evals.reporting import EvaluationReport, ReportCase, ReportCaseFailure
 
 from app.models import Todo
@@ -31,6 +32,13 @@ def test_main_list_experiments_prints_registry(capsys):
     assert exit_code == 0
     for experiment_name in EXPECTED_EXPERIMENTS:
         assert experiment_name in captured.out
+
+
+def test_main_rejects_negative_task_retries():
+    runner = import_module("evals.extraction_quality.run")
+
+    with pytest.raises(SystemExit):
+        runner.main(["--all", "--task-retries", "-1"])
 
 
 def test_mistral_experiment_reports_provider_unavailability(monkeypatch):
@@ -114,6 +122,7 @@ def test_main_configures_logfire_before_running_experiments(monkeypatch, tmp_pat
         experiment,
         *,
         repeat,
+        task_retries,
         max_concurrency,
         result_dir,
         artifact_timestamp,
@@ -127,6 +136,7 @@ def test_main_configures_logfire_before_running_experiments(monkeypatch, tmp_pat
                 },
             )
         ]
+        assert task_retries == 0
         events.append(("run", experiment.name))
 
     monkeypatch.setattr(runner, "_run_experiment", fake_run_experiment)
@@ -258,7 +268,124 @@ def test_write_report_artifact_creates_timestamped_json(tmp_path, monkeypatch):
         }
     ]
     assert payload["trace_id"] == "report-trace-id"
-    assert payload["span_id"] == "report-span-id"
+
+
+@pytest.mark.asyncio
+async def test_run_experiment_disables_task_retry_by_default(
+    monkeypatch, tmp_path
+):
+    runner = import_module("evals.extraction_quality.run")
+
+    evaluate_calls: list[dict[str, object]] = []
+
+    class FakeReport:
+        def print(self, include_metadata: bool) -> None:
+            assert include_metadata is True
+
+    class FakeDataset:
+        name = "todo_extraction_v1"
+
+        async def evaluate(self, task, **kwargs):
+            evaluate_calls.append(kwargs)
+            return FakeReport()
+
+    monkeypatch.setattr(runner, "_build_eval_dataset", lambda: FakeDataset())
+    monkeypatch.setattr(
+        runner,
+        "_experiment_metadata",
+        lambda experiment, dataset_name=None: {
+            "experiment": experiment.name,
+            "dataset_name": dataset_name or "unknown",
+        },
+    )
+    monkeypatch.setattr(
+        runner,
+        "write_report_artifact",
+        lambda report, **kwargs: tmp_path / "artifact.json",
+    )
+
+    await runner._run_experiment(
+        EXPERIMENTS["gemini3_flash_default"],
+        repeat=3,
+        max_concurrency=2,
+        task_retries=0,
+        result_dir=tmp_path,
+        artifact_timestamp=datetime(2026, 4, 1, 16, 20, 0, tzinfo=UTC),
+    )
+
+    assert evaluate_calls == [
+        {
+            "name": "gemini3_flash_default",
+            "task_name": "extract_todos",
+            "metadata": {
+                "experiment": "gemini3_flash_default",
+                "dataset_name": "todo_extraction_v1",
+            },
+            "repeat": 3,
+            "max_concurrency": 2,
+            "retry_task": None,
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_run_experiment_enables_task_retry_without_changing_repeat(
+    monkeypatch, tmp_path
+):
+    runner = import_module("evals.extraction_quality.run")
+
+    evaluate_calls: list[dict[str, object]] = []
+
+    class FakeReport:
+        def print(self, include_metadata: bool) -> None:
+            assert include_metadata is True
+
+    class FakeDataset:
+        name = "todo_extraction_v1"
+
+        async def evaluate(self, task, **kwargs):
+            evaluate_calls.append(kwargs)
+            return FakeReport()
+
+    monkeypatch.setattr(runner, "_build_eval_dataset", lambda: FakeDataset())
+    monkeypatch.setattr(
+        runner,
+        "_experiment_metadata",
+        lambda experiment, dataset_name=None: {
+            "experiment": experiment.name,
+            "dataset_name": dataset_name or "unknown",
+        },
+    )
+    monkeypatch.setattr(
+        runner,
+        "write_report_artifact",
+        lambda report, **kwargs: tmp_path / "artifact.json",
+    )
+
+    await runner._run_experiment(
+        EXPERIMENTS["gemini3_flash_default"],
+        repeat=3,
+        max_concurrency=2,
+        task_retries=2,
+        result_dir=tmp_path,
+        artifact_timestamp=datetime(2026, 4, 1, 16, 20, 0, tzinfo=UTC),
+    )
+
+    retry_task = evaluate_calls[0]["retry_task"]
+    assert retry_task is not None
+    assert evaluate_calls == [
+        {
+            "name": "gemini3_flash_default",
+            "task_name": "extract_todos",
+            "metadata": {
+                "experiment": "gemini3_flash_default",
+                "dataset_name": "todo_extraction_v1",
+            },
+            "repeat": 3,
+            "max_concurrency": 2,
+            "retry_task": retry_task,
+        }
+    ]
 
 
 def test_write_report_artifact_uses_unique_result_dir_on_timestamp_collision(
@@ -445,7 +572,10 @@ def test_build_report_artifact_tracks_mixed_case_and_failure_categories():
                     "source_fixture": "fixture-2.json",
                 },
                 expected_output=[Todo(text="Schedule dentist")],
-                error_message="ConnectError: [Errno 8] nodename nor servname provided, or not known",
+                error_message=(
+                    "ConnectError: [Errno 8] nodename nor servname provided, "
+                    "or not known"
+                ),
                 error_stacktrace="Traceback...",
                 trace_id="failure-trace-id-1",
                 span_id="failure-span-id-1",
@@ -491,7 +621,10 @@ def test_build_report_artifact_tracks_mixed_case_and_failure_categories():
             "source_fixture": "fixture-2.json",
             "expected_todo_count": 1,
             "predicted_todo_count": None,
-            "error_message": "ConnectError: [Errno 8] nodename nor servname provided, or not known",
+            "error_message": (
+                "ConnectError: [Errno 8] nodename nor servname provided, "
+                "or not known"
+            ),
             "failure_category": "provider_transport_failure",
             "trace_id": "failure-trace-id-1",
             "span_id": "failure-span-id-1",

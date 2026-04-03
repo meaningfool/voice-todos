@@ -23,6 +23,7 @@ from pydantic_evals.reporting import ReportCase, ReportCaseFailure
 from app.extract import extract_todos
 from app.logfire_setup import configure_logfire
 from app.models import Todo
+from evals.common.retry_policy import build_retry_task_config
 from evals.extraction_quality.result_artifacts import (
     DEFAULT_RESULTS_DIR,
     reserve_result_dir,
@@ -65,6 +66,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=1,
         help="How many times to run each case per experiment.",
+    )
+    parser.add_argument(
+        "--task-retries",
+        type=int,
+        default=0,
+        help="Extra retries for transient task failures before marking a case failed.",
     )
     parser.add_argument(
         "--max-concurrency",
@@ -276,6 +283,7 @@ async def _run_experiment(
     experiment: ExperimentDefinition,
     *,
     repeat: int,
+    task_retries: int,
     max_concurrency: int,
     result_dir: Path,
     artifact_timestamp: datetime,
@@ -290,6 +298,7 @@ async def _run_experiment(
         metadata=metadata,
         repeat=repeat,
         max_concurrency=max_concurrency,
+        retry_task=build_retry_task_config(task_retries),
     )
     report.print(include_metadata=True)
     artifact_path = write_report_artifact(
@@ -336,6 +345,7 @@ async def _run(args: argparse.Namespace) -> int:
         await _run_experiment(
             experiment,
             repeat=args.repeat,
+            task_retries=args.task_retries,
             max_concurrency=args.max_concurrency,
             result_dir=result_dir,
             artifact_timestamp=artifact_timestamp,
@@ -356,6 +366,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("Specify --all or at least one --experiment.")
     if args.repeat < 1:
         parser.error("--repeat must be >= 1.")
+    if args.task_retries < 0:
+        parser.error("--task-retries must be >= 0.")
     if args.max_concurrency < 1:
         parser.error("--max-concurrency must be >= 1.")
 
