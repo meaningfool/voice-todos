@@ -20,6 +20,12 @@ def test_transient_provider_transport_errors_are_retryable():
     )
 
 
+def test_generic_model_http_5xx_without_transport_markers_is_not_retryable():
+    assert not is_transient_task_failure(
+        ModelHTTPError(500, "test-model", "internal server error")
+    )
+
+
 def test_output_validation_failures_are_not_retryable():
     assert not is_transient_task_failure(
         UnexpectedModelBehavior("output validation failed: expected list of todos")
