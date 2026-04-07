@@ -49,6 +49,19 @@ def _mistral_unavailable_reason() -> str | None:
     return "missing MISTRAL_API_KEY"
 
 
+def _deepinfra_unavailable_reason() -> str | None:
+    try:
+        importlib.import_module("pydantic_ai.models.openai")
+        importlib.import_module("pydantic_ai.providers.openai")
+    except Exception as exc:
+        return f"deepinfra provider unavailable: {exc}"
+
+    if _read_backend_env_var("DEEPINFRA_API_KEY"):
+        return None
+
+    return "missing DEEPINFRA_API_KEY"
+
+
 @dataclass(frozen=True)
 class ExperimentDefinition:
     name: str
@@ -80,6 +93,8 @@ class ExperimentDefinition:
             return _google_unavailable_reason()
         if self.provider == "mistral":
             return _mistral_unavailable_reason()
+        if self.provider == "deepinfra":
+            return _deepinfra_unavailable_reason()
         return None
 
     @property
@@ -136,10 +151,36 @@ EXPERIMENTS: dict[str, ExperimentDefinition] = {
         name="mistral_small_4_default",
         extraction_config=ExtractionConfig(
             model_name="mistral-small-2603",
+            provider="mistral",
             model_settings={},
             prompt_version="v1",
         ),
         provider="mistral",
         thinking_mode="provider_default",
+    ),
+    "deepinfra_qwen35_9b_default": ExperimentDefinition(
+        name="deepinfra_qwen35_9b_default",
+        extraction_config=ExtractionConfig(
+            model_name="Qwen/Qwen3.5-9B",
+            provider="deepinfra",
+            model_settings={},
+            prompt_version="v1",
+        ),
+        provider="deepinfra",
+        thinking_mode="provider_default",
+    ),
+    "deepinfra_qwen35_4b_structured_tuned": ExperimentDefinition(
+        name="deepinfra_qwen35_4b_structured_tuned",
+        extraction_config=ExtractionConfig(
+            model_name="Qwen/Qwen3.5-4B",
+            provider="deepinfra",
+            model_settings={
+                "temperature": 0,
+                "max_tokens": 1024,
+            },
+            prompt_version="v1",
+        ),
+        provider="deepinfra",
+        thinking_mode="structured_output_tuned",
     ),
 }

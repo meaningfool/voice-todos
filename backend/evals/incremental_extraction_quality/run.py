@@ -133,12 +133,16 @@ def _selected_experiments(
 
 
 def _ensure_provider_env(experiment: ExperimentDefinition) -> None:
-    if experiment.provider != "mistral":
+    provider_env_var = {
+        "deepinfra": "DEEPINFRA_API_KEY",
+        "mistral": "MISTRAL_API_KEY",
+    }.get(experiment.provider)
+    if provider_env_var is None:
         return
 
-    mistral_api_key = _read_backend_env_var("MISTRAL_API_KEY")
-    if mistral_api_key:
-        os.environ.setdefault("MISTRAL_API_KEY", mistral_api_key)
+    api_key = _read_backend_env_var(provider_env_var)
+    if api_key:
+        os.environ.setdefault(provider_env_var, api_key)
 
 
 def _run_git_command(*args: str) -> str | None:

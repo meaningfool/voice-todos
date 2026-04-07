@@ -70,7 +70,7 @@ of truth for the full payloads and deeper debugging.
 
 Provider-backed eval runs need real outbound DNS and HTTPS access for:
 
-- model provider APIs such as Gemini and Mistral
+- model provider APIs such as Gemini, Mistral, and DeepInfra
 - Logfire trace shipping and enrichment
 - `uv` dependency resolution in a fresh worktree or virtualenv
 
@@ -157,6 +157,8 @@ Current experiment ids:
 - `gemini31_flash_lite_default`
 - `gemini31_flash_lite_minimal_thinking`
 - `mistral_small_4_default`
+- `deepinfra_qwen35_9b_default`
+- `deepinfra_qwen35_4b_structured_tuned`
 
 If an experiment is unavailable, the runner prints the reason instead of
 failing the whole command.
@@ -166,6 +168,19 @@ failing the whole command.
 ```bash
 cd backend && .venv/bin/python evals/extraction_quality/run.py --experiment gemini3_flash_default --task-retries 2
 ```
+
+For the DeepInfra-backed Qwen runs, add `DEEPINFRA_API_KEY` to `backend/.env`
+first and then run a specific experiment, for example:
+
+```bash
+cd backend && .venv/bin/python evals/extraction_quality/run.py --experiment deepinfra_qwen35_9b_default --task-retries 2
+```
+
+The smaller Qwen 3.5 variants were intentionally dropped from the active matrix
+after live smoke tests. `Qwen/Qwen3.5-4B` remains, but it is no longer treated
+as a provider-default run; the registry uses a tuned config with
+`temperature=0` and `max_tokens=1024` because that was the first setting that
+passed the structured extraction path reliably.
 
 Useful flags:
 

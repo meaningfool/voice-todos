@@ -30,6 +30,7 @@ GoogleProvider = _GoogleProvider
 @dataclass(frozen=True)
 class ExtractionConfig:
     model_name: str = "gemini-3-flash-preview"
+    provider: str | None = None
     model_settings: dict[str, Any] | None = None
     prompt_family: str = "todo_extraction"
     prompt_version: str = "v1"
@@ -64,6 +65,7 @@ def _config_cache_key(
 ) -> tuple[Any, ...]:
     return (
         config.model_name,
+        config.provider,
         config.prompt_family,
         config.prompt_version,
         prompt_sha256,
@@ -114,8 +116,22 @@ def _get_gemini_api_key() -> str:
     return get_settings().gemini_api_key
 
 
-def _build_model(model_name: str) -> Any:
-    return build_model(model_name, gemini_api_key_getter=_get_gemini_api_key)
+def _get_mistral_api_key() -> str | None:
+    return _read_backend_env_var("MISTRAL_API_KEY")
+
+
+def _get_deepinfra_api_key() -> str | None:
+    return _read_backend_env_var("DEEPINFRA_API_KEY")
+
+
+def _build_model(config: ExtractionConfig) -> Any:
+    return build_model(
+        config.model_name,
+        provider=config.provider,
+        gemini_api_key_getter=_get_gemini_api_key,
+        mistral_api_key_getter=_get_mistral_api_key,
+        deepinfra_api_key_getter=_get_deepinfra_api_key,
+    )
 
 
 def build_extraction_agent(
@@ -125,7 +141,7 @@ def build_extraction_agent(
 ) -> Agent[None, ExtractionResult]:
     resolved_prompt_ref = prompt_ref or get_extraction_prompt_ref(config)
     return Agent(
-        _build_model(config.model_name),
+        _build_model(config),
         output_type=ExtractionResult,
         instructions=resolved_prompt_ref.content,
         model_settings=_resolve_model_settings(config),
@@ -206,7 +222,7 @@ async def extract_todos(
     previous_todos: list[Todo] | None = None,
     config: ExtractionConfig | None = None,
 ) -> list[Todo]:
-    """Extract structured todos from a transcript using Gemini."""
+    """Extract structured todos from a transcript using the configured LLM."""
     if not transcript.strip():
         return []
 
