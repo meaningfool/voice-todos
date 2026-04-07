@@ -306,6 +306,63 @@ async def test_write_run_summary_marks_missing_trace_id_partial_on_artifact(
 
 
 @pytest.mark.asyncio
+async def test_write_run_summary_preserves_existing_enrichment_on_degraded_rerun(
+    monkeypatch, tmp_path
+):
+    from importlib import import_module
+
+    logfire_enrichment = import_module("evals.common.logfire_enrichment")
+
+    run_dir = tmp_path / "2026-04-03T09-32-51Z"
+    run_dir.mkdir()
+    artifact_path = run_dir / "already-enriched.json"
+    payload = _make_payload(
+        experiment_id="already-enriched",
+        trace_id="trace-rerun",
+        cases=[
+            {
+                "name": "case-one",
+                "span_id": "case-span-1",
+                "trace_id": "trace-rerun",
+                "status": "success",
+                "duration_s": 0.75,
+                "failure_category": None,
+                "exception_summary": None,
+                "token_metrics": {
+                    "input_tokens": 12,
+                    "output_tokens": 3,
+                },
+            }
+        ],
+        failures=[],
+        enrichment_status="ok",
+    )
+    payload["avg_task_duration_s"] = 0.75
+    payload["min_task_duration_s"] = 0.75
+    payload["max_task_duration_s"] = 0.75
+    artifact_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+
+    monkeypatch.setattr(logfire_enrichment, "_read_backend_env_var", lambda name: None)
+
+    results = await logfire_enrichment.write_run_summary(result_dir=run_dir)
+
+    enriched = _load_artifact(artifact_path)
+    assert results == [
+        {
+            "artifact_path": artifact_path,
+            "enrichment_status": "skipped",
+            "enrichment_reason": "missing_logfire_read_token",
+        }
+    ]
+    assert enriched["enrichment_status"] == "skipped"
+    assert enriched["enrichment_reason"] == "missing_logfire_read_token"
+    assert enriched["avg_task_duration_s"] == 0.75
+    assert enriched["min_task_duration_s"] == 0.75
+    assert enriched["max_task_duration_s"] == 0.75
+    assert enriched["cases"] == payload["cases"]
+
+
+@pytest.mark.asyncio
 async def test_write_run_summary_rewrites_artifact_atomically(
     monkeypatch, tmp_path
 ):
