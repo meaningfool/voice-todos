@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+import pytest
 from pydantic_ai.exceptions import ModelHTTPError, UnexpectedModelBehavior
 from pydantic_evals.evaluators import EvaluatorFailure
 from pydantic_evals.reporting import EvaluationReport, ReportCase
@@ -39,6 +40,21 @@ def test_classify_failure_category_handles_connectivity_dns_failure():
     )
 
     assert classify_failure_category(error_message) == "provider_transport_failure"
+
+
+@pytest.mark.parametrize(
+    ("error_message", "expected_category"),
+    [
+        ("connect failed", "provider_transport_failure"),
+        ("read timed out", "provider_transport_failure"),
+        ("write timed out", "provider_transport_failure"),
+    ],
+)
+def test_classify_failure_category_handles_exhausted_serialized_transport_failures(
+    error_message: str,
+    expected_category: str,
+):
+    assert classify_failure_category(error_message) == expected_category
 
 
 def test_classify_failure_category_handles_output_validation_failure():
