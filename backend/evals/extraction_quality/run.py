@@ -21,6 +21,7 @@ from pydantic_evals import Dataset, set_eval_attribute
 from app.extract import extract_todos
 from app.logfire_setup import configure_logfire
 from app.models import Todo
+from evals.common.logfire_enrichment import write_run_summary
 from evals.common.retry_policy import build_retry_task_config
 from evals.extraction_quality.dataset_loader import load_extraction_quality_dataset
 from evals.extraction_quality.evaluators import EXTRACTION_QUALITY_EVALUATORS
@@ -79,6 +80,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=DEFAULT_RESULTS_DIR,
         help="Directory where JSON result artifacts are written.",
+    )
+    parser.add_argument(
+        "--skip-logfire-summary",
+        action="store_true",
+        help="Skip the post-run Logfire summary download.",
     )
     return parser
 
@@ -198,7 +204,7 @@ async def _run_experiment(
     max_concurrency: int,
     result_dir: Path,
     artifact_timestamp: datetime,
-) -> None:
+) -> Path:
     _ensure_provider_env(experiment)
     dataset = _build_eval_dataset()
     metadata = _experiment_metadata(
@@ -225,6 +231,7 @@ async def _run_experiment(
         timestamp=artifact_timestamp,
     )
     print(f"Wrote artifact: {artifact_path}")
+    return artifact_path
 
 
 async def _run(args: argparse.Namespace) -> int:
@@ -255,15 +262,30 @@ async def _run(args: argparse.Namespace) -> int:
         timestamp=artifact_timestamp,
     )
 
+    artifact_paths: list[Path] = []
     for experiment in runnable_experiments:
-        await _run_experiment(
-            experiment,
-            repeat=args.repeat,
-            task_retries=args.task_retries,
-            max_concurrency=args.max_concurrency,
-            result_dir=result_dir,
-            artifact_timestamp=artifact_timestamp,
+        artifact_paths.append(
+            await _run_experiment(
+                experiment,
+                repeat=args.repeat,
+                task_retries=args.task_retries,
+                max_concurrency=args.max_concurrency,
+                result_dir=result_dir,
+                artifact_timestamp=artifact_timestamp,
+            )
         )
+
+    if not args.skip_logfire_summary:
+        try:
+            await write_run_summary(
+                result_dir=result_dir,
+                artifact_paths=artifact_paths,
+            )
+        except Exception as exc:
+            print(
+                f"Best-effort Logfire summary failed: {exc}",
+                file=sys.stderr,
+            )
 
     return 0
 

@@ -38,6 +38,14 @@ Item 6.5 measures replayed incremental extraction:
 Use item 6 when you want a from-scratch extraction comparison. Use item 6.5
 when you want to measure carried-state behavior across one recorded session.
 
+After a run completes, the runner writes compact JSON artifacts under
+`backend/evals/extraction_quality/results/<timestamp>/`. Those base artifacts
+are the local source of truth for run identity, model metadata, case counts,
+and overall case success. When `LOGFIRE_READ_TOKEN` is available, the runner
+also downloads a `summary.json` file into the same directory. That summary is
+the local copy of the main Logfire-derived comparison metrics for the run.
+Logfire itself remains the source of truth for full payloads and deep debugging.
+
 ## Dataset Shape
 
 The replay dataset lives at
@@ -133,7 +141,7 @@ cd backend && uv run python evals/incremental_extraction_quality/run.py --list-e
 Run one experiment:
 
 ```bash
-cd backend && uv run python evals/incremental_extraction_quality/run.py --experiment gemini3_flash_default
+cd backend && uv run python evals/incremental_extraction_quality/run.py --experiment gemini3_flash_default --task-retries 2
 ```
 
 Run the whole matrix:
@@ -145,9 +153,15 @@ cd backend && uv run python evals/incremental_extraction_quality/run.py --all --
 Useful flags:
 
 - `--repeat N`: rerun each case `N` times
+- `--task-retries N`: retry transient task failures inside one case before
+  marking that case failed. This is different from `--repeat`; `--repeat`
+  reruns the whole case, while `--task-retries` only retries the current case
+  attempt.
 - `--max-concurrency N`: control concurrent case execution inside one experiment
 - `--output-dir PATH`: write artifacts somewhere other than the default results
   directory
+- `--skip-logfire-summary`: skip the post-run summary download when you only
+  want the base artifacts
 
 ## Inspecting Per-Step Outputs
 
@@ -160,10 +174,17 @@ Each artifact includes:
 - `cases[].step_results[]` with the transcript and todos for every replay step
 - `cases[].trace_id` and `cases[].span_id` for cross-referencing traces
 - aggregate metrics and final count metrics for the run
+- the runner also downloads `summary.json` into the same directory when
+  `LOGFIRE_READ_TOKEN` is available
 
 When Logfire credentials are configured, the runner also attaches per-step
 attributes named `replay_step_<n>_todos`, which makes manual inspection easier
 in the trace UI.
+
+Use `LOGFIRE_READ_TOKEN` when you want the runner to download `summary.json`
+after the experiment loop finishes. Logfire remains the source of truth for the
+full payloads and deeper debugging, while the local artifacts give you compact
+run identity and success data at a glance.
 
 ## Caveats And Guardrails
 

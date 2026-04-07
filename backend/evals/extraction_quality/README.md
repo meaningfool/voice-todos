@@ -56,6 +56,14 @@ shared location, or `LOGFIRE_TOKEN` is set, the runner can ship traces
 remotely. Without credentials it still creates local trace/span IDs, but you
 will not see the run in the hosted Logfire UI.
 
+After a run completes, the runner writes compact JSON artifacts under
+`backend/evals/extraction_quality/results/<timestamp>/`. Those base artifacts
+are the local source of truth for run identity, model metadata, case counts,
+and overall case success. When `LOGFIRE_READ_TOKEN` is available, the runner
+also downloads a `summary.json` file into the same directory. That summary is
+the local copy of the main Logfire-derived comparison metrics for the run.
+Logfire itself remains the source of truth for full payloads and deep debugging.
+
 ## Dataset Asset
 
 The dataset is a stable repo asset at
@@ -126,13 +134,19 @@ failing the whole command.
 ## Running One Experiment
 
 ```bash
-cd backend && .venv/bin/python evals/extraction_quality/run.py --experiment gemini3_flash_default
+cd backend && .venv/bin/python evals/extraction_quality/run.py --experiment gemini3_flash_default --task-retries 2
 ```
 
 Useful flags:
 
 - `--repeat N`: rerun each case N times
+- `--task-retries N`: retry transient task failures inside one case before
+  marking that case failed. This is different from `--repeat`; `--repeat`
+  reruns the whole case, while `--task-retries` only retries the current case
+  attempt.
 - `--max-concurrency N`: control concurrent case execution inside an experiment
+- `--skip-logfire-summary`: skip the post-run summary download when you only
+  want the base artifacts
 
 ## Running The Whole Matrix
 
@@ -148,6 +162,8 @@ The runner:
 - prints one `pydantic_evals` report per runnable experiment
 - writes JSON artifacts under `backend/evals/extraction_quality/results/` by
   default, with one timestamped directory per run
+- downloads `summary.json` into the same directory when `LOGFIRE_READ_TOKEN` is
+  available
 
 ## Comparing Experiments In Logfire
 
@@ -174,6 +190,8 @@ When reviewing Logfire for a run that was actually instrumented:
 - inspect `expected_todo_count` and `predicted_todo_count` for why a case passed
   or failed
 - treat latency and token/cost data as supporting evidence, not the only signal
+- use `LOGFIRE_READ_TOKEN` when you want the runner to download `summary.json`
+  after the experiment loop finishes
 
 ## Adding A New Model Config Safely
 

@@ -482,3 +482,160 @@ async def test_run_experiment_enables_task_retry_without_changing_repeat(
             "retry_task": retry_task,
         }
     ]
+
+
+def test_main_attempts_run_summary_after_experiments_and_ignores_failures(
+    monkeypatch, tmp_path
+):
+    runner = import_module("evals.incremental_extraction_quality.run")
+
+    events: list[tuple[str, object]] = []
+    result_dir = tmp_path / "results"
+    artifact_path = result_dir / "artifact.json"
+
+    class FakeExperiment:
+        name = "fake-experiment"
+
+        def unavailable_reason(self) -> None:
+            return None
+
+    monkeypatch.setattr(
+        runner,
+        "_selected_experiments",
+        lambda **kwargs: [FakeExperiment()],
+    )
+    monkeypatch.setattr(
+        runner,
+        "reserve_result_dir",
+        lambda **kwargs: result_dir,
+    )
+    monkeypatch.setattr(
+        runner,
+        "configure_logfire",
+        lambda **kwargs: events.append(("configure", kwargs)),
+    )
+
+    async def fake_run_experiment(
+        experiment,
+        *,
+        repeat,
+        task_retries,
+        max_concurrency,
+        result_dir,
+        artifact_timestamp,
+    ):
+        events.append(("run", experiment.name))
+        return artifact_path
+
+    async def fake_write_run_summary(
+        *,
+        result_dir,
+        artifact_paths,
+        read_token=None,
+    ):
+        events.append(
+            (
+                "summary",
+                {
+                    "result_dir": result_dir,
+                    "artifact_paths": list(artifact_paths),
+                },
+            )
+        )
+        raise RuntimeError("summary failed")
+
+    monkeypatch.setattr(runner, "_run_experiment", fake_run_experiment)
+    monkeypatch.setattr(runner, "write_run_summary", fake_write_run_summary)
+
+    exit_code = runner.main(
+        ["--experiment", "fake-experiment", "--output-dir", str(tmp_path)]
+    )
+
+    assert exit_code == 0
+    assert events == [
+        (
+            "configure",
+            {
+                "service_name": "voice-todos-backend",
+                "instrument_pydantic_ai": True,
+            },
+        ),
+        ("run", "fake-experiment"),
+        (
+            "summary",
+            {
+                "result_dir": result_dir,
+                "artifact_paths": [artifact_path],
+            },
+        ),
+    ]
+
+
+def test_main_skip_logfire_summary_disables_summary_pass(monkeypatch, tmp_path):
+    runner = import_module("evals.incremental_extraction_quality.run")
+
+    events: list[tuple[str, object]] = []
+    result_dir = tmp_path / "results"
+    artifact_path = result_dir / "artifact.json"
+
+    class FakeExperiment:
+        name = "fake-experiment"
+
+        def unavailable_reason(self) -> None:
+            return None
+
+    monkeypatch.setattr(
+        runner,
+        "_selected_experiments",
+        lambda **kwargs: [FakeExperiment()],
+    )
+    monkeypatch.setattr(
+        runner,
+        "reserve_result_dir",
+        lambda **kwargs: result_dir,
+    )
+    monkeypatch.setattr(
+        runner,
+        "configure_logfire",
+        lambda **kwargs: events.append(("configure", kwargs)),
+    )
+
+    async def fake_run_experiment(
+        experiment,
+        *,
+        repeat,
+        task_retries,
+        max_concurrency,
+        result_dir,
+        artifact_timestamp,
+    ):
+        events.append(("run", experiment.name))
+        return artifact_path
+
+    async def fake_write_run_summary(**kwargs):
+        raise AssertionError("summary should not be called")
+
+    monkeypatch.setattr(runner, "_run_experiment", fake_run_experiment)
+    monkeypatch.setattr(runner, "write_run_summary", fake_write_run_summary)
+
+    exit_code = runner.main(
+        [
+            "--experiment",
+            "fake-experiment",
+            "--output-dir",
+            str(tmp_path),
+            "--skip-logfire-summary",
+        ]
+    )
+
+    assert exit_code == 0
+    assert events == [
+        (
+            "configure",
+            {
+                "service_name": "voice-todos-backend",
+                "instrument_pydantic_ai": True,
+            },
+        ),
+        ("run", "fake-experiment"),
+    ]
