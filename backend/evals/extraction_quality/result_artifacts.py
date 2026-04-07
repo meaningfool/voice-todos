@@ -76,6 +76,7 @@ def build_report_artifact(
     *,
     repeat: int,
     max_concurrency: int,
+    task_retries: int = 0,
     timestamp: datetime,
     serialize_case: Callable[[ReportCase[Any, Any, Any]], dict[str, Any]] | None = None,
     serialize_failure: (
@@ -113,6 +114,7 @@ def build_report_artifact(
         },
         "repeat": repeat,
         "max_concurrency": max_concurrency,
+        "task_retries": task_retries,
         "completed_cases": completed_cases,
         "failure_count": failure_count,
         "overall_case_success_rate": overall_case_success_rate,
@@ -157,6 +159,7 @@ def write_report_artifact(
     result_dir: Path | None = None,
     repeat: int,
     max_concurrency: int,
+    task_retries: int = 0,
     timestamp: datetime | None = None,
     serialize_case: Callable[[ReportCase[Any, Any, Any]], dict[str, Any]] | None = None,
     serialize_failure: (
@@ -176,6 +179,7 @@ def write_report_artifact(
         report,
         repeat=repeat,
         max_concurrency=max_concurrency,
+        task_retries=task_retries,
         timestamp=artifact_timestamp,
         serialize_case=serialize_case,
         serialize_failure=serialize_failure,

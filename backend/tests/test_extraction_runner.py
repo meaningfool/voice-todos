@@ -89,6 +89,7 @@ def test_experiment_metadata_includes_prompt_identity(monkeypatch):
     assert metadata["prompt_sha"] == "prompt-sha-123"
     assert metadata["git_branch"] == "codex/item6-extraction-model-evals"
     assert metadata["git_commit_sha"] == "65218795562767602eb8d5f9103eebfd9998cbec"
+    assert metadata["task_retries"] == 0
 
 
 def test_main_configures_logfire_before_running_experiments(monkeypatch, tmp_path):
@@ -249,6 +250,7 @@ def test_write_report_artifact_creates_timestamped_json(tmp_path, monkeypatch):
     )
     assert payload["repeat"] == 2
     assert payload["max_concurrency"] == 3
+    assert payload["task_retries"] == 0
     assert payload["completed_cases"] == 1
     assert payload["failure_count"] == 0
     assert payload["overall_case_success_rate"] == 1.0
@@ -293,9 +295,10 @@ async def test_run_experiment_disables_task_retry_by_default(
     monkeypatch.setattr(
         runner,
         "_experiment_metadata",
-        lambda experiment, dataset_name=None: {
+        lambda experiment, dataset_name=None, task_retries=0: {
             "experiment": experiment.name,
             "dataset_name": dataset_name or "unknown",
+            "task_retries": task_retries,
         },
     )
     monkeypatch.setattr(
@@ -320,6 +323,7 @@ async def test_run_experiment_disables_task_retry_by_default(
             "metadata": {
                 "experiment": "gemini3_flash_default",
                 "dataset_name": "todo_extraction_v1",
+                "task_retries": 0,
             },
             "repeat": 3,
             "max_concurrency": 2,
@@ -351,9 +355,10 @@ async def test_run_experiment_enables_task_retry_without_changing_repeat(
     monkeypatch.setattr(
         runner,
         "_experiment_metadata",
-        lambda experiment, dataset_name=None: {
+        lambda experiment, dataset_name=None, task_retries=0: {
             "experiment": experiment.name,
             "dataset_name": dataset_name or "unknown",
+            "task_retries": task_retries,
         },
     )
     monkeypatch.setattr(
@@ -380,6 +385,7 @@ async def test_run_experiment_enables_task_retry_without_changing_repeat(
             "metadata": {
                 "experiment": "gemini3_flash_default",
                 "dataset_name": "todo_extraction_v1",
+                "task_retries": 2,
             },
             "repeat": 3,
             "max_concurrency": 2,
@@ -520,6 +526,7 @@ def test_build_report_artifact_keeps_transcript_only_case_shape(tmp_path):
         report,
         repeat=1,
         max_concurrency=1,
+        task_retries=2,
         timestamp=datetime(2026, 4, 1, 16, 20, 0, tzinfo=UTC),
     )
 
@@ -533,6 +540,7 @@ def test_build_report_artifact_keeps_transcript_only_case_shape(tmp_path):
             "span_id": "case-span-id",
         }
     ]
+    assert payload["task_retries"] == 2
 
 
 def test_build_report_artifact_tracks_mixed_case_and_failure_categories():
@@ -605,6 +613,7 @@ def test_build_report_artifact_tracks_mixed_case_and_failure_categories():
         report,
         repeat=1,
         max_concurrency=1,
+        task_retries=1,
         timestamp=datetime(2026, 4, 1, 16, 20, 0, tzinfo=UTC),
     )
 
@@ -615,6 +624,7 @@ def test_build_report_artifact_tracks_mixed_case_and_failure_categories():
         "provider_transport_failure": 1,
         "output_validation_failure": 1,
     }
+    assert payload["task_retries"] == 1
     assert payload["failures"] == [
         {
             "name": "case-2",

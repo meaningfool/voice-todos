@@ -161,10 +161,12 @@ def _experiment_metadata(
     experiment: ExperimentDefinition,
     *,
     dataset_name: str | None = None,
-) -> dict[str, str]:
+    task_retries: int = 0,
+) -> dict[str, Any]:
     return {
         **experiment.identity_metadata,
         "dataset_name": dataset_name or "unknown",
+        "task_retries": task_retries,
         "git_branch": _get_git_branch(),
         "git_commit_sha": _get_git_commit_sha(),
     }
@@ -290,7 +292,11 @@ async def _run_experiment(
 ) -> None:
     _ensure_provider_env(experiment)
     dataset = _build_eval_dataset()
-    metadata = _experiment_metadata(experiment, dataset_name=dataset.name)
+    metadata = _experiment_metadata(
+        experiment,
+        dataset_name=dataset.name,
+        task_retries=task_retries,
+    )
     report = await dataset.evaluate(
         _build_task(experiment, metadata=metadata),
         name=experiment.name,
@@ -306,6 +312,7 @@ async def _run_experiment(
         result_dir=result_dir,
         repeat=repeat,
         max_concurrency=max_concurrency,
+        task_retries=task_retries,
         timestamp=artifact_timestamp,
         serialize_case=serialize_replay_case,
         serialize_failure=serialize_replay_failure,

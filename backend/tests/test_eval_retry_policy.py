@@ -1,5 +1,6 @@
 from httpx import ConnectError, PoolTimeout, ReadTimeout
 from pydantic_ai.exceptions import ModelHTTPError, UnexpectedModelBehavior
+from tenacity import retry
 
 from evals.common.retry_policy import (
     build_retry_task_config,
@@ -9,6 +10,24 @@ from evals.common.retry_policy import (
 
 def test_build_retry_task_config_returns_none_for_zero_retries():
     assert build_retry_task_config(task_retries=0) is None
+
+
+def test_build_retry_task_config_retries_flaky_callable_three_times():
+    config = build_retry_task_config(task_retries=2)
+    assert config is not None
+
+    attempts = 0
+
+    @retry(**{**config, "sleep": lambda _: None})
+    def flaky() -> str:
+        nonlocal attempts
+        attempts += 1
+        if attempts < 3:
+            raise ConnectError("connect failed")
+        return "ok"
+
+    assert flaky() == "ok"
+    assert attempts == 3
 
 
 def test_transient_provider_transport_errors_are_retryable():
