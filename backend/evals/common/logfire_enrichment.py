@@ -19,6 +19,27 @@ SUMMARY_STATUS_SKIPPED = "skipped"
 SummaryStatus = Literal["ok", "partial", "skipped"]
 
 _QUERY_LIMIT = 10_000
+_TOKEN_METRIC_ALIASES: dict[str, tuple[str, ...]] = {
+    "input_tokens": (
+        "input_tokens",
+        "prompt_tokens",
+        "gen_ai.usage.input_tokens",
+    ),
+    "output_tokens": (
+        "output_tokens",
+        "completion_tokens",
+        "gen_ai.usage.output_tokens",
+        "gen_ai.usage.details.thoughts_tokens",
+    ),
+    "cost_usd": (
+        "cost_usd",
+        "cost",
+        "total_cost",
+        "operation.cost",
+    ),
+    "total_tokens": ("total_tokens",),
+    "requests": ("requests",),
+}
 
 
 def _utc_now() -> datetime:
@@ -78,9 +99,23 @@ def _load_artifact_payloads(result_dir: Path) -> list[dict[str, Any]]:
     artifact_paths = sorted(
         path
         for path in result_dir.glob("*.json")
-        if path.name != SUMMARY_FILENAME and path.is_file()
+        if path.is_file() and path.name != SUMMARY_FILENAME
     )
-    return [_load_json_file(path) for path in artifact_paths]
+    payloads: list[dict[str, Any]] = []
+    for path in artifact_paths:
+        payload = _load_json_file(path)
+        if _is_experiment_artifact_payload(payload):
+            payloads.append(payload)
+    return payloads
+
+
+def _is_experiment_artifact_payload(payload: Mapping[str, Any]) -> bool:
+    return (
+        isinstance(payload.get("experiment_id"), str)
+        and isinstance(payload.get("trace_id"), str)
+        and isinstance(payload.get("cases"), list)
+        and isinstance(payload.get("failures"), list)
+    )
 
 
 def _build_case_row(
@@ -204,29 +239,74 @@ def _first_numeric(
 
 
 def _collect_token_metrics(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    collected: dict[str, Any] = {}
-    metric_names = (
-        "input_tokens",
-        "output_tokens",
-        "prompt_tokens",
-        "completion_tokens",
-        "total_tokens",
-        "requests",
-        "cost",
-        "cost_usd",
-        "total_cost",
-    )
+    collected: dict[str, float] = defaultdict(float)
     for row in rows:
-        row_values = {**row, **_extract_attributes(row)}
-        for metric_name in metric_names:
-            if metric_name in row_values:
-                raw_value = row_values[metric_name]
-                normalized = _as_int(raw_value)
-                if normalized is None:
-                    normalized = _as_float(raw_value)
-                if normalized is not None:
-                    collected[metric_name] = normalized
-    return {key: collected[key] for key in sorted(collected)}
+        row_values = _flatten_row_values(row)
+        for canonical_name, aliases in _TOKEN_METRIC_ALIASES.items():
+            if canonical_name == "output_tokens":
+                value = _sum_numeric_from_flattened(row_values, aliases)
+            else:
+                value = _first_numeric_from_flattened(row_values, aliases)
+            if value is not None:
+                collected[canonical_name] += value
+    return {
+        key: _normalize_number(value)
+        for key, value in sorted(collected.items())
+    }
+
+
+def _flatten_row_values(row: Mapping[str, Any]) -> dict[str, Any]:
+    sources: dict[str, Any] = dict(row)
+    sources.pop("attributes", None)
+    sources.update(_extract_attributes(row))
+
+    flattened: dict[str, Any] = {}
+    _flatten_mapping(sources, prefix="", flattened=flattened)
+    return flattened
+
+
+def _flatten_mapping(
+    mapping: Mapping[str, Any],
+    *,
+    prefix: str,
+    flattened: dict[str, Any],
+) -> None:
+    for key, value in mapping.items():
+        key_path = f"{prefix}.{key}" if prefix else str(key)
+        if isinstance(value, Mapping):
+            _flatten_mapping(value, prefix=key_path, flattened=flattened)
+        else:
+            flattened[key_path] = value
+
+
+def _first_numeric_from_flattened(
+    row_values: Mapping[str, Any],
+    aliases: Sequence[str],
+) -> float | None:
+    for alias in aliases:
+        value = _as_float(row_values.get(alias))
+        if value is not None:
+            return value
+    return None
+
+
+def _sum_numeric_from_flattened(
+    row_values: Mapping[str, Any],
+    aliases: Sequence[str],
+) -> float | None:
+    total = 0.0
+    found = False
+    for alias in aliases:
+        value = _as_float(row_values.get(alias))
+        if value is None:
+            continue
+        total += value
+        found = True
+    return total if found else None
+
+
+def _normalize_number(value: float) -> int | float:
+    return int(value) if value.is_integer() else value
 
 
 def _query_sql(trace_id: str) -> str:
@@ -415,6 +495,19 @@ async def build_run_summary(
                     payload,
                     status=SUMMARY_STATUS_PARTIAL,
                     reason="logfire_query_failed",
+                )
+            )
+            continue
+
+        if not rows:
+            top_level_status = SUMMARY_STATUS_PARTIAL
+            top_level_reason = top_level_reason or "logfire_query_returned_no_rows"
+            experiments.append(
+                _build_local_experiment_summary(
+                    payload,
+                    status=SUMMARY_STATUS_PARTIAL,
+                    reason="logfire_query_returned_no_rows",
+                    rows=rows,
                 )
             )
             continue

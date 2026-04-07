@@ -232,6 +232,16 @@ async def test_write_run_summary_uses_exact_trace_id_and_case_metrics(
     assert summary["avg_task_duration_s"] == 0.375
     assert summary["min_task_duration_s"] == 0.25
     assert summary["max_task_duration_s"] == 0.5
+    assert summary["experiments"][0]["cases"][0]["token_metrics"] == {
+        "cost_usd": 0.0125,
+        "input_tokens": 100,
+        "output_tokens": 20,
+    }
+    assert summary["experiments"][0]["cases"][1]["token_metrics"] == {
+        "cost_usd": 0.02,
+        "input_tokens": 80,
+        "output_tokens": 0,
+    }
     assert summary["experiments"] == [
         {
             "experiment_id": "mistral_small_4_default",
@@ -269,7 +279,7 @@ async def test_write_run_summary_uses_exact_trace_id_and_case_metrics(
                         "ModelHTTPError: status_code: 503, body: upstream connect error"
                     ),
                     "token_metrics": {
-                        "cost": 0.02,
+                        "cost_usd": 0.02,
                         "input_tokens": 80,
                         "output_tokens": 0,
                     },
@@ -278,6 +288,186 @@ async def test_write_run_summary_uses_exact_trace_id_and_case_metrics(
         }
     ]
     assert (run_dir / "summary.json").exists()
+
+
+@pytest.mark.asyncio
+async def test_write_run_summary_aggregates_nested_token_metrics_across_descendants(
+    monkeypatch, tmp_path
+):
+    from importlib import import_module
+
+    logfire_enrichment = import_module("evals.common.logfire_enrichment")
+
+    run_dir = tmp_path / "2026-04-03T09-32-51Z"
+    run_dir.mkdir()
+    _write_artifact(
+        run_dir,
+        experiment_id="gemini3_flash_default",
+        trace_id="trace-nested",
+        cases=[
+            {
+                "name": "case-one",
+                "span_id": "case-span-1",
+                "trace_id": "trace-nested",
+            }
+        ],
+        failures=[],
+    )
+
+    class FakeAsyncLogfireQueryClient:
+        def __init__(self, read_token: str):
+            self.read_token = read_token
+            self.queries: list[str] = []
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc_value, traceback):
+            return None
+
+        async def query_json_rows(
+            self,
+            sql,
+            min_timestamp=None,
+            max_timestamp=None,
+            limit=None,
+        ):
+            self.queries.append(sql)
+            return {
+                "columns": [],
+                "rows": [
+                    {
+                        "span_id": "case-span-1",
+                        "parent_span_id": None,
+                        "span_name": "case-one",
+                        "kind": "span",
+                        "message": "",
+                        "duration": 0.3,
+                        "attributes": "{\"role\": \"case\"}",
+                    },
+                    {
+                        "span_id": "provider-span-1",
+                        "parent_span_id": "case-span-1",
+                        "span_name": "provider.request",
+                        "kind": "span",
+                        "message": "",
+                        "duration": 0.1,
+                        "attributes": json.dumps(
+                            {
+                                "gen_ai": {
+                                    "usage": {
+                                        "input_tokens": 100,
+                                        "output_tokens": 20,
+                                        "details": {"thoughts_tokens": 5},
+                                    }
+                                },
+                                "operation": {"cost": 0.0125},
+                            },
+                            sort_keys=True,
+                        ),
+                    },
+                    {
+                        "span_id": "provider-span-2",
+                        "parent_span_id": "case-span-1",
+                        "span_name": "provider.retry",
+                        "kind": "span",
+                        "message": "",
+                        "duration": 0.2,
+                        "attributes": json.dumps(
+                            {
+                                "gen_ai.usage.input_tokens": 30,
+                                "gen_ai.usage.output_tokens": 4,
+                                "operation.cost": 0.02,
+                            },
+                            sort_keys=True,
+                        ),
+                    },
+                ],
+            }
+
+    fake_client = FakeAsyncLogfireQueryClient("read-token")
+    monkeypatch.setattr(
+        logfire_enrichment,
+        "_read_backend_env_var",
+        lambda name: "read-token",
+    )
+    monkeypatch.setattr(
+        logfire_enrichment,
+        "AsyncLogfireQueryClient",
+        lambda read_token: fake_client,
+    )
+
+    summary = await logfire_enrichment.write_run_summary(result_dir=run_dir)
+
+    assert summary["status"] == "ok"
+    assert summary["experiments"][0]["cases"][0]["token_metrics"] == {
+        "cost_usd": 0.0325,
+        "input_tokens": 130,
+        "output_tokens": 29,
+    }
+
+
+@pytest.mark.asyncio
+async def test_write_run_summary_marks_empty_query_results_partial(
+    monkeypatch, tmp_path
+):
+    from importlib import import_module
+
+    logfire_enrichment = import_module("evals.common.logfire_enrichment")
+
+    run_dir = tmp_path / "2026-04-03T09-32-51Z"
+    run_dir.mkdir()
+    _write_artifact(
+        run_dir,
+        experiment_id="gemini3_flash_default",
+        trace_id="trace-empty",
+        cases=[
+            {
+                "name": "case-one",
+                "span_id": "case-span-1",
+                "trace_id": "trace-empty",
+            }
+        ],
+        failures=[],
+    )
+
+    class FakeAsyncLogfireQueryClient:
+        def __init__(self, read_token: str):
+            self.read_token = read_token
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc_value, traceback):
+            return None
+
+        async def query_json_rows(
+            self,
+            sql,
+            min_timestamp=None,
+            max_timestamp=None,
+            limit=None,
+        ):
+            return {"columns": [], "rows": []}
+
+    monkeypatch.setattr(
+        logfire_enrichment,
+        "_read_backend_env_var",
+        lambda name: "read-token",
+    )
+    monkeypatch.setattr(
+        logfire_enrichment,
+        "AsyncLogfireQueryClient",
+        lambda read_token: FakeAsyncLogfireQueryClient(read_token),
+    )
+
+    summary = await logfire_enrichment.write_run_summary(result_dir=run_dir)
+
+    assert summary["status"] == "partial"
+    assert summary["reason"] == "logfire_query_returned_no_rows"
+    assert summary["experiments"][0]["status"] == "partial"
+    assert summary["experiments"][0]["reason"] == "logfire_query_returned_no_rows"
+    assert summary["experiments"][0]["cases"][0]["token_metrics"] == {}
 
 
 @pytest.mark.asyncio
