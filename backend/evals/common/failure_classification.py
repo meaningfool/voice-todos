@@ -14,6 +14,12 @@ _PROVIDER_HTTP_TRANSPORT_MARKERS = (
     "reset reason: overflow",
 )
 
+_SERIALIZED_HTTPX_TRANSPORT_MESSAGES = (
+    "connect failed",
+    "read timed out",
+    "write timed out",
+)
+
 
 def classify_failure_category(error_message: str | None) -> str:
     normalized_message = (error_message or "").casefold()
@@ -31,15 +37,15 @@ def _is_provider_transport_failure(normalized_message: str) -> bool:
     if "provider timeout" in normalized_message:
         return True
 
+    if _is_exact_serialized_httpx_transport_failure(normalized_message):
+        return True
+
     if any(
         marker in normalized_message
         for marker in (
-            "connect failed",
             "connecterror",
             "nodename nor servname provided",
             "name or service not known",
-            "read timed out",
-            "write timed out",
             "temporary failure in name resolution",
             "connection reset",
             "connection refused",
@@ -49,6 +55,10 @@ def _is_provider_transport_failure(normalized_message: str) -> bool:
         return True
 
     return _is_provider_http_5xx_transport_failure(normalized_message)
+
+
+def _is_exact_serialized_httpx_transport_failure(normalized_message: str) -> bool:
+    return normalized_message.strip() in _SERIALIZED_HTTPX_TRANSPORT_MESSAGES
 
 
 def _is_provider_http_5xx_transport_failure(normalized_message: str) -> bool:

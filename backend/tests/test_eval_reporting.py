@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import pytest
 from pydantic_ai.exceptions import ModelHTTPError, UnexpectedModelBehavior
 from pydantic_evals.evaluators import EvaluatorFailure
-from pydantic_evals.reporting import EvaluationReport, ReportCase
+from pydantic_evals.reporting import EvaluationReport, ReportCase, ReportCaseFailure
 
 from app.models import Todo
 from evals.common.failure_classification import classify_failure_category
@@ -55,6 +55,20 @@ def test_classify_failure_category_handles_exhausted_serialized_transport_failur
     expected_category: str,
 ):
     assert classify_failure_category(error_message) == expected_category
+
+
+@pytest.mark.parametrize(
+    "error_message",
+    [
+        "RuntimeError: connect failed while retrying",
+        "TaskError: read timed out after 3 attempts",
+        "transport wrapper: write timed out during cleanup",
+    ],
+)
+def test_classify_failure_category_does_not_overmatch_transport_fragments(
+    error_message: str,
+):
+    assert classify_failure_category(error_message) == "unexpected_task_failure"
 
 
 def test_classify_failure_category_handles_output_validation_failure():
@@ -136,5 +150,58 @@ def test_build_report_artifact_starts_with_pending_enrichment_fields():
             "predicted_todo_count": 1,
             "trace_id": "case-trace-id",
             "span_id": "case-span-id",
+        }
+    ]
+
+
+def test_build_report_artifact_classifies_serialized_transport_failure():
+    report = EvaluationReport(
+        name="gemini3_flash_default",
+        cases=[],
+        failures=[
+            ReportCaseFailure(
+                name="case-2",
+                inputs={"transcript": "Schedule dentist"},
+                metadata={
+                    "dataset": "todo_extraction_v1",
+                    "case_type": "extraction",
+                    "source_fixture": "fixture-2.json",
+                },
+                expected_output=[Todo(text="Schedule dentist")],
+                error_message="connect failed",
+                error_stacktrace="Traceback...",
+                trace_id="failure-trace-id",
+                span_id="failure-span-id",
+            )
+        ],
+        experiment_metadata={
+            "experiment": "gemini3_flash_default",
+            "dataset_name": "todo_extraction_v1",
+        },
+        trace_id="report-trace-id",
+        span_id="report-span-id",
+    )
+
+    payload = result_artifacts.build_report_artifact(
+        report,
+        repeat=1,
+        max_concurrency=1,
+        task_retries=0,
+        timestamp=datetime(2026, 4, 1, 16, 20, 0, tzinfo=UTC),
+    )
+
+    assert payload["failure_counts_by_category"] == {
+        "provider_transport_failure": 1
+    }
+    assert payload["failures"] == [
+        {
+            "name": "case-2",
+            "source_fixture": "fixture-2.json",
+            "expected_todo_count": 1,
+            "predicted_todo_count": None,
+            "error_message": "connect failed",
+            "trace_id": "failure-trace-id",
+            "span_id": "failure-span-id",
+            "failure_category": "provider_transport_failure",
         }
     ]
