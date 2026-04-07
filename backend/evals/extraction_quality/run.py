@@ -240,11 +240,16 @@ async def enrich_experiment_artifacts(
     artifact_paths: Sequence[Path],
     read_token: str | None = None,
 ) -> list[dict[str, Any]]:
-    return await logfire_enrichment.write_run_summary(
-        result_dir=result_dir,
-        artifact_paths=artifact_paths,
-        read_token=read_token,
-    )
+    del result_dir
+    results: list[dict[str, Any]] = []
+    for artifact_path in artifact_paths:
+        results.append(
+            await logfire_enrichment.enrich_experiment_artifact(
+                artifact_path,
+                read_token=read_token,
+            )
+        )
+    return results
 
 
 async def _run(args: argparse.Namespace) -> int:
