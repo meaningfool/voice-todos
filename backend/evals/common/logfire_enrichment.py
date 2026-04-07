@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import json
-import re
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
@@ -14,15 +12,12 @@ from app.logfire_setup import _read_backend_env_var
 from evals.common.failure_classification import classify_failure_category
 
 SUMMARY_FILENAME = "summary.json"
-SUMMARY_STATUS_OK = "ok"
-SUMMARY_STATUS_PARTIAL = "partial"
-SUMMARY_STATUS_SKIPPED = "skipped"
-SummaryStatus = Literal["ok", "partial", "skipped"]
+ENRICHMENT_STATUS_OK = "ok"
+ENRICHMENT_STATUS_PARTIAL = "partial"
+ENRICHMENT_STATUS_SKIPPED = "skipped"
+EnrichmentStatus = Literal["ok", "partial", "skipped"]
 
 _QUERY_LIMIT = 10_000
-_RESULT_DIR_TIMESTAMP_RE = re.compile(
-    r"^(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z)(?:-\d+)?$"
-)
 _TOKEN_METRIC_ALIASES: dict[str, tuple[str, ...]] = {
     "input_tokens": (
         "input_tokens",
@@ -49,27 +44,6 @@ _TOKEN_METRIC_ALIASES: dict[str, tuple[str, ...]] = {
 }
 
 
-def _utc_now() -> datetime:
-    return datetime.now(UTC)
-
-
-def _format_timestamp(timestamp: datetime) -> str:
-    return timestamp.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def _parse_run_timestamp(result_dir: Path) -> str:
-    try:
-        match = _RESULT_DIR_TIMESTAMP_RE.fullmatch(result_dir.name)
-        timestamp_text = match.group("timestamp") if match else result_dir.name
-        return _format_timestamp(
-            datetime.strptime(timestamp_text, "%Y-%m-%dT%H-%M-%SZ").replace(
-                tzinfo=UTC
-            )
-        )
-    except ValueError:
-        return _format_timestamp(_utc_now())
-
-
 def _as_float(value: Any) -> float | None:
     if isinstance(value, bool) or value is None:
         return None
@@ -83,39 +57,20 @@ def _as_float(value: Any) -> float | None:
     return None
 
 
-def _as_int(value: Any) -> int | None:
-    if isinstance(value, bool) or value is None:
-        return None
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float) and value.is_integer():
-        return int(value)
-    if isinstance(value, str):
-        try:
-            parsed = float(value)
-        except ValueError:
-            return None
-        if parsed.is_integer():
-            return int(parsed)
-    return None
-
-
 def _load_json_file(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text())
 
 
-def _load_artifact_payloads(result_dir: Path) -> list[dict[str, Any]]:
-    artifact_paths = sorted(
+def _write_json_file(path: Path, payload: Mapping[str, Any]) -> None:
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+
+
+def _load_artifact_paths(result_dir: Path) -> list[Path]:
+    return sorted(
         path
         for path in result_dir.glob("*.json")
         if path.is_file() and path.name != SUMMARY_FILENAME
     )
-    payloads: list[dict[str, Any]] = []
-    for path in artifact_paths:
-        payload = _load_json_file(path)
-        if _is_experiment_artifact_payload(payload):
-            payloads.append(payload)
-    return payloads
 
 
 def _is_experiment_artifact_payload(payload: Mapping[str, Any]) -> bool:
@@ -135,7 +90,6 @@ def _build_case_row(
     child_rows_by_parent_span_id: dict[str, list[dict[str, Any]]],
 ) -> dict[str, Any]:
     span_id = case_payload.get("span_id")
-    case_name = case_payload.get("name")
     matching_row = rows_by_span_id.get(span_id) if isinstance(span_id, str) else None
     candidate_rows: list[dict[str, Any]] = []
     if matching_row is not None:
@@ -144,36 +98,23 @@ def _build_case_row(
             _collect_descendant_rows(matching_row, child_rows_by_parent_span_id)
         )
 
-    duration_row = matching_row
-    if duration_row is None and candidate_rows:
-        duration_row = candidate_rows[0]
-
-    duration_s = _first_numeric(
-        [duration_row, *candidate_rows],
-        "duration",
-    )
+    duration_row = matching_row or (candidate_rows[0] if candidate_rows else None)
+    duration_s = _first_numeric([duration_row, *candidate_rows], "duration")
     token_metrics = _collect_token_metrics(candidate_rows)
     exception_summary = _first_non_empty(
         _extract_text_value(matching_row, "exception_message"),
         _extract_text_value(matching_row, "message"),
         (failure_payload or {}).get("error_message"),
     )
-
-    row_status = "failure" if failure_payload is not None else "success"
     failure_category = (
         classify_failure_category(failure_payload.get("error_message"))
         if failure_payload is not None
         else None
     )
-    if row_status == "success" and duration_row is not None:
-        exception_summary = _first_non_empty(
-            exception_summary,
-            _extract_text_value(duration_row, "exception_message"),
-        )
 
     return {
-        "name": case_name,
-        "status": row_status,
+        **case_payload,
+        "status": "failure" if failure_payload is not None else "success",
         "duration_s": duration_s,
         "failure_category": failure_category,
         "exception_summary": exception_summary,
@@ -220,7 +161,6 @@ def _extract_attributes(row: Mapping[str, Any] | None) -> dict[str, Any]:
 def _extract_text_value(row: Mapping[str, Any] | None, key: str) -> str | None:
     if row is None:
         return None
-
     value = row.get(key)
     if isinstance(value, str) and value.strip():
         return value.strip()
@@ -312,89 +252,121 @@ def _query_sql(trace_id: str) -> str:
     )
 
 
-def _build_local_experiment_summary(
-    artifact_payload: Mapping[str, Any],
-    *,
-    status: SummaryStatus,
-    reason: str | None,
-    rows: Sequence[dict[str, Any]] | None = None,
-) -> dict[str, Any]:
-    cases = list(artifact_payload.get("cases", []) or [])
-    failures = list(artifact_payload.get("failures", []) or [])
-
+def _rows_by_span(
+    rows: Sequence[dict[str, Any]],
+) -> tuple[dict[str, dict[str, Any]], dict[str, list[dict[str, Any]]]]:
     rows_by_span_id: dict[str, dict[str, Any]] = {}
     child_rows_by_parent_span_id: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for row in rows or []:
+    for row in rows:
         span_id = row.get("span_id")
         if isinstance(span_id, str):
             rows_by_span_id[span_id] = row
         parent_span_id = row.get("parent_span_id")
         if isinstance(parent_span_id, str):
             child_rows_by_parent_span_id[parent_span_id].append(row)
+    return rows_by_span_id, child_rows_by_parent_span_id
 
-    case_rows: list[dict[str, Any]] = []
-    for case_payload in cases:
-        case_rows.append(
+
+def _blank_enrichment_row(
+    case_payload: Mapping[str, Any],
+    *,
+    failure_payload: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    return {
+        **case_payload,
+        "status": "failure" if failure_payload is not None else "success",
+        "duration_s": None,
+        "failure_category": (
+            classify_failure_category(failure_payload.get("error_message"))
+            if failure_payload is not None
+            else None
+        ),
+        "exception_summary": (
+            failure_payload.get("error_message")
+            if failure_payload is not None
+            else None
+        ),
+        "token_metrics": {},
+    }
+
+
+def _duration_stats(
+    *,
+    cases: Sequence[Mapping[str, Any]],
+    failures: Sequence[Mapping[str, Any]],
+) -> dict[str, float | None]:
+    durations = [
+        duration_s
+        for payload in [*cases, *failures]
+        if (duration_s := _as_float(payload.get("duration_s"))) is not None
+    ]
+    return {
+        "avg_task_duration_s": (sum(durations) / len(durations)) if durations else None,
+        "min_task_duration_s": min(durations) if durations else None,
+        "max_task_duration_s": max(durations) if durations else None,
+    }
+
+
+def _failure_counts_by_category(
+    failures: Sequence[Mapping[str, Any]],
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for failure in failures:
+        category = failure.get("failure_category")
+        if not isinstance(category, str) or not category:
+            category = classify_failure_category(failure.get("error_message"))
+        counts[category] = counts.get(category, 0) + 1
+    return counts
+
+
+def _build_enriched_artifact(
+    artifact_payload: Mapping[str, Any],
+    *,
+    status: EnrichmentStatus,
+    reason: str | None,
+    rows: Sequence[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    cases = list(artifact_payload.get("cases", []) or [])
+    failures = list(artifact_payload.get("failures", []) or [])
+    rows_by_span_id, child_rows_by_parent_span_id = _rows_by_span(list(rows or []))
+
+    if rows:
+        enriched_cases = [
             _build_case_row(
                 case_payload=case_payload,
                 failure_payload=None,
                 rows_by_span_id=rows_by_span_id,
                 child_rows_by_parent_span_id=child_rows_by_parent_span_id,
             )
-        )
-
-    for failure_payload in failures:
-        case_rows.append(
+            for case_payload in cases
+        ]
+        enriched_failures = [
             _build_case_row(
                 case_payload=failure_payload,
                 failure_payload=failure_payload,
                 rows_by_span_id=rows_by_span_id,
                 child_rows_by_parent_span_id=child_rows_by_parent_span_id,
             )
-        )
-
-    if status == SUMMARY_STATUS_SKIPPED:
-        case_rows = [
-            {
-                **row,
-                "duration_s": None,
-                "token_metrics": {},
-            }
-            for row in case_rows
+            for failure_payload in failures
+        ]
+    else:
+        enriched_cases = [
+            _blank_enrichment_row(case_payload, failure_payload=None)
+            for case_payload in cases
+        ]
+        enriched_failures = [
+            _blank_enrichment_row(failure_payload, failure_payload=failure_payload)
+            for failure_payload in failures
         ]
 
-    completed_cases = len(cases)
-    failure_count = len(failures)
-    total_cases = completed_cases + failure_count
-    success_rate = completed_cases / total_cases if total_cases else 0.0
-    durations = [
-        row["duration_s"]
-        for row in case_rows
-        if row.get("duration_s") is not None
-    ]
-    task_duration_avg = sum(durations) / len(durations) if durations else None
-    task_duration_min = min(durations) if durations else None
-    task_duration_max = max(durations) if durations else None
-    failure_counts_by_category: dict[str, int] = {}
-    for failure_payload in failures:
-        category = classify_failure_category(failure_payload.get("error_message"))
-        failure_counts_by_category[category] = (
-            failure_counts_by_category.get(category, 0) + 1
-        )
-
     return {
-        "experiment_id": artifact_payload.get("experiment_id"),
-        "trace_id": artifact_payload.get("trace_id"),
-        "status": status,
-        "reason": reason,
-        "completed_cases": completed_cases,
-        "failure_count": failure_count,
-        "overall_case_success_rate": success_rate,
-        "failure_counts_by_category": failure_counts_by_category,
-        "avg_task_duration_s": task_duration_avg,
-        "min_task_duration_s": task_duration_min,
-        "max_task_duration_s": task_duration_max,
-        "cases": case_rows,
+        **artifact_payload,
+        "enrichment_status": status,
+        "enrichment_reason": reason,
+        "failure_counts_by_category": _failure_counts_by_category(enriched_failures),
+        **_duration_stats(cases=enriched_cases, failures=enriched_failures),
+        "cases": enriched_cases,
+        "failures": enriched_failures,
     }
 
 
@@ -409,178 +381,89 @@ async def _query_trace_rows(
     return [row for row in rows if isinstance(row, dict)]
 
 
-async def build_run_summary(
+async def enrich_experiment_artifact(
+    artifact_path: Path,
     *,
-    result_dir: Path,
     read_token: str | None = None,
-    artifact_paths: Sequence[Path] | None = None,
-    artifact_payloads: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    resolved_read_token = read_token or _read_backend_env_var("LOGFIRE_READ_TOKEN")
-    payloads = _resolve_artifact_payloads(
-        result_dir=result_dir,
-        artifact_paths=artifact_paths,
-        artifact_payloads=artifact_payloads,
-    )
-    run_timestamp = _parse_run_timestamp(result_dir)
-
-    if not payloads:
+    artifact_payload = _load_json_file(artifact_path)
+    if not _is_experiment_artifact_payload(artifact_payload):
         return {
-            "status": SUMMARY_STATUS_SKIPPED,
-            "reason": "no_result_artifacts",
-            "run_timestamp": run_timestamp,
-            "experiments": [],
-            "completed_cases": 0,
-            "failure_count": 0,
-            "overall_case_success_rate": 0.0,
-            "failure_counts_by_category": {},
-            "avg_task_duration_s": None,
-            "min_task_duration_s": None,
-            "max_task_duration_s": None,
+            "artifact_path": artifact_path,
+            "enrichment_status": ENRICHMENT_STATUS_SKIPPED,
+            "enrichment_reason": "invalid_experiment_artifact",
         }
 
+    resolved_read_token = read_token or _read_backend_env_var("LOGFIRE_READ_TOKEN")
     if not resolved_read_token:
-        experiments = [
-            _build_local_experiment_summary(
-                payload,
-                status=SUMMARY_STATUS_SKIPPED,
-                reason="missing_logfire_read_token",
-            )
-            for payload in payloads
-        ]
-        return _build_run_summary(
-            run_timestamp=run_timestamp,
-            experiments=experiments,
-            status=SUMMARY_STATUS_SKIPPED,
+        enriched_payload = _build_enriched_artifact(
+            artifact_payload,
+            status=ENRICHMENT_STATUS_SKIPPED,
             reason="missing_logfire_read_token",
         )
+        _write_json_file(artifact_path, enriched_payload)
+        return {
+            "artifact_path": artifact_path,
+            "enrichment_status": ENRICHMENT_STATUS_SKIPPED,
+            "enrichment_reason": "missing_logfire_read_token",
+        }
 
-    experiments: list[dict[str, Any]] = []
-    top_level_status: SummaryStatus = SUMMARY_STATUS_OK
-    top_level_reason: str | None = None
-
-    for payload in payloads:
-        trace_id = payload.get("trace_id")
-        if not isinstance(trace_id, str) or not trace_id:
-            top_level_status = SUMMARY_STATUS_PARTIAL
-            top_level_reason = top_level_reason or "missing_trace_id"
-            experiments.append(
-                _build_local_experiment_summary(
-                    payload,
-                    status=SUMMARY_STATUS_PARTIAL,
-                    reason="missing_trace_id",
-                )
-            )
-            continue
-
-        try:
-            rows = await _query_trace_rows(
-                read_token=resolved_read_token,
-                trace_id=trace_id,
-            )
-        except Exception:
-            top_level_status = SUMMARY_STATUS_PARTIAL
-            top_level_reason = top_level_reason or "logfire_query_failed"
-            experiments.append(
-                _build_local_experiment_summary(
-                    payload,
-                    status=SUMMARY_STATUS_PARTIAL,
-                    reason="logfire_query_failed",
-                )
-            )
-            continue
-
-        if not rows:
-            top_level_status = SUMMARY_STATUS_PARTIAL
-            top_level_reason = top_level_reason or "logfire_query_returned_no_rows"
-            experiments.append(
-                _build_local_experiment_summary(
-                    payload,
-                    status=SUMMARY_STATUS_PARTIAL,
-                    reason="logfire_query_returned_no_rows",
-                    rows=rows,
-                )
-            )
-            continue
-
-        experiments.append(
-            _build_local_experiment_summary(
-                payload,
-                status=SUMMARY_STATUS_OK,
-                reason=None,
-                rows=rows,
-            )
+    trace_id = artifact_payload.get("trace_id")
+    if not isinstance(trace_id, str) or not trace_id:
+        enriched_payload = _build_enriched_artifact(
+            artifact_payload,
+            status=ENRICHMENT_STATUS_PARTIAL,
+            reason="missing_trace_id",
         )
+        _write_json_file(artifact_path, enriched_payload)
+        return {
+            "artifact_path": artifact_path,
+            "enrichment_status": ENRICHMENT_STATUS_PARTIAL,
+            "enrichment_reason": "missing_trace_id",
+        }
 
-    summary = _build_run_summary(
-        run_timestamp=run_timestamp,
-        experiments=experiments,
-        status=top_level_status,
-        reason=top_level_reason,
+    try:
+        rows = await _query_trace_rows(
+            read_token=resolved_read_token,
+            trace_id=trace_id,
+        )
+    except Exception:
+        enriched_payload = _build_enriched_artifact(
+            artifact_payload,
+            status=ENRICHMENT_STATUS_PARTIAL,
+            reason="logfire_query_failed",
+        )
+        _write_json_file(artifact_path, enriched_payload)
+        return {
+            "artifact_path": artifact_path,
+            "enrichment_status": ENRICHMENT_STATUS_PARTIAL,
+            "enrichment_reason": "logfire_query_failed",
+        }
+
+    if not rows:
+        enriched_payload = _build_enriched_artifact(
+            artifact_payload,
+            status=ENRICHMENT_STATUS_PARTIAL,
+            reason="logfire_query_returned_no_rows",
+        )
+        _write_json_file(artifact_path, enriched_payload)
+        return {
+            "artifact_path": artifact_path,
+            "enrichment_status": ENRICHMENT_STATUS_PARTIAL,
+            "enrichment_reason": "logfire_query_returned_no_rows",
+        }
+
+    enriched_payload = _build_enriched_artifact(
+        artifact_payload,
+        status=ENRICHMENT_STATUS_OK,
+        reason=None,
+        rows=rows,
     )
-    return summary
-
-
-def _resolve_artifact_payloads(
-    *,
-    result_dir: Path,
-    artifact_paths: Sequence[Path] | None,
-    artifact_payloads: Sequence[Mapping[str, Any]] | None,
-) -> list[dict[str, Any]]:
-    if artifact_payloads is not None:
-        return [dict(payload) for payload in artifact_payloads]
-    if artifact_paths is not None:
-        resolved_paths = [Path(path) for path in artifact_paths]
-        return [_load_json_file(path) for path in resolved_paths]
-    return _load_artifact_payloads(result_dir)
-
-
-def _build_run_summary(
-    *,
-    run_timestamp: str,
-    experiments: Sequence[Mapping[str, Any]],
-    status: SummaryStatus,
-    reason: str | None,
-) -> dict[str, Any]:
-    completed_cases = sum(
-        int(experiment.get("completed_cases", 0)) for experiment in experiments
-    )
-    failure_count = sum(
-        int(experiment.get("failure_count", 0)) for experiment in experiments
-    )
-    total_cases = completed_cases + failure_count
-    success_rate = completed_cases / total_cases if total_cases else 0.0
-
-    failure_counts_by_category: dict[str, int] = {}
-    durations: list[float] = []
-    for experiment in experiments:
-        for category, count in dict(
-            experiment.get("failure_counts_by_category", {})
-        ).items():
-            failure_counts_by_category[category] = (
-                failure_counts_by_category.get(category, 0) + int(count)
-            )
-        for case in experiment.get("cases", []):
-            duration_s = _as_float(case.get("duration_s"))
-            if duration_s is not None:
-                durations.append(duration_s)
-
-    avg_duration = sum(durations) / len(durations) if durations else None
-    min_duration = min(durations) if durations else None
-    max_duration = max(durations) if durations else None
-
+    _write_json_file(artifact_path, enriched_payload)
     return {
-        "status": status,
-        "reason": reason,
-        "run_timestamp": run_timestamp,
-        "experiments": list(experiments),
-        "completed_cases": completed_cases,
-        "failure_count": failure_count,
-        "overall_case_success_rate": success_rate,
-        "failure_counts_by_category": failure_counts_by_category,
-        "avg_task_duration_s": avg_duration,
-        "min_task_duration_s": min_duration,
-        "max_task_duration_s": max_duration,
+        "artifact_path": artifact_path,
+        "enrichment_status": ENRICHMENT_STATUS_OK,
+        "enrichment_reason": None,
     }
 
 
@@ -590,13 +473,24 @@ async def write_run_summary(
     read_token: str | None = None,
     artifact_paths: Sequence[Path] | None = None,
     artifact_payloads: Sequence[Mapping[str, Any]] | None = None,
-) -> dict[str, Any]:
-    summary = await build_run_summary(
-        result_dir=result_dir,
-        read_token=read_token,
-        artifact_paths=artifact_paths,
-        artifact_payloads=artifact_payloads,
+) -> list[dict[str, Any]]:
+    resolved_paths = (
+        [Path(path) for path in artifact_paths]
+        if artifact_paths is not None
+        else _load_artifact_paths(result_dir)
     )
-    summary_path = result_dir / SUMMARY_FILENAME
-    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
-    return summary
+    if artifact_payloads is not None and artifact_paths is None:
+        return []
+
+    results: list[dict[str, Any]] = []
+    for artifact_path in resolved_paths:
+        payload = _load_json_file(artifact_path)
+        if not _is_experiment_artifact_payload(payload):
+            continue
+        results.append(
+            await enrich_experiment_artifact(
+                artifact_path,
+                read_token=read_token,
+            )
+        )
+    return results

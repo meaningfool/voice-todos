@@ -98,6 +98,8 @@ def build_report_artifact(
         "timestamp": _format_timestamp(timestamp),
         "dataset_name": metadata.get("dataset_name"),
         "experiment_id": metadata.get("experiment", report.name),
+        "enrichment_status": "pending",
+        "enrichment_reason": None,
         "model": {
             "name": metadata.get("model_name"),
             "provider": metadata.get("provider"),
@@ -119,6 +121,9 @@ def build_report_artifact(
         "failure_count": failure_count,
         "overall_case_success_rate": overall_case_success_rate,
         "failure_counts_by_category": _count_failure_categories(report.failures),
+        "avg_task_duration_s": None,
+        "min_task_duration_s": None,
+        "max_task_duration_s": None,
         "aggregate_metrics": averages.metrics if averages else {},
         "cases": [case_serializer(case) for case in report.cases],
         "failures": [

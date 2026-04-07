@@ -13,28 +13,44 @@ def _write_artifact(
     trace_id: str,
     cases: list[dict[str, object]],
     failures: list[dict[str, object]],
+    enrichment_status: str = "pending",
+    enrichment_reason: str | None = None,
 ) -> Path:
     payload = {
         "experiment_id": experiment_id,
         "trace_id": trace_id,
         "cases": cases,
         "failures": failures,
+        "completed_cases": len(cases),
+        "failure_count": len(failures),
+        "overall_case_success_rate": (
+            len(cases) / (len(cases) + len(failures)) if cases or failures else 0.0
+        ),
+        "failure_counts_by_category": {},
         "timestamp": "2026-04-03T09:32:51Z",
+        "enrichment_status": enrichment_status,
+        "enrichment_reason": enrichment_reason,
     }
     artifact_path = result_dir / f"{experiment_id}.json"
     artifact_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
     return artifact_path
 
 
+def _load_artifact(path: Path) -> dict[str, object]:
+    return json.loads(path.read_text())
+
+
 @pytest.mark.asyncio
-async def test_write_run_summary_skips_when_read_token_missing(monkeypatch, tmp_path):
+async def test_write_run_summary_marks_artifact_skipped_when_read_token_missing(
+    monkeypatch, tmp_path
+):
     from importlib import import_module
 
     logfire_enrichment = import_module("evals.common.logfire_enrichment")
 
     run_dir = tmp_path / "2026-04-03T09-32-51Z"
     run_dir.mkdir()
-    _write_artifact(
+    artifact_path = _write_artifact(
         run_dir,
         experiment_id="gemini3_flash_default",
         trace_id="trace-abc",
@@ -48,79 +64,45 @@ async def test_write_run_summary_skips_when_read_token_missing(monkeypatch, tmp_
         failures=[],
     )
 
-    monkeypatch.setattr(
-        logfire_enrichment,
-        "_read_backend_env_var",
-        lambda name: None,
-    )
+    monkeypatch.setattr(logfire_enrichment, "_read_backend_env_var", lambda name: None)
 
-    summary = await logfire_enrichment.write_run_summary(result_dir=run_dir)
+    results = await logfire_enrichment.write_run_summary(result_dir=run_dir)
 
-    assert summary["status"] == "skipped"
-    assert summary["reason"] == "missing_logfire_read_token"
-    assert summary["run_timestamp"] == "2026-04-03T09:32:51Z"
-    assert summary["experiments"] == [
+    payload = _load_artifact(artifact_path)
+
+    assert results == [
         {
-            "experiment_id": "gemini3_flash_default",
-            "trace_id": "trace-abc",
-            "status": "skipped",
-            "reason": "missing_logfire_read_token",
-            "completed_cases": 1,
-            "failure_count": 0,
-            "overall_case_success_rate": 1.0,
-            "failure_counts_by_category": {},
-            "avg_task_duration_s": None,
-            "min_task_duration_s": None,
-            "max_task_duration_s": None,
-            "cases": [
-                {
-                    "name": "case-one",
-                    "status": "success",
-                    "duration_s": None,
-                    "failure_category": None,
-                    "exception_summary": None,
-                    "token_metrics": {},
-                }
-            ],
+            "artifact_path": artifact_path,
+            "enrichment_status": "skipped",
+            "enrichment_reason": "missing_logfire_read_token",
         }
     ]
-    assert (run_dir / "summary.json").exists()
+    assert payload["enrichment_status"] == "skipped"
+    assert payload["enrichment_reason"] == "missing_logfire_read_token"
+    assert payload["completed_cases"] == 1
+    assert payload["failure_count"] == 0
+    assert payload["overall_case_success_rate"] == 1.0
+    assert payload["failure_counts_by_category"] == {}
+    assert payload["avg_task_duration_s"] is None
+    assert payload["min_task_duration_s"] is None
+    assert payload["max_task_duration_s"] is None
+    assert payload["cases"] == [
+        {
+            "name": "case-one",
+            "span_id": "case-span-1",
+            "trace_id": "trace-abc",
+            "status": "success",
+            "duration_s": None,
+            "failure_category": None,
+            "exception_summary": None,
+            "token_metrics": {},
+        }
+    ]
+    assert not (run_dir / "summary.json").exists()
 
 
 @pytest.mark.asyncio
-async def test_write_run_summary_parses_suffixed_run_directory_timestamp(
-    monkeypatch, tmp_path
-):
-    from importlib import import_module
-
-    logfire_enrichment = import_module("evals.common.logfire_enrichment")
-
-    run_dir = tmp_path / "2026-04-03T09-32-51Z-01"
-    run_dir.mkdir()
-    _write_artifact(
-        run_dir,
-        experiment_id="gemini3_flash_default",
-        trace_id="trace-abc",
-        cases=[],
-        failures=[],
-    )
-
-    monkeypatch.setattr(
-        logfire_enrichment,
-        "_read_backend_env_var",
-        lambda name: None,
-    )
-
-    summary = await logfire_enrichment.write_run_summary(result_dir=run_dir)
-
-    assert summary["run_timestamp"] == "2026-04-03T09:32:51Z"
-    assert summary["status"] == "skipped"
-    assert summary["reason"] == "missing_logfire_read_token"
-    assert (run_dir / "summary.json").exists()
-
-
-@pytest.mark.asyncio
-async def test_write_run_summary_uses_exact_trace_id_and_case_metrics(
+async def test_write_run_summary_uses_exact_trace_id_and_enriches_artifact_in_place(
     monkeypatch, tmp_path
 ):
     from importlib import import_module
@@ -129,7 +111,7 @@ async def test_write_run_summary_uses_exact_trace_id_and_case_metrics(
 
     run_dir = tmp_path / "2026-04-03T09-32-51Z"
     run_dir.mkdir()
-    _write_artifact(
+    artifact_path = _write_artifact(
         run_dir,
         experiment_id="mistral_small_4_default",
         trace_id="019d52b132be51488e7d960a6f737adf",
@@ -148,6 +130,7 @@ async def test_write_run_summary_uses_exact_trace_id_and_case_metrics(
                 "error_message": (
                     "ModelHTTPError: status_code: 503, body: upstream connect error"
                 ),
+                "failure_category": "provider_transport_failure",
             }
         ],
     )
@@ -173,15 +156,7 @@ async def test_write_run_summary_uses_exact_trace_id_and_case_metrics(
             self.queries.append(sql)
             assert "trace_id = '019d52b132be51488e7d960a6f737adf'" in sql
             return {
-                "columns": [
-                    {"name": "span_id", "datatype": "string", "nullable": False},
-                    {"name": "parent_span_id", "datatype": "string", "nullable": True},
-                    {"name": "span_name", "datatype": "string", "nullable": False},
-                    {"name": "kind", "datatype": "string", "nullable": False},
-                    {"name": "message", "datatype": "string", "nullable": False},
-                    {"name": "duration", "datatype": "float64", "nullable": True},
-                    {"name": "attributes", "datatype": "string", "nullable": True},
-                ],
+                "columns": [],
                 "rows": [
                     {
                         "span_id": "case-span-1",
@@ -243,7 +218,8 @@ async def test_write_run_summary_uses_exact_trace_id_and_case_metrics(
         lambda read_token: fake_client,
     )
 
-    summary = await logfire_enrichment.write_run_summary(result_dir=run_dir)
+    results = await logfire_enrichment.write_run_summary(result_dir=run_dir)
+    payload = _load_artifact(artifact_path)
 
     assert fake_client.queries == [
         (
@@ -254,72 +230,62 @@ async def test_write_run_summary_uses_exact_trace_id_and_case_metrics(
             "ORDER BY start_timestamp ASC"
         )
     ]
-    assert summary["status"] == "ok"
-    assert summary["completed_cases"] == 1
-    assert summary["failure_count"] == 1
-    assert summary["overall_case_success_rate"] == 0.5
-    assert summary["failure_counts_by_category"] == {
-        "provider_transport_failure": 1
-    }
-    assert summary["avg_task_duration_s"] == 0.375
-    assert summary["min_task_duration_s"] == 0.25
-    assert summary["max_task_duration_s"] == 0.5
-    assert summary["experiments"][0]["cases"][0]["token_metrics"] == {
-        "cost_usd": 0.0125,
-        "input_tokens": 100,
-        "output_tokens": 20,
-    }
-    assert summary["experiments"][0]["cases"][1]["token_metrics"] == {
-        "cost_usd": 0.02,
-        "input_tokens": 80,
-        "output_tokens": 0,
-    }
-    assert summary["experiments"] == [
+    assert results == [
         {
-            "experiment_id": "mistral_small_4_default",
-            "trace_id": "019d52b132be51488e7d960a6f737adf",
-            "status": "ok",
-            "reason": None,
-            "completed_cases": 1,
-            "failure_count": 1,
-            "overall_case_success_rate": 0.5,
-            "failure_counts_by_category": {
-                "provider_transport_failure": 1
-            },
-            "avg_task_duration_s": 0.375,
-            "min_task_duration_s": 0.25,
-            "max_task_duration_s": 0.5,
-            "cases": [
-                {
-                    "name": "call-mom-memo-supplier",
-                    "status": "success",
-                    "duration_s": 0.25,
-                    "failure_category": None,
-                    "exception_summary": None,
-                    "token_metrics": {
-                        "cost_usd": 0.0125,
-                        "input_tokens": 100,
-                        "output_tokens": 20,
-                    },
-                },
-                {
-                    "name": "refine-todo",
-                    "status": "failure",
-                    "duration_s": 0.5,
-                    "failure_category": "provider_transport_failure",
-                    "exception_summary": (
-                        "ModelHTTPError: status_code: 503, body: upstream connect error"
-                    ),
-                    "token_metrics": {
-                        "cost_usd": 0.02,
-                        "input_tokens": 80,
-                        "output_tokens": 0,
-                    },
-                },
-            ],
+            "artifact_path": artifact_path,
+            "enrichment_status": "ok",
+            "enrichment_reason": None,
         }
     ]
-    assert (run_dir / "summary.json").exists()
+    assert payload["enrichment_status"] == "ok"
+    assert payload["enrichment_reason"] is None
+    assert payload["completed_cases"] == 1
+    assert payload["failure_count"] == 1
+    assert payload["overall_case_success_rate"] == 0.5
+    assert payload["failure_counts_by_category"] == {
+        "provider_transport_failure": 1
+    }
+    assert payload["avg_task_duration_s"] == 0.375
+    assert payload["min_task_duration_s"] == 0.25
+    assert payload["max_task_duration_s"] == 0.5
+    assert payload["cases"] == [
+        {
+            "name": "call-mom-memo-supplier",
+            "span_id": "case-span-1",
+            "trace_id": "019d52b132be51488e7d960a6f737adf",
+            "status": "success",
+            "duration_s": 0.25,
+            "failure_category": None,
+            "exception_summary": None,
+            "token_metrics": {
+                "cost_usd": 0.0125,
+                "input_tokens": 100,
+                "output_tokens": 20,
+            },
+        }
+    ]
+    assert payload["failures"] == [
+        {
+            "name": "refine-todo",
+            "span_id": "case-span-2",
+            "trace_id": "019d52b132be51488e7d960a6f737adf",
+            "error_message": (
+                "ModelHTTPError: status_code: 503, body: upstream connect error"
+            ),
+            "failure_category": "provider_transport_failure",
+            "status": "failure",
+            "duration_s": 0.5,
+            "exception_summary": (
+                "ModelHTTPError: status_code: 503, body: upstream connect error"
+            ),
+            "token_metrics": {
+                "cost_usd": 0.02,
+                "input_tokens": 80,
+                "output_tokens": 0,
+            },
+        }
+    ]
+    assert not (run_dir / "summary.json").exists()
 
 
 @pytest.mark.asyncio
@@ -332,7 +298,7 @@ async def test_write_run_summary_aggregates_nested_token_metrics_across_descenda
 
     run_dir = tmp_path / "2026-04-03T09-32-51Z"
     run_dir.mkdir()
-    _write_artifact(
+    artifact_path = _write_artifact(
         run_dir,
         experiment_id="gemini3_flash_default",
         trace_id="trace-nested",
@@ -349,7 +315,6 @@ async def test_write_run_summary_aggregates_nested_token_metrics_across_descenda
     class FakeAsyncLogfireQueryClient:
         def __init__(self, read_token: str):
             self.read_token = read_token
-            self.queries: list[str] = []
 
         async def __aenter__(self):
             return self
@@ -364,7 +329,6 @@ async def test_write_run_summary_aggregates_nested_token_metrics_across_descenda
             max_timestamp=None,
             limit=None,
         ):
-            self.queries.append(sql)
             return {
                 "columns": [],
                 "rows": [
@@ -417,7 +381,6 @@ async def test_write_run_summary_aggregates_nested_token_metrics_across_descenda
                 ],
             }
 
-    fake_client = FakeAsyncLogfireQueryClient("read-token")
     monkeypatch.setattr(
         logfire_enrichment,
         "_read_backend_env_var",
@@ -426,13 +389,14 @@ async def test_write_run_summary_aggregates_nested_token_metrics_across_descenda
     monkeypatch.setattr(
         logfire_enrichment,
         "AsyncLogfireQueryClient",
-        lambda read_token: fake_client,
+        lambda read_token: FakeAsyncLogfireQueryClient(read_token),
     )
 
-    summary = await logfire_enrichment.write_run_summary(result_dir=run_dir)
+    await logfire_enrichment.write_run_summary(result_dir=run_dir)
+    payload = _load_artifact(artifact_path)
 
-    assert summary["status"] == "ok"
-    assert summary["experiments"][0]["cases"][0]["token_metrics"] == {
+    assert payload["enrichment_status"] == "ok"
+    assert payload["cases"][0]["token_metrics"] == {
         "cost_usd": 0.0325,
         "input_tokens": 130,
         "output_tokens": 24,
@@ -441,7 +405,7 @@ async def test_write_run_summary_aggregates_nested_token_metrics_across_descenda
 
 
 @pytest.mark.asyncio
-async def test_write_run_summary_marks_empty_query_results_partial(
+async def test_write_run_summary_marks_empty_query_results_partial_on_artifact(
     monkeypatch, tmp_path
 ):
     from importlib import import_module
@@ -450,7 +414,7 @@ async def test_write_run_summary_marks_empty_query_results_partial(
 
     run_dir = tmp_path / "2026-04-03T09-32-51Z"
     run_dir.mkdir()
-    _write_artifact(
+    artifact_path = _write_artifact(
         run_dir,
         experiment_id="gemini3_flash_default",
         trace_id="trace-empty",
@@ -494,13 +458,23 @@ async def test_write_run_summary_marks_empty_query_results_partial(
         lambda read_token: FakeAsyncLogfireQueryClient(read_token),
     )
 
-    summary = await logfire_enrichment.write_run_summary(result_dir=run_dir)
+    results = await logfire_enrichment.write_run_summary(result_dir=run_dir)
+    payload = _load_artifact(artifact_path)
 
-    assert summary["status"] == "partial"
-    assert summary["reason"] == "logfire_query_returned_no_rows"
-    assert summary["experiments"][0]["status"] == "partial"
-    assert summary["experiments"][0]["reason"] == "logfire_query_returned_no_rows"
-    assert summary["experiments"][0]["cases"][0]["token_metrics"] == {}
+    assert results == [
+        {
+            "artifact_path": artifact_path,
+            "enrichment_status": "partial",
+            "enrichment_reason": "logfire_query_returned_no_rows",
+        }
+    ]
+    assert payload["enrichment_status"] == "partial"
+    assert payload["enrichment_reason"] == "logfire_query_returned_no_rows"
+    assert payload["cases"][0]["token_metrics"] == {}
+    assert payload["avg_task_duration_s"] is None
+    assert payload["min_task_duration_s"] is None
+    assert payload["max_task_duration_s"] is None
+    assert not (run_dir / "summary.json").exists()
 
 
 @pytest.mark.asyncio
@@ -513,7 +487,7 @@ async def test_write_run_summary_records_partial_status_on_query_failure(
 
     run_dir = tmp_path / "2026-04-03T09-32-51Z"
     run_dir.mkdir()
-    _write_artifact(
+    artifact_path = _write_artifact(
         run_dir,
         experiment_id="gemini3_flash_default",
         trace_id="trace-partial",
@@ -557,12 +531,19 @@ async def test_write_run_summary_records_partial_status_on_query_failure(
         lambda read_token: FakeAsyncLogfireQueryClient(read_token),
     )
 
-    summary = await logfire_enrichment.write_run_summary(result_dir=run_dir)
+    results = await logfire_enrichment.write_run_summary(result_dir=run_dir)
+    payload = _load_artifact(artifact_path)
 
-    assert summary["status"] == "partial"
-    assert summary["reason"] == "logfire_query_failed"
-    assert summary["experiments"][0]["status"] == "partial"
-    assert summary["experiments"][0]["reason"] == "logfire_query_failed"
-    assert summary["experiments"][0]["completed_cases"] == 1
-    assert summary["experiments"][0]["failure_count"] == 0
-    assert (run_dir / "summary.json").exists()
+    assert results == [
+        {
+            "artifact_path": artifact_path,
+            "enrichment_status": "partial",
+            "enrichment_reason": "logfire_query_failed",
+        }
+    ]
+    assert payload["enrichment_status"] == "partial"
+    assert payload["enrichment_reason"] == "logfire_query_failed"
+    assert payload["completed_cases"] == 1
+    assert payload["failure_count"] == 0
+    assert payload["cases"][0]["duration_s"] is None
+    assert not (run_dir / "summary.json").exists()
