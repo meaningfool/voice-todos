@@ -43,9 +43,12 @@ def _is_provider_transport_failure(normalized_message: str) -> bool:
     if any(
         marker in normalized_message
         for marker in (
+            "connect failed",
             "connecterror",
             "nodename nor servname provided",
             "name or service not known",
+            "read timed out",
+            "write timed out",
             "temporary failure in name resolution",
             "connection reset",
             "connection refused",
