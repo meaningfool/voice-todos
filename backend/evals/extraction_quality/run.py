@@ -236,11 +236,9 @@ async def _run_experiment(
 
 async def enrich_experiment_artifacts(
     *,
-    result_dir: Path,
     artifact_paths: Sequence[Path],
     read_token: str | None = None,
 ) -> list[dict[str, Any]]:
-    del result_dir
     results: list[dict[str, Any]] = []
     for artifact_path in artifact_paths:
         results.append(
@@ -296,7 +294,6 @@ async def _run(args: argparse.Namespace) -> int:
     if not args.skip_logfire_enrichment:
         try:
             await enrich_experiment_artifacts(
-                result_dir=result_dir,
                 artifact_paths=artifact_paths,
             )
         except Exception as exc:

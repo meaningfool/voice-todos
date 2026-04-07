@@ -171,6 +171,48 @@ def test_main_configures_logfire_before_running_experiments(monkeypatch, tmp_pat
     ]
 
 
+@pytest.mark.asyncio
+async def test_enrich_experiment_artifacts_forwards_read_token(
+    monkeypatch, tmp_path
+):
+    runner = import_module("evals.extraction_quality.run")
+
+    calls: list[tuple[Path, str | None]] = []
+
+    async def fake_enrich_experiment_artifact(
+        artifact_path,
+        *,
+        read_token=None,
+    ):
+        calls.append((artifact_path, read_token))
+        return {"artifact_path": artifact_path.name, "read_token": read_token}
+
+    monkeypatch.setattr(
+        runner.logfire_enrichment,
+        "enrich_experiment_artifact",
+        fake_enrich_experiment_artifact,
+    )
+
+    artifact_paths = [
+        tmp_path / "artifact-a.json",
+        tmp_path / "artifact-b.json",
+    ]
+
+    results = await runner.enrich_experiment_artifacts(
+        artifact_paths=artifact_paths,
+        read_token="read-token",
+    )
+
+    assert calls == [
+        (artifact_paths[0], "read-token"),
+        (artifact_paths[1], "read-token"),
+    ]
+    assert results == [
+        {"artifact_path": "artifact-a.json", "read_token": "read-token"},
+        {"artifact_path": "artifact-b.json", "read_token": "read-token"},
+    ]
+
+
 def test_main_attempts_enrichment_after_experiments_and_ignores_failures(
     monkeypatch, tmp_path, capsys
 ):
@@ -223,7 +265,6 @@ def test_main_attempts_enrichment_after_experiments_and_ignores_failures(
 
     async def fake_enrich_run_artifacts(
         *,
-        result_dir,
         artifact_paths,
         read_token=None,
     ):
@@ -231,8 +272,8 @@ def test_main_attempts_enrichment_after_experiments_and_ignores_failures(
             (
                 "enrichment",
                 {
-                    "result_dir": result_dir,
                     "artifact_paths": list(artifact_paths),
+                    "read_token": read_token,
                 },
             )
         )
@@ -262,11 +303,11 @@ def test_main_attempts_enrichment_after_experiments_and_ignores_failures(
         (
             "enrichment",
             {
-                "result_dir": result_dir,
                 "artifact_paths": [
                     artifact_paths["fake-experiment-a"],
                     artifact_paths["fake-experiment-b"],
                 ],
+                "read_token": None,
             },
         ),
     ]
