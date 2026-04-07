@@ -29,6 +29,9 @@ _TOKEN_METRIC_ALIASES: dict[str, tuple[str, ...]] = {
         "output_tokens",
         "completion_tokens",
         "gen_ai.usage.output_tokens",
+    ),
+    "thoughts_tokens": (
+        "thoughts_tokens",
         "gen_ai.usage.details.thoughts_tokens",
     ),
     "cost_usd": (
@@ -243,10 +246,7 @@ def _collect_token_metrics(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     for row in rows:
         row_values = _flatten_row_values(row)
         for canonical_name, aliases in _TOKEN_METRIC_ALIASES.items():
-            if canonical_name == "output_tokens":
-                value = _sum_numeric_from_flattened(row_values, aliases)
-            else:
-                value = _first_numeric_from_flattened(row_values, aliases)
+            value = _first_numeric_from_flattened(row_values, aliases)
             if value is not None:
                 collected[canonical_name] += value
     return {
@@ -288,21 +288,6 @@ def _first_numeric_from_flattened(
         if value is not None:
             return value
     return None
-
-
-def _sum_numeric_from_flattened(
-    row_values: Mapping[str, Any],
-    aliases: Sequence[str],
-) -> float | None:
-    total = 0.0
-    found = False
-    for alias in aliases:
-        value = _as_float(row_values.get(alias))
-        if value is None:
-            continue
-        total += value
-        found = True
-    return total if found else None
 
 
 def _normalize_number(value: float) -> int | float:

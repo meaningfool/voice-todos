@@ -403,7 +403,8 @@ async def test_write_run_summary_aggregates_nested_token_metrics_across_descenda
     assert summary["experiments"][0]["cases"][0]["token_metrics"] == {
         "cost_usd": 0.0325,
         "input_tokens": 130,
-        "output_tokens": 29,
+        "output_tokens": 24,
+        "thoughts_tokens": 5,
     }
 
 
