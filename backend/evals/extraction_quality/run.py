@@ -21,9 +21,7 @@ from pydantic_evals import Dataset, set_eval_attribute
 from app.extract import extract_todos
 from app.logfire_setup import configure_logfire
 from app.models import Todo
-from evals.common.logfire_enrichment import (
-    write_run_summary as enrich_experiment_artifacts,
-)
+from evals.common import logfire_enrichment
 from evals.common.retry_policy import build_retry_task_config
 from evals.extraction_quality.dataset_loader import load_extraction_quality_dataset
 from evals.extraction_quality.evaluators import EXTRACTION_QUALITY_EVALUATORS
@@ -234,6 +232,19 @@ async def _run_experiment(
     )
     print(f"Wrote artifact: {artifact_path}")
     return artifact_path
+
+
+async def enrich_experiment_artifacts(
+    *,
+    result_dir: Path,
+    artifact_paths: Sequence[Path],
+    read_token: str | None = None,
+) -> list[dict[str, Any]]:
+    return await logfire_enrichment.write_run_summary(
+        result_dir=result_dir,
+        artifact_paths=artifact_paths,
+        read_token=read_token,
+    )
 
 
 async def _run(args: argparse.Namespace) -> int:

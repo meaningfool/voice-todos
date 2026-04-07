@@ -484,7 +484,7 @@ async def test_run_experiment_enables_task_retry_without_changing_repeat(
     ]
 
 
-def test_main_attempts_run_summary_after_experiments_and_ignores_failures(
+def test_main_attempts_enrichment_after_experiments_and_ignores_failures(
     monkeypatch, tmp_path, capsys
 ):
     runner = import_module("evals.incremental_extraction_quality.run")
