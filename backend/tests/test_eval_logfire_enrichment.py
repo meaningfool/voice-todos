@@ -266,6 +266,101 @@ async def test_write_run_summary_returns_invalid_artifact_result_for_malformed_f
 
 
 @pytest.mark.asyncio
+async def test_write_run_summary_returns_invalid_artifact_result_for_non_object_json(
+    tmp_path
+):
+    from importlib import import_module
+
+    logfire_enrichment = import_module("evals.common.logfire_enrichment")
+
+    run_dir = tmp_path / "2026-04-03T09-32-51Z"
+    run_dir.mkdir()
+    artifact_path = run_dir / "non-object.json"
+    artifact_path.write_text('["not", "an", "object"]\n')
+
+    results = await logfire_enrichment.write_run_summary(result_dir=run_dir)
+
+    assert results == [
+        {
+            "artifact_path": artifact_path,
+            "enrichment_status": "skipped",
+            "enrichment_reason": "invalid_experiment_artifact",
+        }
+    ]
+    assert json.loads(artifact_path.read_text()) == ["not", "an", "object"]
+
+
+@pytest.mark.asyncio
+async def test_write_run_summary_uses_disk_artifact_as_safe_base_for_payload_overrides(
+    monkeypatch, tmp_path
+):
+    from importlib import import_module
+
+    logfire_enrichment = import_module("evals.common.logfire_enrichment")
+
+    run_dir = tmp_path / "2026-04-03T09-32-51Z"
+    run_dir.mkdir()
+    artifact_path = run_dir / "payload-safe-base.json"
+    disk_payload = _make_payload(
+        experiment_id="payload-safe-base",
+        trace_id="trace-disk",
+        cases=[
+            {
+                "name": "case-one",
+                "span_id": "case-span-1",
+                "trace_id": "trace-disk",
+                "status": "success",
+                "duration_s": 0.9,
+                "failure_category": None,
+                "exception_summary": None,
+                "token_metrics": {"input_tokens": 44, "output_tokens": 5},
+            }
+        ],
+        failures=[],
+        enrichment_status="ok",
+    )
+    disk_payload["model"] = {"name": "disk-model"}
+    disk_payload["avg_task_duration_s"] = 0.9
+    disk_payload["min_task_duration_s"] = 0.9
+    disk_payload["max_task_duration_s"] = 0.9
+    artifact_path.write_text(json.dumps(disk_payload, indent=2, sort_keys=True) + "\n")
+
+    stale_payload = _make_payload(
+        experiment_id="payload-safe-base",
+        trace_id="trace-stale",
+        cases=[
+            {
+                "name": "case-one",
+                "span_id": "case-span-1",
+                "trace_id": "trace-stale",
+            }
+        ],
+        failures=[],
+    )
+
+    monkeypatch.setattr(logfire_enrichment, "_read_backend_env_var", lambda name: None)
+
+    results = await logfire_enrichment.write_run_summary(
+        result_dir=run_dir,
+        artifact_paths=[artifact_path],
+        artifact_payloads=[stale_payload],
+    )
+
+    enriched = _load_artifact(artifact_path)
+    assert results == [
+        {
+            "artifact_path": artifact_path,
+            "enrichment_status": "skipped",
+            "enrichment_reason": "missing_logfire_read_token",
+        }
+    ]
+    assert enriched["trace_id"] == "trace-disk"
+    assert enriched["model"] == {"name": "disk-model"}
+    assert enriched["cases"] == disk_payload["cases"]
+    assert enriched["avg_task_duration_s"] == 0.9
+
+
+@pytest.mark.asyncio
 async def test_write_run_summary_marks_missing_trace_id_partial_on_artifact(
     monkeypatch, tmp_path
 ):
