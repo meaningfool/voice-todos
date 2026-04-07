@@ -16,6 +16,7 @@ _PROVIDER_HTTP_TRANSPORT_MARKERS = (
 
 _SERIALIZED_HTTPX_TRANSPORT_MESSAGES = (
     "connect failed",
+    "connect timed out",
     "read timed out",
     "write timed out",
 )

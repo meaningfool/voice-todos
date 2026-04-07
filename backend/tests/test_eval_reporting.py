@@ -46,6 +46,7 @@ def test_classify_failure_category_handles_connectivity_dns_failure():
     ("error_message", "expected_category"),
     [
         ("connect failed", "provider_transport_failure"),
+        ("connect timed out", "provider_transport_failure"),
         ("read timed out", "provider_transport_failure"),
         ("write timed out", "provider_transport_failure"),
     ],
