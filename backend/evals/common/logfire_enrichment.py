@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -18,7 +16,6 @@ ENRICHMENT_STATUS_OK = "ok"
 ENRICHMENT_STATUS_PARTIAL = "partial"
 ENRICHMENT_STATUS_SKIPPED = "skipped"
 EnrichmentStatus = Literal["ok", "partial", "skipped"]
-_INVALID_JSON = object()
 
 _QUERY_LIMIT = 10_000
 _TOKEN_METRIC_ALIASES: dict[str, tuple[str, ...]] = {
@@ -60,41 +57,12 @@ def _as_float(value: Any) -> float | None:
     return None
 
 
-def _load_json_file(path: Path) -> Any:
+def _load_json_file(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text())
 
 
-def _load_json_file_safely(path: Path) -> Any:
-    try:
-        return _load_json_file(path)
-    except (OSError, json.JSONDecodeError):
-        return _INVALID_JSON
-
-
-def _atomic_write_json_file(path: Path, payload: Mapping[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(
-        mode="w",
-        encoding="utf-8",
-        dir=path.parent,
-        prefix=f".{path.name}.",
-        suffix=".tmp",
-        delete=False,
-    ) as temp_file:
-        temp_path = Path(temp_file.name)
-        try:
-            json.dump(payload, temp_file, indent=2, sort_keys=True)
-            temp_file.write("\n")
-            temp_file.flush()
-            os.fsync(temp_file.fileno())
-        except Exception:
-            temp_path.unlink(missing_ok=True)
-            raise
-    try:
-        os.replace(temp_path, path)
-    except Exception:
-        temp_path.unlink(missing_ok=True)
-        raise
+def _write_json_file(path: Path, payload: Mapping[str, Any]) -> None:
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
 
 def _load_artifact_paths(result_dir: Path) -> list[Path]:
@@ -103,18 +71,6 @@ def _load_artifact_paths(result_dir: Path) -> list[Path]:
         for path in result_dir.glob("*.json")
         if path.is_file() and path.name != SUMMARY_FILENAME
     )
-
-
-def _artifact_validation_reason(payload: Any) -> str | None:
-    if not isinstance(payload, Mapping):
-        return "invalid_experiment_artifact"
-    if not isinstance(payload.get("experiment_id"), str):
-        return "invalid_experiment_artifact"
-    if not isinstance(payload.get("cases"), list):
-        return "invalid_experiment_artifact"
-    if not isinstance(payload.get("failures"), list):
-        return "invalid_experiment_artifact"
-    return None
 
 
 def _is_experiment_artifact_payload(payload: Mapping[str, Any]) -> bool:
@@ -331,37 +287,21 @@ def _blank_enrichment_row(
     *,
     failure_payload: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
-    existing_status = case_payload.get("status")
-    if existing_status not in {"success", "failure"}:
-        existing_status = "failure" if failure_payload is not None else "success"
-
-    existing_token_metrics = case_payload.get("token_metrics")
-    if not isinstance(existing_token_metrics, Mapping):
-        existing_token_metrics = {}
-
     return {
         **case_payload,
-        "status": existing_status,
-        "duration_s": case_payload.get("duration_s"),
+        "status": "failure" if failure_payload is not None else "success",
+        "duration_s": None,
         "failure_category": (
-            case_payload.get("failure_category")
-            if case_payload.get("failure_category") is not None
-            else (
-                classify_failure_category(failure_payload.get("error_message"))
-                if failure_payload is not None
-                else None
-            )
+            classify_failure_category(failure_payload.get("error_message"))
+            if failure_payload is not None
+            else None
         ),
         "exception_summary": (
-            case_payload.get("exception_summary")
-            if case_payload.get("exception_summary") is not None
-            else (
-                failure_payload.get("error_message")
-                if failure_payload is not None
-                else None
-            )
+            failure_payload.get("error_message")
+            if failure_payload is not None
+            else None
         ),
-        "token_metrics": dict(existing_token_metrics),
+        "token_metrics": {},
     }
 
 
@@ -460,43 +400,37 @@ async def enrich_experiment_artifact(
     artifact_path: Path,
     *,
     read_token: str | None = None,
-    artifact_payload: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    disk_payload = _load_json_file_safely(artifact_path)
-    payload = _merge_artifact_payloads(
-        disk_payload=disk_payload,
-        override_payload=artifact_payload,
-    )
-    validation_reason = _artifact_validation_reason(payload)
-    if validation_reason is not None:
+    artifact_payload = _load_json_file(artifact_path)
+    if not _is_experiment_artifact_payload(artifact_payload):
         return {
             "artifact_path": artifact_path,
             "enrichment_status": ENRICHMENT_STATUS_SKIPPED,
-            "enrichment_reason": validation_reason,
+            "enrichment_reason": "invalid_experiment_artifact",
         }
 
     resolved_read_token = read_token or _read_backend_env_var("LOGFIRE_READ_TOKEN")
     if not resolved_read_token:
         enriched_payload = _build_enriched_artifact(
-            payload,
+            artifact_payload,
             status=ENRICHMENT_STATUS_SKIPPED,
             reason="missing_logfire_read_token",
         )
-        _atomic_write_json_file(artifact_path, enriched_payload)
+        _write_json_file(artifact_path, enriched_payload)
         return {
             "artifact_path": artifact_path,
             "enrichment_status": ENRICHMENT_STATUS_SKIPPED,
             "enrichment_reason": "missing_logfire_read_token",
         }
 
-    trace_id = payload.get("trace_id")
+    trace_id = artifact_payload.get("trace_id")
     if not isinstance(trace_id, str) or not trace_id:
         enriched_payload = _build_enriched_artifact(
-            payload,
+            artifact_payload,
             status=ENRICHMENT_STATUS_PARTIAL,
             reason="missing_trace_id",
         )
-        _atomic_write_json_file(artifact_path, enriched_payload)
+        _write_json_file(artifact_path, enriched_payload)
         return {
             "artifact_path": artifact_path,
             "enrichment_status": ENRICHMENT_STATUS_PARTIAL,
@@ -510,11 +444,11 @@ async def enrich_experiment_artifact(
         )
     except Exception:
         enriched_payload = _build_enriched_artifact(
-            payload,
+            artifact_payload,
             status=ENRICHMENT_STATUS_PARTIAL,
             reason="logfire_query_failed",
         )
-        _atomic_write_json_file(artifact_path, enriched_payload)
+        _write_json_file(artifact_path, enriched_payload)
         return {
             "artifact_path": artifact_path,
             "enrichment_status": ENRICHMENT_STATUS_PARTIAL,
@@ -523,11 +457,11 @@ async def enrich_experiment_artifact(
 
     if not rows:
         enriched_payload = _build_enriched_artifact(
-            payload,
+            artifact_payload,
             status=ENRICHMENT_STATUS_PARTIAL,
             reason="logfire_query_returned_no_rows",
         )
-        _atomic_write_json_file(artifact_path, enriched_payload)
+        _write_json_file(artifact_path, enriched_payload)
         return {
             "artifact_path": artifact_path,
             "enrichment_status": ENRICHMENT_STATUS_PARTIAL,
@@ -535,41 +469,17 @@ async def enrich_experiment_artifact(
         }
 
     enriched_payload = _build_enriched_artifact(
-        payload,
+        artifact_payload,
         status=ENRICHMENT_STATUS_OK,
         reason=None,
         rows=rows,
     )
-    _atomic_write_json_file(artifact_path, enriched_payload)
+    _write_json_file(artifact_path, enriched_payload)
     return {
         "artifact_path": artifact_path,
         "enrichment_status": ENRICHMENT_STATUS_OK,
         "enrichment_reason": None,
     }
-
-
-def _resolve_artifact_inputs(
-    *,
-    result_dir: Path,
-    artifact_paths: Sequence[Path] | None,
-    artifact_payloads: Sequence[Mapping[str, Any]] | None,
-) -> list[tuple[Path, Mapping[str, Any] | None]]:
-    if artifact_payloads is not None and artifact_paths is None:
-        raise ValueError("artifact_payloads requires artifact_paths")
-
-    if artifact_paths is None:
-        return [(path, None) for path in _load_artifact_paths(result_dir)]
-
-    resolved_paths = [Path(path) for path in artifact_paths]
-    if artifact_payloads is None:
-        return [(path, None) for path in resolved_paths]
-
-    if len(resolved_paths) != len(artifact_payloads):
-        raise ValueError(
-            "artifact_paths and artifact_payloads must have the same length"
-        )
-
-    return list(zip(resolved_paths, artifact_payloads, strict=True))
 
 
 async def write_run_summary(
@@ -579,19 +489,23 @@ async def write_run_summary(
     artifact_paths: Sequence[Path] | None = None,
     artifact_payloads: Sequence[Mapping[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
-    resolved_inputs = _resolve_artifact_inputs(
-        result_dir=result_dir,
-        artifact_paths=artifact_paths,
-        artifact_payloads=artifact_payloads,
+    resolved_paths = (
+        [Path(path) for path in artifact_paths]
+        if artifact_paths is not None
+        else _load_artifact_paths(result_dir)
     )
+    if artifact_payloads is not None and artifact_paths is None:
+        return []
 
     results: list[dict[str, Any]] = []
-    for artifact_path, artifact_payload in resolved_inputs:
+    for artifact_path in resolved_paths:
+        payload = _load_json_file(artifact_path)
+        if not _is_experiment_artifact_payload(payload):
+            continue
         results.append(
             await enrich_experiment_artifact(
                 artifact_path,
                 read_token=read_token,
-                artifact_payload=artifact_payload,
             )
         )
     return results
