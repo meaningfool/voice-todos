@@ -16,8 +16,22 @@ def test_classify_failure_category_handles_provider_transport_failure():
     assert classify_failure_category(error_message) == "provider_transport_failure"
 
 
+def test_classify_failure_category_does_not_treat_generic_provider_5xx_as_transport():
+    error_message = str(
+        ModelHTTPError(
+            500,
+            "test-model",
+            "internal server error",
+        )
+    )
+
+    assert classify_failure_category(error_message) == "unexpected_task_failure"
+
+
 def test_classify_failure_category_handles_connectivity_dns_failure():
-    error_message = "ConnectError: [Errno 8] nodename nor servname provided, or not known"
+    error_message = (
+        "ConnectError: [Errno 8] nodename nor servname provided, or not known"
+    )
 
     assert classify_failure_category(error_message) == "provider_transport_failure"
 

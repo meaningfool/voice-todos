@@ -5,6 +5,15 @@ output_validation_failure = "output_validation_failure"
 evaluator_failure = "evaluator_failure"
 unexpected_task_failure = "unexpected_task_failure"
 
+_PROVIDER_HTTP_TRANSPORT_MARKERS = (
+    "upstream connect error",
+    "disconnect/reset before headers",
+    "connection reset",
+    "connection refused",
+    "connection timed out",
+    "reset reason: overflow",
+)
+
 
 def classify_failure_category(error_message: str | None) -> str:
     normalized_message = (error_message or "").casefold()
@@ -19,11 +28,12 @@ def classify_failure_category(error_message: str | None) -> str:
 
 
 def _is_provider_transport_failure(normalized_message: str) -> bool:
-    return any(
+    if "provider timeout" in normalized_message:
+        return True
+
+    if any(
         marker in normalized_message
         for marker in (
-            "provider timeout",
-            "upstream connect error",
             "connecterror",
             "nodename nor servname provided",
             "name or service not known",
@@ -31,9 +41,22 @@ def _is_provider_transport_failure(normalized_message: str) -> bool:
             "connection reset",
             "connection refused",
             "connection timed out",
-            "status_code: 5",
-            "status code: 5",
         )
+    ):
+        return True
+
+    return _is_provider_http_5xx_transport_failure(normalized_message)
+
+
+def _is_provider_http_5xx_transport_failure(normalized_message: str) -> bool:
+    if (
+        "status_code: 5" not in normalized_message
+        and "status code: 5" not in normalized_message
+    ):
+        return False
+
+    return any(
+        marker in normalized_message for marker in _PROVIDER_HTTP_TRANSPORT_MARKERS
     )
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
@@ -19,6 +20,9 @@ SUMMARY_STATUS_SKIPPED = "skipped"
 SummaryStatus = Literal["ok", "partial", "skipped"]
 
 _QUERY_LIMIT = 10_000
+_RESULT_DIR_TIMESTAMP_RE = re.compile(
+    r"^(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z)(?:-\d+)?$"
+)
 _TOKEN_METRIC_ALIASES: dict[str, tuple[str, ...]] = {
     "input_tokens": (
         "input_tokens",
@@ -55,8 +59,10 @@ def _format_timestamp(timestamp: datetime) -> str:
 
 def _parse_run_timestamp(result_dir: Path) -> str:
     try:
+        match = _RESULT_DIR_TIMESTAMP_RE.fullmatch(result_dir.name)
+        timestamp_text = match.group("timestamp") if match else result_dir.name
         return _format_timestamp(
-            datetime.strptime(result_dir.name, "%Y-%m-%dT%H-%M-%SZ").replace(
+            datetime.strptime(timestamp_text, "%Y-%m-%dT%H-%M-%SZ").replace(
                 tzinfo=UTC
             )
         )

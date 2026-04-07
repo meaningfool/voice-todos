@@ -88,6 +88,38 @@ async def test_write_run_summary_skips_when_read_token_missing(monkeypatch, tmp_
 
 
 @pytest.mark.asyncio
+async def test_write_run_summary_parses_suffixed_run_directory_timestamp(
+    monkeypatch, tmp_path
+):
+    from importlib import import_module
+
+    logfire_enrichment = import_module("evals.common.logfire_enrichment")
+
+    run_dir = tmp_path / "2026-04-03T09-32-51Z-01"
+    run_dir.mkdir()
+    _write_artifact(
+        run_dir,
+        experiment_id="gemini3_flash_default",
+        trace_id="trace-abc",
+        cases=[],
+        failures=[],
+    )
+
+    monkeypatch.setattr(
+        logfire_enrichment,
+        "_read_backend_env_var",
+        lambda name: None,
+    )
+
+    summary = await logfire_enrichment.write_run_summary(result_dir=run_dir)
+
+    assert summary["run_timestamp"] == "2026-04-03T09:32:51Z"
+    assert summary["status"] == "skipped"
+    assert summary["reason"] == "missing_logfire_read_token"
+    assert (run_dir / "summary.json").exists()
+
+
+@pytest.mark.asyncio
 async def test_write_run_summary_uses_exact_trace_id_and_case_metrics(
     monkeypatch, tmp_path
 ):
