@@ -59,10 +59,12 @@ will not see the run in the hosted Logfire UI.
 After a run completes, the runner writes compact JSON artifacts under
 `backend/evals/extraction_quality/results/<timestamp>/`. Those base artifacts
 are the local source of truth for run identity, model metadata, case counts,
-and overall case success. When `LOGFIRE_READ_TOKEN` is available, the runner
-also downloads a `summary.json` file into the same directory. That summary is
-the local copy of the main Logfire-derived comparison metrics for the run.
-Logfire itself remains the source of truth for full payloads and deep debugging.
+and overall case success. The runner also writes `summary.json` into the same
+directory on every run that is not skipped. When `LOGFIRE_READ_TOKEN` is
+available, that summary contains the main Logfire-derived comparison metrics.
+When the read token is missing, the summary is still written but marked as
+`skipped`. Logfire itself remains the source of truth for full payloads and
+deep debugging.
 
 ## Dataset Asset
 
@@ -162,8 +164,9 @@ The runner:
 - prints one `pydantic_evals` report per runnable experiment
 - writes JSON artifacts under `backend/evals/extraction_quality/results/` by
   default, with one timestamped directory per run
-- downloads `summary.json` into the same directory when `LOGFIRE_READ_TOKEN` is
-  available
+- writes `summary.json` into the same directory for every non-skipped run;
+  when `LOGFIRE_READ_TOKEN` is missing, the summary is still written but marked
+  as `skipped`
 
 ## Comparing Experiments In Logfire
 
@@ -190,8 +193,8 @@ When reviewing Logfire for a run that was actually instrumented:
 - inspect `expected_todo_count` and `predicted_todo_count` for why a case passed
   or failed
 - treat latency and token/cost data as supporting evidence, not the only signal
-- use `LOGFIRE_READ_TOKEN` when you want the runner to download `summary.json`
-  after the experiment loop finishes
+- use `LOGFIRE_READ_TOKEN` when you want the summary to include the main
+  Logfire-derived comparison metrics instead of a `skipped` summary
 
 ## Adding A New Model Config Safely
 

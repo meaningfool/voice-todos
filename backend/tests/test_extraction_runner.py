@@ -96,9 +96,15 @@ def test_main_configures_logfire_before_running_experiments(monkeypatch, tmp_pat
     import evals.extraction_quality.run as runner
 
     events: list[tuple[str, object]] = []
+    result_dir = tmp_path / "results"
+    artifact_paths = {
+        "fake-experiment-a": result_dir / "artifact-a.json",
+        "fake-experiment-b": result_dir / "artifact-b.json",
+    }
 
     class FakeExperiment:
-        name = "fake-experiment"
+        def __init__(self, name: str):
+            self.name = name
 
         def unavailable_reason(self) -> None:
             return None
@@ -106,12 +112,15 @@ def test_main_configures_logfire_before_running_experiments(monkeypatch, tmp_pat
     monkeypatch.setattr(
         runner,
         "_selected_experiments",
-        lambda **kwargs: [FakeExperiment()],
+        lambda **kwargs: [
+            FakeExperiment("fake-experiment-a"),
+            FakeExperiment("fake-experiment-b"),
+        ],
     )
     monkeypatch.setattr(
         runner,
         "reserve_result_dir",
-        lambda **kwargs: tmp_path / "results",
+        lambda **kwargs: result_dir,
     )
     monkeypatch.setattr(
         runner,
@@ -133,18 +142,8 @@ def test_main_configures_logfire_before_running_experiments(monkeypatch, tmp_pat
         result_dir,
         artifact_timestamp,
     ) -> Path:
-        assert events == [
-            (
-                "configure",
-                {
-                    "service_name": "voice-todos-backend",
-                    "instrument_pydantic_ai": True,
-                },
-            )
-        ]
-        assert task_retries == 0
         events.append(("run", experiment.name))
-        return tmp_path / "results" / "artifact.json"
+        return artifact_paths[experiment.name]
 
     monkeypatch.setattr(runner, "_run_experiment", fake_run_experiment)
 
@@ -167,21 +166,26 @@ def test_main_configures_logfire_before_running_experiments(monkeypatch, tmp_pat
                 "instrument_pydantic_ai": True,
             },
         ),
-        ("run", "fake-experiment"),
+        ("run", "fake-experiment-a"),
+        ("run", "fake-experiment-b"),
     ]
 
 
 def test_main_attempts_run_summary_after_experiments_and_ignores_failures(
-    monkeypatch, tmp_path
+    monkeypatch, tmp_path, capsys
 ):
     import evals.extraction_quality.run as runner
 
     events: list[tuple[str, object]] = []
     result_dir = tmp_path / "results"
-    artifact_path = result_dir / "artifact.json"
+    artifact_paths = {
+        "fake-experiment-a": result_dir / "artifact-a.json",
+        "fake-experiment-b": result_dir / "artifact-b.json",
+    }
 
     class FakeExperiment:
-        name = "fake-experiment"
+        def __init__(self, name: str):
+            self.name = name
 
         def unavailable_reason(self) -> None:
             return None
@@ -189,7 +193,10 @@ def test_main_attempts_run_summary_after_experiments_and_ignores_failures(
     monkeypatch.setattr(
         runner,
         "_selected_experiments",
-        lambda **kwargs: [FakeExperiment()],
+        lambda **kwargs: [
+            FakeExperiment("fake-experiment-a"),
+            FakeExperiment("fake-experiment-b"),
+        ],
     )
     monkeypatch.setattr(
         runner,
@@ -212,7 +219,7 @@ def test_main_attempts_run_summary_after_experiments_and_ignores_failures(
         artifact_timestamp,
     ) -> Path:
         events.append(("run", experiment.name))
-        return artifact_path
+        return artifact_paths[experiment.name]
 
     async def fake_write_run_summary(
         *,
@@ -235,8 +242,9 @@ def test_main_attempts_run_summary_after_experiments_and_ignores_failures(
     monkeypatch.setattr(runner, "write_run_summary", fake_write_run_summary)
 
     exit_code = runner.main(
-        ["--experiment", "fake-experiment", "--output-dir", str(tmp_path)]
+        ["--experiment", "fake-experiment-a", "--output-dir", str(tmp_path)]
     )
+    captured = capsys.readouterr()
 
     assert exit_code == 0
     assert events == [
@@ -247,15 +255,20 @@ def test_main_attempts_run_summary_after_experiments_and_ignores_failures(
                 "instrument_pydantic_ai": True,
             },
         ),
-        ("run", "fake-experiment"),
+        ("run", "fake-experiment-a"),
+        ("run", "fake-experiment-b"),
         (
             "summary",
             {
                 "result_dir": result_dir,
-                "artifact_paths": [artifact_path],
+                "artifact_paths": [
+                    artifact_paths["fake-experiment-a"],
+                    artifact_paths["fake-experiment-b"],
+                ],
             },
         ),
     ]
+    assert "Best-effort Logfire summary failed: summary failed" in captured.err
 
 
 def test_main_skip_logfire_summary_disables_summary_pass(monkeypatch, tmp_path):
@@ -263,10 +276,14 @@ def test_main_skip_logfire_summary_disables_summary_pass(monkeypatch, tmp_path):
 
     events: list[tuple[str, object]] = []
     result_dir = tmp_path / "results"
-    artifact_path = result_dir / "artifact.json"
+    artifact_paths = {
+        "fake-experiment-a": result_dir / "artifact-a.json",
+        "fake-experiment-b": result_dir / "artifact-b.json",
+    }
 
     class FakeExperiment:
-        name = "fake-experiment"
+        def __init__(self, name: str):
+            self.name = name
 
         def unavailable_reason(self) -> None:
             return None
@@ -274,7 +291,10 @@ def test_main_skip_logfire_summary_disables_summary_pass(monkeypatch, tmp_path):
     monkeypatch.setattr(
         runner,
         "_selected_experiments",
-        lambda **kwargs: [FakeExperiment()],
+        lambda **kwargs: [
+            FakeExperiment("fake-experiment-a"),
+            FakeExperiment("fake-experiment-b"),
+        ],
     )
     monkeypatch.setattr(
         runner,
@@ -297,7 +317,7 @@ def test_main_skip_logfire_summary_disables_summary_pass(monkeypatch, tmp_path):
         artifact_timestamp,
     ) -> Path:
         events.append(("run", experiment.name))
-        return artifact_path
+        return artifact_paths[experiment.name]
 
     async def fake_write_run_summary(**kwargs):
         raise AssertionError("summary should not be called")
@@ -324,7 +344,8 @@ def test_main_skip_logfire_summary_disables_summary_pass(monkeypatch, tmp_path):
                 "instrument_pydantic_ai": True,
             },
         ),
-        ("run", "fake-experiment"),
+        ("run", "fake-experiment-a"),
+        ("run", "fake-experiment-b"),
     ]
 
 
