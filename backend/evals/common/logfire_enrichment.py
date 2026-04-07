@@ -18,6 +18,7 @@ ENRICHMENT_STATUS_OK = "ok"
 ENRICHMENT_STATUS_PARTIAL = "partial"
 ENRICHMENT_STATUS_SKIPPED = "skipped"
 EnrichmentStatus = Literal["ok", "partial", "skipped"]
+_INVALID_JSON = object()
 
 _QUERY_LIMIT = 10_000
 _TOKEN_METRIC_ALIASES: dict[str, tuple[str, ...]] = {
@@ -59,8 +60,15 @@ def _as_float(value: Any) -> float | None:
     return None
 
 
-def _load_json_file(path: Path) -> dict[str, Any]:
+def _load_json_file(path: Path) -> Any:
     return json.loads(path.read_text())
+
+
+def _load_json_file_safely(path: Path) -> Any:
+    try:
+        return _load_json_file(path)
+    except (OSError, json.JSONDecodeError):
+        return _INVALID_JSON
 
 
 def _atomic_write_json_file(path: Path, payload: Mapping[str, Any]) -> None:
@@ -97,7 +105,9 @@ def _load_artifact_paths(result_dir: Path) -> list[Path]:
     )
 
 
-def _artifact_validation_reason(payload: Mapping[str, Any]) -> str | None:
+def _artifact_validation_reason(payload: Any) -> str | None:
+    if not isinstance(payload, Mapping):
+        return "invalid_experiment_artifact"
     if not isinstance(payload.get("experiment_id"), str):
         return "invalid_experiment_artifact"
     if not isinstance(payload.get("cases"), list):
@@ -452,10 +462,11 @@ async def enrich_experiment_artifact(
     read_token: str | None = None,
     artifact_payload: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    if artifact_payload is not None:
-        payload = dict(artifact_payload)
-    else:
-        payload = _load_json_file(artifact_path)
+    disk_payload = _load_json_file_safely(artifact_path)
+    payload = _merge_artifact_payloads(
+        disk_payload=disk_payload,
+        override_payload=artifact_payload,
+    )
     validation_reason = _artifact_validation_reason(payload)
     if validation_reason is not None:
         return {
