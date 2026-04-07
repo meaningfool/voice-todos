@@ -23,7 +23,9 @@ from pydantic_evals.reporting import ReportCase, ReportCaseFailure
 from app.extract import extract_todos
 from app.logfire_setup import configure_logfire
 from app.models import Todo
-from evals.common import logfire_enrichment
+from evals.common.logfire_enrichment import (
+    write_run_summary as enrich_experiment_artifacts,
+)
 from evals.common.retry_policy import build_retry_task_config
 from evals.extraction_quality.result_artifacts import (
     DEFAULT_RESULTS_DIR,
@@ -387,6 +389,7 @@ async def _run(args: argparse.Namespace) -> int:
     if not args.skip_logfire_enrichment:
         try:
             await enrich_experiment_artifacts(
+                result_dir=result_dir,
                 artifact_paths=artifact_paths,
             )
         except Exception as exc:
