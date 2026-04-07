@@ -57,6 +57,20 @@ def test_classify_failure_category_handles_exhausted_serialized_transport_failur
     assert classify_failure_category(error_message) == expected_category
 
 
+@pytest.mark.parametrize(
+    "error_message",
+    [
+        "RuntimeError: connect failed while retrying",
+        "TaskError: read timed out after 3 attempts",
+        "transport wrapper: write timed out during cleanup",
+    ],
+)
+def test_classify_failure_category_does_not_overmatch_transport_fragments(
+    error_message: str,
+):
+    assert classify_failure_category(error_message) == "unexpected_task_failure"
+
+
 def test_classify_failure_category_handles_output_validation_failure():
     error_message = str(
         UnexpectedModelBehavior("output validation failed: expected list of todos")
