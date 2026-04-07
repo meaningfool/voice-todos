@@ -1,0 +1,206 @@
+{
+  "aggregate_metrics": {
+    "cost": 0.0019373888888888889,
+    "input_tokens": 636.1111111111111,
+    "output_tokens": 539.7777777777778,
+    "requests": 1.0,
+    "text_prompt_tokens": 636.1111111111111,
+    "thoughts_tokens": 479.8888888888889
+  },
+  "avg_task_duration_s": 3.5043765555555555,
+  "cases": [
+    {
+      "duration_s": 7.608119,
+      "exception_summary": "case: call-mom-memo-supplier",
+      "expected_todo_count": 3,
+      "failure_category": null,
+      "name": "call-mom-memo-supplier",
+      "predicted_todo_count": 3,
+      "source_fixture": "call-mom-memo-supplier",
+      "span_id": "95e4643cfb322630",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0042455,
+        "input_tokens": 1334,
+        "output_tokens": 2608,
+        "thoughts_tokens": 2298
+      },
+      "trace_id": "019d67a9df1c88ed1095894bc72725f5"
+    },
+    {
+      "duration_s": 6.520141,
+      "exception_summary": "case: continuous-speech",
+      "expected_todo_count": 6,
+      "failure_category": null,
+      "name": "continuous-speech",
+      "predicted_todo_count": 6,
+      "source_fixture": "continuous-speech",
+      "span_id": "8f19d1f9f0d9b062",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.005079,
+        "input_tokens": 1296,
+        "output_tokens": 3170,
+        "thoughts_tokens": 2786
+      },
+      "trace_id": "019d67a9df1c88ed1095894bc72725f5"
+    },
+    {
+      "duration_s": 1.668115,
+      "exception_summary": "case: finding-out-if-you",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "finding-out-if-you",
+      "predicted_todo_count": 0,
+      "source_fixture": "finding-out-if-you",
+      "span_id": "2753deff7f5e9cd6",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000753,
+        "input_tokens": 1284,
+        "output_tokens": 288,
+        "thoughts_tokens": 262
+      },
+      "trace_id": "019d67a9df1c88ed1095894bc72725f5"
+    },
+    {
+      "duration_s": 2.442952,
+      "exception_summary": "case: refine-todo",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "refine-todo",
+      "predicted_todo_count": 1,
+      "source_fixture": "refine-todo",
+      "span_id": "55e70d6f49ad1646",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0013575,
+        "input_tokens": 1254,
+        "output_tokens": 696,
+        "thoughts_tokens": 632
+      },
+      "trace_id": "019d67a9df1c88ed1095894bc72725f5"
+    },
+    {
+      "duration_s": 3.435035,
+      "exception_summary": "case: stop-final-sweep-single-todo",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "stop-final-sweep-single-todo",
+      "predicted_todo_count": 1,
+      "source_fixture": "stop-final-sweep-single-todo",
+      "span_id": "5e98d1239e2c0751",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0017785,
+        "input_tokens": 1234,
+        "output_tokens": 980,
+        "thoughts_tokens": 886
+      },
+      "trace_id": "019d67a9df1c88ed1095894bc72725f5"
+    },
+    {
+      "duration_s": 1.898075,
+      "exception_summary": "case: stop-the-button",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "stop-the-button",
+      "predicted_todo_count": 0,
+      "source_fixture": "stop-the-button",
+      "span_id": "556c9bf9747239e1",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0007495,
+        "input_tokens": 1222,
+        "output_tokens": 296,
+        "thoughts_tokens": 270
+      },
+      "trace_id": "019d67a9df1c88ed1095894bc72725f5"
+    },
+    {
+      "duration_s": 1.523538,
+      "exception_summary": "case: text-is-captured",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "text-is-captured",
+      "predicted_todo_count": 0,
+      "source_fixture": "text-is-captured",
+      "span_id": "a9a3692fc1142e0d",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0008455,
+        "input_tokens": 1306,
+        "output_tokens": 346,
+        "thoughts_tokens": 320
+      },
+      "trace_id": "019d67a9df1c88ed1095894bc72725f5"
+    },
+    {
+      "duration_s": 1.58014,
+      "exception_summary": "case: to-build-todos",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "to-build-todos",
+      "predicted_todo_count": 0,
+      "source_fixture": "to-build-todos",
+      "span_id": "bf1aecb49da334e6",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000709,
+        "input_tokens": 1276,
+        "output_tokens": 260,
+        "thoughts_tokens": 234
+      },
+      "trace_id": "019d67a9df1c88ed1095894bc72725f5"
+    },
+    {
+      "duration_s": 4.863274,
+      "exception_summary": "case: while-speaking-two-todos",
+      "expected_todo_count": 2,
+      "failure_category": null,
+      "name": "while-speaking-two-todos",
+      "predicted_todo_count": 2,
+      "source_fixture": "while-speaking-two-todos",
+      "span_id": "ca2638ab7b8e35f6",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.001919,
+        "input_tokens": 1244,
+        "output_tokens": 1072,
+        "thoughts_tokens": 950
+      },
+      "trace_id": "019d67a9df1c88ed1095894bc72725f5"
+    }
+  ],
+  "completed_cases": 9,
+  "dataset_name": "todo_extraction_v1",
+  "enrichment_reason": null,
+  "enrichment_status": "ok",
+  "experiment_id": "gemini3_flash_default",
+  "failure_count": 0,
+  "failure_counts_by_category": {},
+  "failures": [],
+  "git": {
+    "branch": "codex/item6.6-eval-reliability-reporting",
+    "commit_sha": "a2f543face7f42319df1e5b385024603a5d8624d"
+  },
+  "max_concurrency": 1,
+  "max_task_duration_s": 7.608119,
+  "min_task_duration_s": 1.523538,
+  "model": {
+    "name": "gemini-3-flash-preview",
+    "provider": "google-gla",
+    "thinking_mode": "provider_default"
+  },
+  "overall_case_success_rate": 1.0,
+  "prompt": {
+    "family": "todo_extraction",
+    "sha": "8d2720d336d35b8bfd655ce8fe731e6185c21934ae7148d133986a94036dbeed",
+    "version": "v1"
+  },
+  "repeat": 1,
+  "span_id": "d5004d167c86309f",
+  "task_retries": 1,
+  "timestamp": "2026-04-07T11:17:58Z",
+  "trace_id": "019d67a9df1c88ed1095894bc72725f5"
+}

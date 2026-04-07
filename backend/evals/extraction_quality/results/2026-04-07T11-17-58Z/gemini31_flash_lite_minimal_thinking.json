@@ -1,0 +1,196 @@
+{
+  "aggregate_metrics": {
+    "cost": 0.00024352777777777779,
+    "input_tokens": 636.1111111111111,
+    "output_tokens": 56.333333333333336,
+    "requests": 1.0,
+    "text_prompt_tokens": 636.1111111111111
+  },
+  "avg_task_duration_s": 1.0391425555555556,
+  "cases": [
+    {
+      "duration_s": 1.178512,
+      "exception_summary": "case: call-mom-memo-supplier",
+      "expected_todo_count": 3,
+      "failure_category": null,
+      "name": "call-mom-memo-supplier",
+      "predicted_todo_count": 3,
+      "source_fixture": "call-mom-memo-supplier",
+      "span_id": "d17b4ebd215ba640",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00036175,
+        "input_tokens": 1334,
+        "output_tokens": 260
+      },
+      "trace_id": "019d67aab14cec68b4b5866261042ce5"
+    },
+    {
+      "duration_s": 1.60419,
+      "exception_summary": "case: continuous-speech",
+      "expected_todo_count": 6,
+      "failure_category": null,
+      "name": "continuous-speech",
+      "predicted_todo_count": 6,
+      "source_fixture": "continuous-speech",
+      "span_id": "e1838d7d25efff2a",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000435,
+        "input_tokens": 1296,
+        "output_tokens": 364
+      },
+      "trace_id": "019d67aab14cec68b4b5866261042ce5"
+    },
+    {
+      "duration_s": 0.854465,
+      "exception_summary": "case: finding-out-if-you",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "finding-out-if-you",
+      "predicted_todo_count": 0,
+      "source_fixture": "finding-out-if-you",
+      "span_id": "98c119846ab78af0",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00018,
+        "input_tokens": 1284,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67aab14cec68b4b5866261042ce5"
+    },
+    {
+      "duration_s": 0.986428,
+      "exception_summary": "case: refine-todo",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "refine-todo",
+      "predicted_todo_count": 1,
+      "source_fixture": "refine-todo",
+      "span_id": "f564583e62f78e34",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00019275,
+        "input_tokens": 1254,
+        "output_tokens": 48
+      },
+      "trace_id": "019d67aab14cec68b4b5866261042ce5"
+    },
+    {
+      "duration_s": 0.806825,
+      "exception_summary": "case: stop-final-sweep-single-todo",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "stop-final-sweep-single-todo",
+      "predicted_todo_count": 1,
+      "source_fixture": "stop-final-sweep-single-todo",
+      "span_id": "4ddf21abc3a34332",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00023075,
+        "input_tokens": 1234,
+        "output_tokens": 102
+      },
+      "trace_id": "019d67aab14cec68b4b5866261042ce5"
+    },
+    {
+      "duration_s": 0.766689,
+      "exception_summary": "case: stop-the-button",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "stop-the-button",
+      "predicted_todo_count": 0,
+      "source_fixture": "stop-the-button",
+      "span_id": "6127deb0d6da3546",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00017225,
+        "input_tokens": 1222,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67aab14cec68b4b5866261042ce5"
+    },
+    {
+      "duration_s": 0.895926,
+      "exception_summary": "case: text-is-captured",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "text-is-captured",
+      "predicted_todo_count": 0,
+      "source_fixture": "text-is-captured",
+      "span_id": "be64fe005ca928cd",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00018275,
+        "input_tokens": 1306,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67aab14cec68b4b5866261042ce5"
+    },
+    {
+      "duration_s": 1.193573,
+      "exception_summary": "case: to-build-todos",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "to-build-todos",
+      "predicted_todo_count": 0,
+      "source_fixture": "to-build-todos",
+      "span_id": "bbfac1be86765a74",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000179,
+        "input_tokens": 1276,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67aab14cec68b4b5866261042ce5"
+    },
+    {
+      "duration_s": 1.065675,
+      "exception_summary": "case: while-speaking-two-todos",
+      "expected_todo_count": 2,
+      "failure_category": null,
+      "name": "while-speaking-two-todos",
+      "predicted_todo_count": 2,
+      "source_fixture": "while-speaking-two-todos",
+      "span_id": "29922293231e21f6",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0002575,
+        "input_tokens": 1244,
+        "output_tokens": 136
+      },
+      "trace_id": "019d67aab14cec68b4b5866261042ce5"
+    }
+  ],
+  "completed_cases": 9,
+  "dataset_name": "todo_extraction_v1",
+  "enrichment_reason": null,
+  "enrichment_status": "ok",
+  "experiment_id": "gemini31_flash_lite_minimal_thinking",
+  "failure_count": 0,
+  "failure_counts_by_category": {},
+  "failures": [],
+  "git": {
+    "branch": "codex/item6.6-eval-reliability-reporting",
+    "commit_sha": "a2f543face7f42319df1e5b385024603a5d8624d"
+  },
+  "max_concurrency": 1,
+  "max_task_duration_s": 1.60419,
+  "min_task_duration_s": 0.766689,
+  "model": {
+    "name": "gemini-3.1-flash-lite-preview",
+    "provider": "google-gla",
+    "thinking_mode": "minimal"
+  },
+  "overall_case_success_rate": 1.0,
+  "prompt": {
+    "family": "todo_extraction",
+    "sha": "8d2720d336d35b8bfd655ce8fe731e6185c21934ae7148d133986a94036dbeed",
+    "version": "v1"
+  },
+  "repeat": 1,
+  "span_id": "d8ea630ac36506fc",
+  "task_retries": 1,
+  "timestamp": "2026-04-07T11:17:58Z",
+  "trace_id": "019d67aab14cec68b4b5866261042ce5"
+}

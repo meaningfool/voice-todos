@@ -1,0 +1,200 @@
+{
+  "aggregate_metrics": {
+    "cost": 0.00022856249999999998,
+    "input_tokens": 632.25,
+    "output_tokens": 47.0,
+    "requests": 1.0,
+    "text_prompt_tokens": 632.25
+  },
+  "avg_task_duration_s": 1.2046393333333334,
+  "cases": [
+    {
+      "duration_s": 1.234921,
+      "exception_summary": "case: continuous-speech",
+      "expected_todo_count": 6,
+      "failure_category": null,
+      "name": "continuous-speech",
+      "predicted_todo_count": 6,
+      "source_fixture": "continuous-speech",
+      "span_id": "9a272e0d509d5135",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000435,
+        "input_tokens": 1296,
+        "output_tokens": 364
+      },
+      "trace_id": "019d67aa86a66f0c5bd1df2489f8e6af"
+    },
+    {
+      "duration_s": 0.77425,
+      "exception_summary": "case: finding-out-if-you",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "finding-out-if-you",
+      "predicted_todo_count": 0,
+      "source_fixture": "finding-out-if-you",
+      "span_id": "f915ece0eb75c680",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00018,
+        "input_tokens": 1284,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67aa86a66f0c5bd1df2489f8e6af"
+    },
+    {
+      "duration_s": 0.809298,
+      "exception_summary": "case: refine-todo",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "refine-todo",
+      "predicted_todo_count": 1,
+      "source_fixture": "refine-todo",
+      "span_id": "d32cb76e4af5e453",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00019275,
+        "input_tokens": 1254,
+        "output_tokens": 48
+      },
+      "trace_id": "019d67aa86a66f0c5bd1df2489f8e6af"
+    },
+    {
+      "duration_s": 1.145545,
+      "exception_summary": "case: stop-final-sweep-single-todo",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "stop-final-sweep-single-todo",
+      "predicted_todo_count": 1,
+      "source_fixture": "stop-final-sweep-single-todo",
+      "span_id": "0043e45388828bb3",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00022925,
+        "input_tokens": 1234,
+        "output_tokens": 100
+      },
+      "trace_id": "019d67aa86a66f0c5bd1df2489f8e6af"
+    },
+    {
+      "duration_s": 1.290446,
+      "exception_summary": "case: stop-the-button",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "stop-the-button",
+      "predicted_todo_count": 0,
+      "source_fixture": "stop-the-button",
+      "span_id": "74d7cf505a3bf3b4",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00017225,
+        "input_tokens": 1222,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67aa86a66f0c5bd1df2489f8e6af"
+    },
+    {
+      "duration_s": 1.184084,
+      "exception_summary": "case: text-is-captured",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "text-is-captured",
+      "predicted_todo_count": 0,
+      "source_fixture": "text-is-captured",
+      "span_id": "c5955e05e96e8d9f",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00018275,
+        "input_tokens": 1306,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67aa86a66f0c5bd1df2489f8e6af"
+    },
+    {
+      "duration_s": 1.308523,
+      "exception_summary": "case: to-build-todos",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "to-build-todos",
+      "predicted_todo_count": 0,
+      "source_fixture": "to-build-todos",
+      "span_id": "7d00ec38aa05a7fc",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000179,
+        "input_tokens": 1276,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67aa86a66f0c5bd1df2489f8e6af"
+    },
+    {
+      "duration_s": 0.914843,
+      "exception_summary": "case: while-speaking-two-todos",
+      "expected_todo_count": 2,
+      "failure_category": null,
+      "name": "while-speaking-two-todos",
+      "predicted_todo_count": 2,
+      "source_fixture": "while-speaking-two-todos",
+      "span_id": "6745e05c8e52ab7d",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0002575,
+        "input_tokens": 1244,
+        "output_tokens": 136
+      },
+      "trace_id": "019d67aa86a66f0c5bd1df2489f8e6af"
+    }
+  ],
+  "completed_cases": 8,
+  "dataset_name": "todo_extraction_v1",
+  "enrichment_reason": null,
+  "enrichment_status": "ok",
+  "experiment_id": "gemini31_flash_lite_default",
+  "failure_count": 1,
+  "failure_counts_by_category": {
+    "output_validation_failure": 1
+  },
+  "failures": [
+    {
+      "duration_s": 2.179844,
+      "error_message": "UnexpectedModelBehavior: Exceeded maximum retries (1) for output validation",
+      "exception_summary": "Exceeded maximum retries (1) for output validation",
+      "expected_todo_count": 3,
+      "failure_category": "output_validation_failure",
+      "name": "call-mom-memo-supplier",
+      "predicted_todo_count": null,
+      "source_fixture": "call-mom-memo-supplier",
+      "span_id": "f0a0ade6b5d9d483",
+      "status": "failure",
+      "token_metrics": {
+        "cost_usd": 0.0008222500000000001,
+        "input_tokens": 3386,
+        "output_tokens": 532
+      },
+      "trace_id": "019d67aa86a66f0c5bd1df2489f8e6af"
+    }
+  ],
+  "git": {
+    "branch": "codex/item6.6-eval-reliability-reporting",
+    "commit_sha": "a2f543face7f42319df1e5b385024603a5d8624d"
+  },
+  "max_concurrency": 1,
+  "max_task_duration_s": 2.179844,
+  "min_task_duration_s": 0.77425,
+  "model": {
+    "name": "gemini-3.1-flash-lite-preview",
+    "provider": "google-gla",
+    "thinking_mode": "provider_default"
+  },
+  "overall_case_success_rate": 0.8888888888888888,
+  "prompt": {
+    "family": "todo_extraction",
+    "sha": "8d2720d336d35b8bfd655ce8fe731e6185c21934ae7148d133986a94036dbeed",
+    "version": "v1"
+  },
+  "repeat": 1,
+  "span_id": "735b3ac8c09ff971",
+  "task_retries": 1,
+  "timestamp": "2026-04-07T11:17:58Z",
+  "trace_id": "019d67aa86a66f0c5bd1df2489f8e6af"
+}

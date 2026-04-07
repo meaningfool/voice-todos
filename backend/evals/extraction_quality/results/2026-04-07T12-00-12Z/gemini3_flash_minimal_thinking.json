@@ -1,0 +1,808 @@
+{
+  "aggregate_metrics": {
+    "cost": 0.0004824555555555555,
+    "input_tokens": 636.1111111111111,
+    "output_tokens": 54.8,
+    "requests": 1.0,
+    "text_prompt_tokens": 636.1111111111111
+  },
+  "avg_task_duration_s": 1.3052595333333334,
+  "cases": [
+    {
+      "duration_s": 1.485041,
+      "exception_summary": "case: call-mom-memo-supplier [1/5]",
+      "expected_todo_count": 3,
+      "failure_category": null,
+      "name": "call-mom-memo-supplier [1/5]",
+      "predicted_todo_count": 3,
+      "source_fixture": "call-mom-memo-supplier",
+      "span_id": "7c21506583b4f6da",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0007055,
+        "input_tokens": 1334,
+        "output_tokens": 248
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.286422,
+      "exception_summary": "case: call-mom-memo-supplier [2/5]",
+      "expected_todo_count": 3,
+      "failure_category": null,
+      "name": "call-mom-memo-supplier [2/5]",
+      "predicted_todo_count": 3,
+      "source_fixture": "call-mom-memo-supplier",
+      "span_id": "56d3e5b5b6eb05a8",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0007805,
+        "input_tokens": 1334,
+        "output_tokens": 298
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.351753,
+      "exception_summary": "case: call-mom-memo-supplier [3/5]",
+      "expected_todo_count": 3,
+      "failure_category": null,
+      "name": "call-mom-memo-supplier [3/5]",
+      "predicted_todo_count": 3,
+      "source_fixture": "call-mom-memo-supplier",
+      "span_id": "eb880ca642bfc15f",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0007055,
+        "input_tokens": 1334,
+        "output_tokens": 248
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.470404,
+      "exception_summary": "case: call-mom-memo-supplier [4/5]",
+      "expected_todo_count": 3,
+      "failure_category": null,
+      "name": "call-mom-memo-supplier [4/5]",
+      "predicted_todo_count": 3,
+      "source_fixture": "call-mom-memo-supplier",
+      "span_id": "55e477513f6f19ea",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0007025,
+        "input_tokens": 1334,
+        "output_tokens": 246
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.224427,
+      "exception_summary": "case: call-mom-memo-supplier [5/5]",
+      "expected_todo_count": 3,
+      "failure_category": null,
+      "name": "call-mom-memo-supplier [5/5]",
+      "predicted_todo_count": 3,
+      "source_fixture": "call-mom-memo-supplier",
+      "span_id": "9b3e258f1376fa8f",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0007055,
+        "input_tokens": 1334,
+        "output_tokens": 248
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.731515,
+      "exception_summary": "case: continuous-speech [1/5]",
+      "expected_todo_count": 6,
+      "failure_category": null,
+      "name": "continuous-speech [1/5]",
+      "predicted_todo_count": 6,
+      "source_fixture": "continuous-speech",
+      "span_id": "4dc2f228560b0d40",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000792,
+        "input_tokens": 1296,
+        "output_tokens": 312
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.742549,
+      "exception_summary": "case: continuous-speech [2/5]",
+      "expected_todo_count": 6,
+      "failure_category": null,
+      "name": "continuous-speech [2/5]",
+      "predicted_todo_count": 6,
+      "source_fixture": "continuous-speech",
+      "span_id": "fd41a6cfee6da809",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000792,
+        "input_tokens": 1296,
+        "output_tokens": 312
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.809131,
+      "exception_summary": "case: continuous-speech [3/5]",
+      "expected_todo_count": 6,
+      "failure_category": null,
+      "name": "continuous-speech [3/5]",
+      "predicted_todo_count": 6,
+      "source_fixture": "continuous-speech",
+      "span_id": "07c3d285536ea26d",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000819,
+        "input_tokens": 1296,
+        "output_tokens": 330
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.807895,
+      "exception_summary": "case: continuous-speech [4/5]",
+      "expected_todo_count": 6,
+      "failure_category": null,
+      "name": "continuous-speech [4/5]",
+      "predicted_todo_count": 6,
+      "source_fixture": "continuous-speech",
+      "span_id": "9c10a74732cefebe",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000798,
+        "input_tokens": 1296,
+        "output_tokens": 316
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 2.21635,
+      "exception_summary": "case: continuous-speech [5/5]",
+      "expected_todo_count": 6,
+      "failure_category": null,
+      "name": "continuous-speech [5/5]",
+      "predicted_todo_count": 6,
+      "source_fixture": "continuous-speech",
+      "span_id": "727ea92afb437b67",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000774,
+        "input_tokens": 1296,
+        "output_tokens": 300
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.600239,
+      "exception_summary": "case: finding-out-if-you [1/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "finding-out-if-you [1/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "finding-out-if-you",
+      "span_id": "cc903224c3c693a5",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00036,
+        "input_tokens": 1284,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 2.067459,
+      "exception_summary": "case: finding-out-if-you [2/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "finding-out-if-you [2/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "finding-out-if-you",
+      "span_id": "c55dd423e5c3ec0b",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00036,
+        "input_tokens": 1284,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.388011,
+      "exception_summary": "case: finding-out-if-you [3/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "finding-out-if-you [3/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "finding-out-if-you",
+      "span_id": "1b6142fb0449f11d",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00036,
+        "input_tokens": 1284,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 0.981228,
+      "exception_summary": "case: finding-out-if-you [4/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "finding-out-if-you [4/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "finding-out-if-you",
+      "span_id": "ec537eaebc5fe7bd",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00036,
+        "input_tokens": 1284,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.074259,
+      "exception_summary": "case: finding-out-if-you [5/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "finding-out-if-you [5/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "finding-out-if-you",
+      "span_id": "d34d152a307b1248",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.00036,
+        "input_tokens": 1284,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.19928,
+      "exception_summary": "case: refine-todo [1/5]",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "refine-todo [1/5]",
+      "predicted_todo_count": 1,
+      "source_fixture": "refine-todo",
+      "span_id": "14ee4a4bce29f5a3",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0004095,
+        "input_tokens": 1254,
+        "output_tokens": 64
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.611093,
+      "exception_summary": "case: refine-todo [2/5]",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "refine-todo [2/5]",
+      "predicted_todo_count": 1,
+      "source_fixture": "refine-todo",
+      "span_id": "411c5a4074d01a8e",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0004125,
+        "input_tokens": 1254,
+        "output_tokens": 66
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.153577,
+      "exception_summary": "case: refine-todo [3/5]",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "refine-todo [3/5]",
+      "predicted_todo_count": 1,
+      "source_fixture": "refine-todo",
+      "span_id": "ffa588adbc283c79",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0004065,
+        "input_tokens": 1254,
+        "output_tokens": 62
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.211999,
+      "exception_summary": "case: refine-todo [4/5]",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "refine-todo [4/5]",
+      "predicted_todo_count": 1,
+      "source_fixture": "refine-todo",
+      "span_id": "327323c146754a95",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0004065,
+        "input_tokens": 1254,
+        "output_tokens": 62
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.138566,
+      "exception_summary": "case: refine-todo [5/5]",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "refine-todo [5/5]",
+      "predicted_todo_count": 1,
+      "source_fixture": "refine-todo",
+      "span_id": "c02465be02283f34",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0004125,
+        "input_tokens": 1254,
+        "output_tokens": 66
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.818905,
+      "exception_summary": "case: stop-final-sweep-single-todo [1/5]",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "stop-final-sweep-single-todo [1/5]",
+      "predicted_todo_count": 1,
+      "source_fixture": "stop-final-sweep-single-todo",
+      "span_id": "fd6eb3ae857cd1fb",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0004735,
+        "input_tokens": 1234,
+        "output_tokens": 110
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.595068,
+      "exception_summary": "case: stop-final-sweep-single-todo [2/5]",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "stop-final-sweep-single-todo [2/5]",
+      "predicted_todo_count": 1,
+      "source_fixture": "stop-final-sweep-single-todo",
+      "span_id": "581a04d8ddcbb25e",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0004585,
+        "input_tokens": 1234,
+        "output_tokens": 100
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.119717,
+      "exception_summary": "case: stop-final-sweep-single-todo [3/5]",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "stop-final-sweep-single-todo [3/5]",
+      "predicted_todo_count": 1,
+      "source_fixture": "stop-final-sweep-single-todo",
+      "span_id": "91777f05aa595a65",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0004555,
+        "input_tokens": 1234,
+        "output_tokens": 98
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.574388,
+      "exception_summary": "case: stop-final-sweep-single-todo [4/5]",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "stop-final-sweep-single-todo [4/5]",
+      "predicted_todo_count": 1,
+      "source_fixture": "stop-final-sweep-single-todo",
+      "span_id": "cdb54da6f361e936",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0004765,
+        "input_tokens": 1234,
+        "output_tokens": 112
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.07781,
+      "exception_summary": "case: stop-final-sweep-single-todo [5/5]",
+      "expected_todo_count": 1,
+      "failure_category": null,
+      "name": "stop-final-sweep-single-todo [5/5]",
+      "predicted_todo_count": 1,
+      "source_fixture": "stop-final-sweep-single-todo",
+      "span_id": "82bcf9ba74547fc4",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0004555,
+        "input_tokens": 1234,
+        "output_tokens": 98
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 0.831059,
+      "exception_summary": "case: stop-the-button [1/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "stop-the-button [1/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "stop-the-button",
+      "span_id": "d8660c5e2d8d417a",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0003445,
+        "input_tokens": 1222,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 0.774028,
+      "exception_summary": "case: stop-the-button [2/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "stop-the-button [2/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "stop-the-button",
+      "span_id": "e314dac7ea0c56cb",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0003445,
+        "input_tokens": 1222,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.199027,
+      "exception_summary": "case: stop-the-button [3/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "stop-the-button [3/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "stop-the-button",
+      "span_id": "8d3f16a348c6b737",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0003445,
+        "input_tokens": 1222,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.524985,
+      "exception_summary": "case: stop-the-button [4/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "stop-the-button [4/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "stop-the-button",
+      "span_id": "abfa0d33c1f08c10",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0003445,
+        "input_tokens": 1222,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 0.871048,
+      "exception_summary": "case: stop-the-button [5/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "stop-the-button [5/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "stop-the-button",
+      "span_id": "c036f8cea50169a7",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0003445,
+        "input_tokens": 1222,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.178064,
+      "exception_summary": "case: text-is-captured [1/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "text-is-captured [1/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "text-is-captured",
+      "span_id": "3d679be8fc1749a5",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0003655,
+        "input_tokens": 1306,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.019993,
+      "exception_summary": "case: text-is-captured [2/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "text-is-captured [2/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "text-is-captured",
+      "span_id": "69c4b6508411c7a8",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0003655,
+        "input_tokens": 1306,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 0.838973,
+      "exception_summary": "case: text-is-captured [3/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "text-is-captured [3/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "text-is-captured",
+      "span_id": "e42c39f042d4a4dd",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0003655,
+        "input_tokens": 1306,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.122864,
+      "exception_summary": "case: text-is-captured [4/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "text-is-captured [4/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "text-is-captured",
+      "span_id": "ed9ee723ab4a1c66",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0003655,
+        "input_tokens": 1306,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.102473,
+      "exception_summary": "case: text-is-captured [5/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "text-is-captured [5/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "text-is-captured",
+      "span_id": "5d3fa36a66d6f9f9",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.0003655,
+        "input_tokens": 1306,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.230976,
+      "exception_summary": "case: to-build-todos [1/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "to-build-todos [1/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "to-build-todos",
+      "span_id": "a74e2b18177f0dd8",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000358,
+        "input_tokens": 1276,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 0.852098,
+      "exception_summary": "case: to-build-todos [2/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "to-build-todos [2/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "to-build-todos",
+      "span_id": "f72e89efcf908422",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000358,
+        "input_tokens": 1276,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 0.985597,
+      "exception_summary": "case: to-build-todos [3/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "to-build-todos [3/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "to-build-todos",
+      "span_id": "8bba9489a7f3a8d5",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000358,
+        "input_tokens": 1276,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.347894,
+      "exception_summary": "case: to-build-todos [4/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "to-build-todos [4/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "to-build-todos",
+      "span_id": "34023687a2cff52d",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000358,
+        "input_tokens": 1276,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 0.859994,
+      "exception_summary": "case: to-build-todos [5/5]",
+      "expected_todo_count": 0,
+      "failure_category": null,
+      "name": "to-build-todos [5/5]",
+      "predicted_todo_count": 0,
+      "source_fixture": "to-build-todos",
+      "span_id": "c03790295d891130",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000358,
+        "input_tokens": 1276,
+        "output_tokens": 26
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.35464,
+      "exception_summary": "case: while-speaking-two-todos [1/5]",
+      "expected_todo_count": 2,
+      "failure_category": null,
+      "name": "while-speaking-two-todos [1/5]",
+      "predicted_todo_count": 2,
+      "source_fixture": "while-speaking-two-todos",
+      "span_id": "1c4d68ad0cd66b0d",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000527,
+        "input_tokens": 1244,
+        "output_tokens": 144
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.100128,
+      "exception_summary": "case: while-speaking-two-todos [2/5]",
+      "expected_todo_count": 2,
+      "failure_category": null,
+      "name": "while-speaking-two-todos [2/5]",
+      "predicted_todo_count": 2,
+      "source_fixture": "while-speaking-two-todos",
+      "span_id": "dcfa5d0f5ba1dfee",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000521,
+        "input_tokens": 1244,
+        "output_tokens": 140
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.205734,
+      "exception_summary": "case: while-speaking-two-todos [3/5]",
+      "expected_todo_count": 2,
+      "failure_category": null,
+      "name": "while-speaking-two-todos [3/5]",
+      "predicted_todo_count": 2,
+      "source_fixture": "while-speaking-two-todos",
+      "span_id": "4454b2546626baa9",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000527,
+        "input_tokens": 1244,
+        "output_tokens": 144
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.135252,
+      "exception_summary": "case: while-speaking-two-todos [4/5]",
+      "expected_todo_count": 2,
+      "failure_category": null,
+      "name": "while-speaking-two-todos [4/5]",
+      "predicted_todo_count": 2,
+      "source_fixture": "while-speaking-two-todos",
+      "span_id": "e5c220cca4f45f28",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000527,
+        "input_tokens": 1244,
+        "output_tokens": 144
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    },
+    {
+      "duration_s": 1.464766,
+      "exception_summary": "case: while-speaking-two-todos [5/5]",
+      "expected_todo_count": 2,
+      "failure_category": null,
+      "name": "while-speaking-two-todos [5/5]",
+      "predicted_todo_count": 2,
+      "source_fixture": "while-speaking-two-todos",
+      "span_id": "b89e1e6235657415",
+      "status": "success",
+      "token_metrics": {
+        "cost_usd": 0.000527,
+        "input_tokens": 1244,
+        "output_tokens": 144
+      },
+      "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+    }
+  ],
+  "completed_cases": 45,
+  "dataset_name": "todo_extraction_v1",
+  "enrichment_reason": null,
+  "enrichment_status": "ok",
+  "experiment_id": "gemini3_flash_minimal_thinking",
+  "failure_count": 0,
+  "failure_counts_by_category": {},
+  "failures": [],
+  "git": {
+    "branch": "codex/item6.6-eval-reliability-reporting",
+    "commit_sha": "a2f543face7f42319df1e5b385024603a5d8624d"
+  },
+  "max_concurrency": 1,
+  "max_task_duration_s": 2.21635,
+  "min_task_duration_s": 0.774028,
+  "model": {
+    "name": "gemini-3-flash-preview",
+    "provider": "google-gla",
+    "thinking_mode": "minimal"
+  },
+  "overall_case_success_rate": 1.0,
+  "prompt": {
+    "family": "todo_extraction",
+    "sha": "8d2720d336d35b8bfd655ce8fe731e6185c21934ae7148d133986a94036dbeed",
+    "version": "v1"
+  },
+  "repeat": 5,
+  "span_id": "dacb9c6568a787b7",
+  "task_retries": 3,
+  "timestamp": "2026-04-07T12:00:12Z",
+  "trace_id": "019d67d2d81b3cd31e6b533c55b2acee"
+}
