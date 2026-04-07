@@ -129,8 +129,8 @@ def test_main_configures_logfire_before_running_experiments(monkeypatch, tmp_pat
     )
     monkeypatch.setattr(
         runner,
-        "write_run_summary",
-        lambda **kwargs: pytest.fail("summary should be skipped"),
+        "enrich_experiment_artifacts",
+        lambda **kwargs: pytest.fail("enrichment should be skipped"),
     )
 
     async def fake_run_experiment(
@@ -153,7 +153,7 @@ def test_main_configures_logfire_before_running_experiments(monkeypatch, tmp_pat
             "fake-experiment",
             "--output-dir",
             str(tmp_path),
-            "--skip-logfire-summary",
+            "--skip-logfire-enrichment",
         ]
     )
 
@@ -171,7 +171,7 @@ def test_main_configures_logfire_before_running_experiments(monkeypatch, tmp_pat
     ]
 
 
-def test_main_attempts_run_summary_after_experiments_and_ignores_failures(
+def test_main_attempts_enrichment_after_experiments_and_ignores_failures(
     monkeypatch, tmp_path, capsys
 ):
     import evals.extraction_quality.run as runner
@@ -221,7 +221,7 @@ def test_main_attempts_run_summary_after_experiments_and_ignores_failures(
         events.append(("run", experiment.name))
         return artifact_paths[experiment.name]
 
-    async def fake_write_run_summary(
+    async def fake_enrich_run_artifacts(
         *,
         result_dir,
         artifact_paths,
@@ -229,17 +229,19 @@ def test_main_attempts_run_summary_after_experiments_and_ignores_failures(
     ):
         events.append(
             (
-                "summary",
+                "enrichment",
                 {
                     "result_dir": result_dir,
                     "artifact_paths": list(artifact_paths),
                 },
             )
         )
-        raise RuntimeError("summary failed")
+        raise RuntimeError("enrichment failed")
 
     monkeypatch.setattr(runner, "_run_experiment", fake_run_experiment)
-    monkeypatch.setattr(runner, "write_run_summary", fake_write_run_summary)
+    monkeypatch.setattr(
+        runner, "enrich_experiment_artifacts", fake_enrich_run_artifacts
+    )
 
     exit_code = runner.main(
         ["--experiment", "fake-experiment-a", "--output-dir", str(tmp_path)]
@@ -258,7 +260,7 @@ def test_main_attempts_run_summary_after_experiments_and_ignores_failures(
         ("run", "fake-experiment-a"),
         ("run", "fake-experiment-b"),
         (
-            "summary",
+            "enrichment",
             {
                 "result_dir": result_dir,
                 "artifact_paths": [
@@ -268,10 +270,12 @@ def test_main_attempts_run_summary_after_experiments_and_ignores_failures(
             },
         ),
     ]
-    assert "Best-effort Logfire summary failed: summary failed" in captured.err
+    assert "Best-effort Logfire enrichment failed: enrichment failed" in captured.err
 
 
-def test_main_skip_logfire_summary_disables_summary_pass(monkeypatch, tmp_path):
+def test_main_skip_logfire_enrichment_disables_enrichment_pass(
+    monkeypatch, tmp_path
+):
     import evals.extraction_quality.run as runner
 
     events: list[tuple[str, object]] = []
@@ -319,11 +323,13 @@ def test_main_skip_logfire_summary_disables_summary_pass(monkeypatch, tmp_path):
         events.append(("run", experiment.name))
         return artifact_paths[experiment.name]
 
-    async def fake_write_run_summary(**kwargs):
-        raise AssertionError("summary should not be called")
+    async def fake_enrich_run_artifacts(**kwargs):
+        raise AssertionError("enrichment should not be called")
 
     monkeypatch.setattr(runner, "_run_experiment", fake_run_experiment)
-    monkeypatch.setattr(runner, "write_run_summary", fake_write_run_summary)
+    monkeypatch.setattr(
+        runner, "enrich_experiment_artifacts", fake_enrich_run_artifacts
+    )
 
     exit_code = runner.main(
         [
@@ -331,7 +337,7 @@ def test_main_skip_logfire_summary_disables_summary_pass(monkeypatch, tmp_path):
             "fake-experiment",
             "--output-dir",
             str(tmp_path),
-            "--skip-logfire-summary",
+            "--skip-logfire-enrichment",
         ]
     )
 

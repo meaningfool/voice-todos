@@ -56,15 +56,15 @@ shared location, or `LOGFIRE_TOKEN` is set, the runner can ship traces
 remotely. Without credentials it still creates local trace/span IDs, but you
 will not see the run in the hosted Logfire UI.
 
-After a run completes, the runner writes compact JSON artifacts under
-`backend/evals/extraction_quality/results/<timestamp>/`. Those base artifacts
-are the local source of truth for run identity, model metadata, case counts,
-and overall case success. The runner also writes `summary.json` into the same
-directory on every run that is not skipped. When `LOGFIRE_READ_TOKEN` is
-available, that summary contains the main Logfire-derived comparison metrics.
-When the read token is missing, the summary is still written but marked as
-`skipped`. Logfire itself remains the source of truth for full payloads and
-deep debugging.
+After a run completes, the runner writes one compact JSON artifact per
+experiment under `backend/evals/extraction_quality/results/<timestamp>/`. That
+base artifact is the local source of truth for run identity, model metadata,
+case counts, and overall case success. The runner then makes a best-effort
+Logfire enrichment pass that updates each experiment artifact in place. When
+`LOGFIRE_READ_TOKEN` is available, enrichment can pull in the deeper
+comparison metrics from Logfire. If the token is missing or enrichment is
+skipped, the base artifact still stands on its own. Logfire remains the source
+of truth for the full payloads and deeper debugging.
 
 ## Dataset Asset
 
@@ -144,11 +144,11 @@ Useful flags:
 - `--repeat N`: rerun each case N times
 - `--task-retries N`: retry transient task failures inside one case before
   marking that case failed. This is different from `--repeat`; `--repeat`
-  reruns the whole case, while `--task-retries` only retries the current case
-  attempt.
+  reruns the whole case from the start, while `--task-retries` only retries the
+  current case attempt before the case is marked failed.
 - `--max-concurrency N`: control concurrent case execution inside an experiment
-- `--skip-logfire-summary`: skip the post-run summary download when you only
-  want the base artifacts
+- `--skip-logfire-enrichment`: skip the post-run Logfire enrichment pass when
+  you only want the base artifacts
 
 ## Running The Whole Matrix
 
@@ -162,11 +162,11 @@ The runner:
 - attaches the count-based evaluator set
 - skips experiments whose provider credentials or provider support are missing
 - prints one `pydantic_evals` report per runnable experiment
-- writes JSON artifacts under `backend/evals/extraction_quality/results/` by
-  default, with one timestamped directory per run
-- writes `summary.json` into the same directory for every non-skipped run;
-  when `LOGFIRE_READ_TOKEN` is missing, the summary is still written but marked
-  as `skipped`
+- writes one JSON artifact per experiment under
+  `backend/evals/extraction_quality/results/` by default, with one timestamped
+  directory per run
+- enriches those experiment artifacts in place after the run unless
+  `--skip-logfire-enrichment` is set
 
 ## Comparing Experiments In Logfire
 
@@ -193,8 +193,9 @@ When reviewing Logfire for a run that was actually instrumented:
 - inspect `expected_todo_count` and `predicted_todo_count` for why a case passed
   or failed
 - treat latency and token/cost data as supporting evidence, not the only signal
-- use `LOGFIRE_READ_TOKEN` when you want the summary to include the main
-  Logfire-derived comparison metrics instead of a `skipped` summary
+- use `LOGFIRE_READ_TOKEN` when you want the enrichment pass to include the
+  main Logfire-derived comparison metrics instead of leaving the base artifact
+  untouched
 
 ## Adding A New Model Config Safely
 

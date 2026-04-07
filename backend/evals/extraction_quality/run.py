@@ -21,7 +21,9 @@ from pydantic_evals import Dataset, set_eval_attribute
 from app.extract import extract_todos
 from app.logfire_setup import configure_logfire
 from app.models import Todo
-from evals.common.logfire_enrichment import write_run_summary
+from evals.common.logfire_enrichment import (
+    write_run_summary as enrich_experiment_artifacts,
+)
 from evals.common.retry_policy import build_retry_task_config
 from evals.extraction_quality.dataset_loader import load_extraction_quality_dataset
 from evals.extraction_quality.evaluators import EXTRACTION_QUALITY_EVALUATORS
@@ -82,9 +84,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where JSON result artifacts are written.",
     )
     parser.add_argument(
-        "--skip-logfire-summary",
+        "--skip-logfire-enrichment",
         action="store_true",
-        help="Skip the post-run Logfire summary download.",
+        help="Skip the post-run Logfire artifact enrichment pass.",
     )
     return parser
 
@@ -275,15 +277,15 @@ async def _run(args: argparse.Namespace) -> int:
             )
         )
 
-    if not args.skip_logfire_summary:
+    if not args.skip_logfire_enrichment:
         try:
-            await write_run_summary(
+            await enrich_experiment_artifacts(
                 result_dir=result_dir,
                 artifact_paths=artifact_paths,
             )
         except Exception as exc:
             print(
-                f"Best-effort Logfire summary failed: {exc}",
+                f"Best-effort Logfire enrichment failed: {exc}",
                 file=sys.stderr,
             )
 

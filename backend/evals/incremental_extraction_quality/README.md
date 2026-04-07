@@ -41,12 +41,12 @@ when you want to measure carried-state behavior across one recorded session.
 After a run completes, the runner writes compact JSON artifacts under
 `backend/evals/extraction_quality/results/<timestamp>/`. Those base artifacts
 are the local source of truth for run identity, model metadata, case counts,
-and overall case success. The runner also writes `summary.json` into the same
-directory on every run that is not skipped. When `LOGFIRE_READ_TOKEN` is
-available, that summary contains the main Logfire-derived comparison metrics.
-When the read token is missing, the summary is still written but marked as
-`skipped`. Logfire itself remains the source of truth for full payloads and
-deep debugging.
+and overall case success. The runner then makes a best-effort Logfire
+enrichment pass that updates each experiment artifact in place. When
+`LOGFIRE_READ_TOKEN` is available, enrichment can pull in the main
+Logfire-derived comparison metrics. If the token is missing or enrichment is
+skipped, the base artifact still stands on its own. Logfire itself remains the
+source of truth for full payloads and deep debugging.
 
 ## Dataset Shape
 
@@ -157,13 +157,13 @@ Useful flags:
 - `--repeat N`: rerun each case `N` times
 - `--task-retries N`: retry transient task failures inside one case before
   marking that case failed. This is different from `--repeat`; `--repeat`
-  reruns the whole case, while `--task-retries` only retries the current case
-  attempt.
+  reruns the whole case from the start, while `--task-retries` only retries the
+  current case attempt before the case is marked failed.
 - `--max-concurrency N`: control concurrent case execution inside one experiment
 - `--output-dir PATH`: write artifacts somewhere other than the default results
   directory
-- `--skip-logfire-summary`: skip the post-run summary download when you only
-  want the base artifacts
+- `--skip-logfire-enrichment`: skip the post-run Logfire enrichment pass when
+  you only want the base artifacts
 
 ## Inspecting Per-Step Outputs
 
@@ -176,18 +176,17 @@ Each artifact includes:
 - `cases[].step_results[]` with the transcript and todos for every replay step
 - `cases[].trace_id` and `cases[].span_id` for cross-referencing traces
 - aggregate metrics and final count metrics for the run
-- the runner also writes `summary.json` into the same directory for every
-  non-skipped run; when `LOGFIRE_READ_TOKEN` is missing, that summary is still
-  written but marked as `skipped`
+- the runner enriches each per-experiment artifact in place after the run
+  unless `--skip-logfire-enrichment` is set
 
 When Logfire credentials are configured, the runner also attaches per-step
 attributes named `replay_step_<n>_todos`, which makes manual inspection easier
 in the trace UI.
 
-Use `LOGFIRE_READ_TOKEN` when you want the summary to include the main
-Logfire-derived comparison metrics instead of a `skipped` summary. Logfire
-remains the source of truth for the full payloads and deeper debugging, while
-the local artifacts give you compact run identity and success data at a glance.
+Use `LOGFIRE_READ_TOKEN` when you want the enrichment pass to include the main
+Logfire-derived comparison metrics. Logfire remains the source of truth for
+the full payloads and deeper debugging, while the local artifacts give you
+compact run identity and success data at a glance.
 
 ## Caveats And Guardrails
 
