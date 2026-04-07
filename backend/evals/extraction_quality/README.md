@@ -66,6 +66,34 @@ comparison metrics from Logfire. If the token is missing or enrichment is
 skipped, the base artifact still stands on its own. Logfire remains the source
 of truth for the full payloads and deeper debugging.
 
+## Network Execution Note
+
+Provider-backed eval runs need real outbound DNS and HTTPS access for:
+
+- model provider APIs such as Gemini and Mistral
+- Logfire trace shipping and enrichment
+- `uv` dependency resolution in a fresh worktree or virtualenv
+
+Run these evals from a normal terminal on your machine when possible:
+
+```bash
+cd backend && .venv/bin/python evals/extraction_quality/run.py --all
+```
+
+If you ask Codex to run the evals for you, make it explicit that the command
+should run outside the sandbox. The sandboxed runner can fail even when your
+laptop connection is healthy, because DNS resolution may be blocked there.
+
+The failure signature looks like:
+
+```text
+ConnectError: [Errno 8] nodename nor servname provided, or not known
+```
+
+Treat that as an execution-environment problem first, not as a provider outage
+or a model-quality regression. Re-run the same command in a normal terminal or
+outside the sandbox before drawing conclusions from the result.
+
 ## Dataset Asset
 
 The dataset is a stable repo asset at

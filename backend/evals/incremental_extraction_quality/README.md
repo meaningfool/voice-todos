@@ -23,6 +23,34 @@ built by previous steps.
 Item 6.5 is intentionally narrower than item 6. It replays incremental
 extraction state, but the evaluator only checks the final todo count.
 
+## Network Execution Note
+
+Replay evals also depend on real outbound DNS and HTTPS access for:
+
+- model provider APIs such as Gemini and Mistral
+- Logfire trace shipping and enrichment
+- `uv` dependency resolution in a fresh worktree or virtualenv
+
+Run these evals from a normal terminal on your machine when possible:
+
+```bash
+cd backend && uv run python evals/incremental_extraction_quality/run.py --all
+```
+
+If you ask Codex to run the command, make it explicit that it should run
+outside the sandbox. A sandboxed runner can fail with DNS errors even when your
+machine connection is healthy.
+
+The failure signature looks like:
+
+```text
+ConnectError: [Errno 8] nodename nor servname provided, or not known
+```
+
+Treat that as an execution-environment problem first. Re-run the same command
+in a normal terminal or outside the sandbox before treating it as a provider or
+model issue.
+
 ## How This Differs From Item 6
 
 Item 6 measures transcript-to-todo extraction from a finalized transcript with
