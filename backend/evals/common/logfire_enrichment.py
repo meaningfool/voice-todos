@@ -321,21 +321,37 @@ def _blank_enrichment_row(
     *,
     failure_payload: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
+    existing_status = case_payload.get("status")
+    if existing_status not in {"success", "failure"}:
+        existing_status = "failure" if failure_payload is not None else "success"
+
+    existing_token_metrics = case_payload.get("token_metrics")
+    if not isinstance(existing_token_metrics, Mapping):
+        existing_token_metrics = {}
+
     return {
         **case_payload,
-        "status": "failure" if failure_payload is not None else "success",
-        "duration_s": None,
+        "status": existing_status,
+        "duration_s": case_payload.get("duration_s"),
         "failure_category": (
-            classify_failure_category(failure_payload.get("error_message"))
-            if failure_payload is not None
-            else None
+            case_payload.get("failure_category")
+            if case_payload.get("failure_category") is not None
+            else (
+                classify_failure_category(failure_payload.get("error_message"))
+                if failure_payload is not None
+                else None
+            )
         ),
         "exception_summary": (
-            failure_payload.get("error_message")
-            if failure_payload is not None
-            else None
+            case_payload.get("exception_summary")
+            if case_payload.get("exception_summary") is not None
+            else (
+                failure_payload.get("error_message")
+                if failure_payload is not None
+                else None
+            )
         ),
-        "token_metrics": {},
+        "token_metrics": dict(existing_token_metrics),
     }
 
 
