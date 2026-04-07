@@ -1,0 +1,1156 @@
+{
+  "aggregate_metrics": {
+    "cost": 0.000646375,
+    "input_tokens": 1548.4,
+    "output_tokens": 172.85,
+    "requests": 2.3,
+    "text_prompt_tokens": 1548.4
+  },
+  "avg_task_duration_s": 3.7226444,
+  "cases": [
+    {
+      "duration_s": 7.139043,
+      "exception_summary": "case: call-mom-memo-supplier [1/5]",
+      "expected_final_todo_count": 3,
+      "failure_category": null,
+      "name": "call-mom-memo-supplier [1/5]",
+      "predicted_final_todo_count": 4,
+      "source_fixture": "call-mom-memo-supplier",
+      "span_id": "b7d507b69c52f747",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "due_date": "2026-03-24",
+              "text": "Call Mom"
+            },
+            {
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call client"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our"
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "due_date": "2026-03-24",
+              "text": "Call Mom"
+            },
+            {
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call client"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call supplier to confirm catering"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is"
+        },
+        {
+          "step_index": 3,
+          "todos": [
+            {
+              "due_date": "2026-03-24",
+              "notification": "2026-03-24T18:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call client"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call supplier to confirm catering"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is arranged, uh, by, uh, for the, u"
+        },
+        {
+          "step_index": 4,
+          "todos": [
+            {
+              "due_date": "2026-03-24",
+              "notification": "2026-03-24T18:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call client"
+            },
+            {
+              "assign_to": "JC",
+              "due_date": "2026-04-01",
+              "text": "Call supplier to confirm catering for the wedding"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is arranged, uh, by, uh, for the, uh, wedding on, uh, next Wednesday."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.0013520000000000001,
+        "input_tokens": 5656,
+        "output_tokens": 860
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 6.285316,
+      "exception_summary": "case: call-mom-memo-supplier [2/5]",
+      "expected_final_todo_count": 3,
+      "failure_category": null,
+      "name": "call-mom-memo-supplier [2/5]",
+      "predicted_final_todo_count": 4,
+      "source_fixture": "call-mom-memo-supplier",
+      "span_id": "277aff2b5378d4bb",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "due_date": "2026-03-24",
+              "notification": "2026-03-24T18:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call client"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our"
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "due_date": "2026-03-24",
+              "notification": "2026-03-24T18:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call client"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call supplier to confirm catering"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is"
+        },
+        {
+          "step_index": 3,
+          "todos": [
+            {
+              "due_date": "2026-03-24",
+              "notification": "2026-03-24T18:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call client"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call supplier to confirm catering"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is arranged, uh, by, uh, for the, u"
+        },
+        {
+          "step_index": 4,
+          "todos": [
+            {
+              "due_date": "2026-03-24",
+              "notification": "2026-03-24T18:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call client"
+            },
+            {
+              "assign_to": "JC,due_date:",
+              "text": "Call supplier to confirm catering for the wedding on 2026-04-01"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is arranged, uh, by, uh, for the, uh, wedding on, uh, next Wednesday."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.0014355000000000001,
+        "input_tokens": 5748,
+        "output_tokens": 956
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 7.858672,
+      "exception_summary": "case: call-mom-memo-supplier [3/5]",
+      "expected_final_todo_count": 3,
+      "failure_category": null,
+      "name": "call-mom-memo-supplier [3/5]",
+      "predicted_final_todo_count": 4,
+      "source_fixture": "call-mom-memo-supplier",
+      "span_id": "73079168ad69c00d",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "category": "Personal",
+              "notification": "2026-03-24T19:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "category": "Work",
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call our client"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our"
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "category": "Personal",
+              "notification": "2026-03-24T19:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "category": "Work",
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call the client"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call the supplier to confirm catering"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is"
+        },
+        {
+          "step_index": 3,
+          "todos": [
+            {
+              "category": "Personal",
+              "notification": "2026-03-24T19:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "category": "Work",
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call the client"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call the supplier to confirm catering"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is arranged, uh, by, uh, for the, u"
+        },
+        {
+          "step_index": 4,
+          "todos": [
+            {
+              "category": "Personal",
+              "notification": "2026-03-24T19:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "category": "Work",
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call the client"
+            },
+            {
+              "assign_to": "JC",
+              "due_date": "2026-04-01",
+              "text": "Confirm catering for the wedding with the supplier"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is arranged, uh, by, uh, for the, uh, wedding on, uh, next Wednesday."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00141125,
+        "input_tokens": 5722,
+        "output_tokens": 928
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 8.478237,
+      "exception_summary": "case: call-mom-memo-supplier [4/5]",
+      "expected_final_todo_count": 3,
+      "failure_category": null,
+      "name": "call-mom-memo-supplier [4/5]",
+      "predicted_final_todo_count": 4,
+      "source_fixture": "call-mom-memo-supplier",
+      "span_id": "f7226c5aecbdc168",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "category": "Personal",
+              "notification": "2026-03-24T18:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "category": "Work",
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Have JC call our clients"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our"
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "category": "Personal",
+              "notification": "2026-03-24T18:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "category": "Work",
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Have JC call our clients"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Have JC call our supplier to confirm catering"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is"
+        },
+        {
+          "step_index": 3,
+          "todos": [
+            {
+              "category": "Personal",
+              "notification": "2026-03-24T18:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "category": "Work",
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call our clients"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call our supplier to confirm catering"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is arranged, uh, by, uh, for the, u"
+        },
+        {
+          "step_index": 4,
+          "todos": [
+            {
+              "category": "Personal",
+              "notification": "2026-03-24T18:00:00",
+              "text": "Call Mom"
+            },
+            {
+              "category": "Work",
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call our clients"
+            },
+            {
+              "assign_to": "JC",
+              "due_date": "2026-04-01",
+              "text": "Call our supplier to confirm catering for the wedding"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is arranged, uh, by, uh, for the, uh, wedding on, uh, next Wednesday."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00142325,
+        "input_tokens": 5734,
+        "output_tokens": 942
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 7.474491,
+      "exception_summary": "case: call-mom-memo-supplier [5/5]",
+      "expected_final_todo_count": 3,
+      "failure_category": null,
+      "name": "call-mom-memo-supplier [5/5]",
+      "predicted_final_todo_count": 4,
+      "source_fixture": "call-mom-memo-supplier",
+      "span_id": "2a109351519b41ff",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "category": "Personal",
+              "due_date": "2026-03-24",
+              "text": "Call Mom"
+            },
+            {
+              "category": "Work",
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call our client"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our"
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "category": "Personal",
+              "due_date": "2026-03-24",
+              "text": "Call Mom"
+            },
+            {
+              "category": "Work",
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call the client"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call the supplier to confirm catering"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is"
+        },
+        {
+          "step_index": 3,
+          "todos": [
+            {
+              "category": "Personal",
+              "due_date": "2026-03-24",
+              "text": "Call Mom"
+            },
+            {
+              "category": "Work",
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call the client"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call the supplier to confirm catering for the event"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is arranged, uh, by, uh, for the, u"
+        },
+        {
+          "step_index": 4,
+          "todos": [
+            {
+              "category": "Personal",
+              "due_date": "2026-03-24",
+              "text": "Call Mom"
+            },
+            {
+              "category": "Work",
+              "due_date": "2026-03-27",
+              "text": "Finish the memo"
+            },
+            {
+              "assign_to": "JC",
+              "text": "Call the client"
+            },
+            {
+              "assign_to": "JC,due_date:",
+              "text": "Call the supplier to confirm catering for the event (due date: 2026-04-01)"
+            }
+          ],
+          "transcript": "I need to call Mom tonight, um, I need to finish the memo by Friday. And I need JC to call our supplier and make sure that, um, the catering is arranged, uh, by, uh, for the, uh, wedding on, uh, next Wednesday."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.0018265,
+        "input_tokens": 7700,
+        "output_tokens": 1152
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 2.222135,
+      "exception_summary": "case: refine-todo [1/5]",
+      "expected_final_todo_count": 1,
+      "failure_category": null,
+      "name": "refine-todo [1/5]",
+      "predicted_final_todo_count": 1,
+      "source_fixture": "refine-todo",
+      "span_id": "361396d10fa31a80",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "text": "Buy milk"
+            }
+          ],
+          "transcript": "I need to buy milk."
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "text": "Buy organic milk from the organic store"
+            }
+          ],
+          "transcript": "I need to buy milk. Actually, mais exact oud milk from the organic store."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00038075,
+        "input_tokens": 2506,
+        "output_tokens": 90
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 4.159682,
+      "exception_summary": "case: refine-todo [2/5]",
+      "expected_final_todo_count": 1,
+      "failure_category": null,
+      "name": "refine-todo [2/5]",
+      "predicted_final_todo_count": 1,
+      "source_fixture": "refine-todo",
+      "span_id": "8eb39ce07beb26ac",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "text": "Buy milk"
+            }
+          ],
+          "transcript": "I need to buy milk."
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "text": "Buy organic milk from the organic store"
+            }
+          ],
+          "transcript": "I need to buy milk. Actually, mais exact oud milk from the organic store."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00038075,
+        "input_tokens": 2506,
+        "output_tokens": 90
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 4.943711,
+      "exception_summary": "case: refine-todo [3/5]",
+      "expected_final_todo_count": 1,
+      "failure_category": null,
+      "name": "refine-todo [3/5]",
+      "predicted_final_todo_count": 1,
+      "source_fixture": "refine-todo",
+      "span_id": "f790e8a77a76aea2",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "text": "Buy milk"
+            }
+          ],
+          "transcript": "I need to buy milk."
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "text": "Buy milk from the organic store"
+            }
+          ],
+          "transcript": "I need to buy milk. Actually, mais exact oud milk from the organic store."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00037925000000000003,
+        "input_tokens": 2506,
+        "output_tokens": 88
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 2.355845,
+      "exception_summary": "case: refine-todo [4/5]",
+      "expected_final_todo_count": 1,
+      "failure_category": null,
+      "name": "refine-todo [4/5]",
+      "predicted_final_todo_count": 1,
+      "source_fixture": "refine-todo",
+      "span_id": "afb469f44286ee8c",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "text": "Buy milk"
+            }
+          ],
+          "transcript": "I need to buy milk."
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "text": "Buy milk from the organic store"
+            }
+          ],
+          "transcript": "I need to buy milk. Actually, mais exact oud milk from the organic store."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00037925000000000003,
+        "input_tokens": 2506,
+        "output_tokens": 88
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 2.018853,
+      "exception_summary": "case: refine-todo [5/5]",
+      "expected_final_todo_count": 1,
+      "failure_category": null,
+      "name": "refine-todo [5/5]",
+      "predicted_final_todo_count": 1,
+      "source_fixture": "refine-todo",
+      "span_id": "b6af52f925f0cb85",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "text": "Buy milk"
+            }
+          ],
+          "transcript": "I need to buy milk."
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "text": "Buy milk from the organic store"
+            }
+          ],
+          "transcript": "I need to buy milk. Actually, mais exact oud milk from the organic store."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00037925000000000003,
+        "input_tokens": 2506,
+        "output_tokens": 88
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 6.008139,
+      "exception_summary": "case: while-speaking-two-todos [1/5]",
+      "expected_final_todo_count": 2,
+      "failure_category": null,
+      "name": "while-speaking-two-todos [1/5]",
+      "predicted_final_todo_count": 2,
+      "source_fixture": "while-speaking-two-todos",
+      "span_id": "6844eac4b11ba6c4",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "category": "Shopping",
+              "due_date": "2026-03-24",
+              "text": "Buy oat milk"
+            }
+          ],
+          "transcript": "By oat milk tonight."
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "category": "Shopping",
+              "due_date": "2026-03-24",
+              "text": "Buy oat milk"
+            },
+            {
+              "assign_to": "Sarah",
+              "category": "Work",
+              "text": "Email Sarah the revised budget"
+            }
+          ],
+          "transcript": "By oat milk tonight. Zen email Sarah the revised budget."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00048475,
+        "input_tokens": 2534,
+        "output_tokens": 224
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 2.507133,
+      "exception_summary": "case: while-speaking-two-todos [2/5]",
+      "expected_final_todo_count": 2,
+      "failure_category": null,
+      "name": "while-speaking-two-todos [2/5]",
+      "predicted_final_todo_count": 2,
+      "source_fixture": "while-speaking-two-todos",
+      "span_id": "b47c5d4017ee7ae2",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "category": "Groceries",
+              "due_date": "2026-03-24",
+              "text": "Buy oat milk"
+            }
+          ],
+          "transcript": "By oat milk tonight."
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "category": "Groceries",
+              "due_date": "2026-03-24",
+              "text": "Buy oat milk"
+            },
+            {
+              "assign_to": "Sarah",
+              "category": "Work",
+              "text": "Email Sarah the revised budget"
+            }
+          ],
+          "transcript": "By oat milk tonight. Zen email Sarah the revised budget."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00048800000000000004,
+        "input_tokens": 2536,
+        "output_tokens": 228
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 2.572161,
+      "exception_summary": "case: while-speaking-two-todos [3/5]",
+      "expected_final_todo_count": 2,
+      "failure_category": null,
+      "name": "while-speaking-two-todos [3/5]",
+      "predicted_final_todo_count": 2,
+      "source_fixture": "while-speaking-two-todos",
+      "span_id": "ef0f27603f044156",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "category": "Groceries",
+              "due_date": "2026-03-24",
+              "text": "Buy oat milk"
+            }
+          ],
+          "transcript": "By oat milk tonight."
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "category": "Groceries",
+              "due_date": "2026-03-24",
+              "text": "Buy oat milk"
+            },
+            {
+              "assign_to": "Sarah",
+              "category": "Work",
+              "text": "Email Sarah the revised budget"
+            }
+          ],
+          "transcript": "By oat milk tonight. Zen email Sarah the revised budget."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00048800000000000004,
+        "input_tokens": 2536,
+        "output_tokens": 228
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 2.326062,
+      "exception_summary": "case: while-speaking-two-todos [4/5]",
+      "expected_final_todo_count": 2,
+      "failure_category": null,
+      "name": "while-speaking-two-todos [4/5]",
+      "predicted_final_todo_count": 2,
+      "source_fixture": "while-speaking-two-todos",
+      "span_id": "3a4149f35a294049",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "category": "Groceries",
+              "due_date": "2026-03-24",
+              "text": "Buy oat milk"
+            }
+          ],
+          "transcript": "By oat milk tonight."
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "category": "Groceries",
+              "due_date": "2026-03-24",
+              "text": "Buy oat milk"
+            },
+            {
+              "assign_to": "Sarah",
+              "category": "Work",
+              "text": "Email Sarah the revised budget"
+            }
+          ],
+          "transcript": "By oat milk tonight. Zen email Sarah the revised budget."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00048800000000000004,
+        "input_tokens": 2536,
+        "output_tokens": 228
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 2.343218,
+      "exception_summary": "case: while-speaking-two-todos [5/5]",
+      "expected_final_todo_count": 2,
+      "failure_category": null,
+      "name": "while-speaking-two-todos [5/5]",
+      "predicted_final_todo_count": 2,
+      "source_fixture": "while-speaking-two-todos",
+      "span_id": "8f63e92bf7409767",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "category": "Grocery",
+              "due_date": "2026-03-24",
+              "text": "Buy oat milk"
+            }
+          ],
+          "transcript": "By oat milk tonight."
+        },
+        {
+          "step_index": 2,
+          "todos": [
+            {
+              "category": "Grocery",
+              "due_date": "2026-03-24",
+              "text": "Buy oat milk"
+            },
+            {
+              "assign_to": "Sarah",
+              "category": "Work",
+              "text": "Email Sarah the revised budget"
+            }
+          ],
+          "transcript": "By oat milk tonight. Zen email Sarah the revised budget."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00048475,
+        "input_tokens": 2534,
+        "output_tokens": 224
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 0.897484,
+      "exception_summary": "case: stop-final-sweep-single-todo [1/5]",
+      "expected_final_todo_count": 1,
+      "failure_category": null,
+      "name": "stop-final-sweep-single-todo [1/5]",
+      "predicted_final_todo_count": 1,
+      "source_fixture": "stop-final-sweep-single-todo",
+      "span_id": "c86b71d40fb1d891",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "assign_to": "Priya",
+              "due_date": "2026-03-24",
+              "text": "Send the signed contract to Priya"
+            }
+          ],
+          "transcript": "Send Priya the signed contract tonight."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00022925,
+        "input_tokens": 1234,
+        "output_tokens": 100
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 0.921432,
+      "exception_summary": "case: stop-final-sweep-single-todo [2/5]",
+      "expected_final_todo_count": 1,
+      "failure_category": null,
+      "name": "stop-final-sweep-single-todo [2/5]",
+      "predicted_final_todo_count": 1,
+      "source_fixture": "stop-final-sweep-single-todo",
+      "span_id": "f841ae71814c60cf",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "assign_to": "Priya",
+              "due_date": "2026-03-24",
+              "text": "Send the signed contract to Priya"
+            }
+          ],
+          "transcript": "Send Priya the signed contract tonight."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00022925,
+        "input_tokens": 1234,
+        "output_tokens": 100
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 1.36313,
+      "exception_summary": "case: stop-final-sweep-single-todo [3/5]",
+      "expected_final_todo_count": 1,
+      "failure_category": null,
+      "name": "stop-final-sweep-single-todo [3/5]",
+      "predicted_final_todo_count": 1,
+      "source_fixture": "stop-final-sweep-single-todo",
+      "span_id": "e26fda370edda913",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "assign_to": "Priya",
+              "due_date": "2026-03-24",
+              "text": "Send the signed contract to Priya"
+            }
+          ],
+          "transcript": "Send Priya the signed contract tonight."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00022925,
+        "input_tokens": 1234,
+        "output_tokens": 100
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 1.235339,
+      "exception_summary": "case: stop-final-sweep-single-todo [4/5]",
+      "expected_final_todo_count": 1,
+      "failure_category": null,
+      "name": "stop-final-sweep-single-todo [4/5]",
+      "predicted_final_todo_count": 1,
+      "source_fixture": "stop-final-sweep-single-todo",
+      "span_id": "766d4bb6e45b9421",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "assign_to": "Priya",
+              "due_date": "2026-03-24",
+              "text": "Send the signed contract to Priya"
+            }
+          ],
+          "transcript": "Send Priya the signed contract tonight."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00022925,
+        "input_tokens": 1234,
+        "output_tokens": 100
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    },
+    {
+      "duration_s": 1.342805,
+      "exception_summary": "case: stop-final-sweep-single-todo [5/5]",
+      "expected_final_todo_count": 1,
+      "failure_category": null,
+      "name": "stop-final-sweep-single-todo [5/5]",
+      "predicted_final_todo_count": 1,
+      "source_fixture": "stop-final-sweep-single-todo",
+      "span_id": "339a6357bb52553b",
+      "status": "success",
+      "step_results": [
+        {
+          "step_index": 1,
+          "todos": [
+            {
+              "assign_to": "Priya",
+              "due_date": "2026-03-24",
+              "text": "Send the signed contract to Priya"
+            }
+          ],
+          "transcript": "Send Priya the signed contract tonight."
+        }
+      ],
+      "token_metrics": {
+        "cost_usd": 0.00022925,
+        "input_tokens": 1234,
+        "output_tokens": 100
+      },
+      "trace_id": "019d68a916104e81571fad37b7839ddb"
+    }
+  ],
+  "completed_cases": 20,
+  "dataset_name": "todo_extraction_replay_v1",
+  "enrichment_reason": null,
+  "enrichment_status": "ok",
+  "experiment_id": "gemini31_flash_lite_minimal_thinking",
+  "failure_count": 0,
+  "failure_counts_by_category": {},
+  "failures": [],
+  "git": {
+    "branch": "meaningfool/retry-exp-audit",
+    "commit_sha": "4f87845fadd19f76f3a07c27df8fcd7040efcb01"
+  },
+  "max_concurrency": 1,
+  "max_task_duration_s": 8.478237,
+  "min_task_duration_s": 0.897484,
+  "model": {
+    "name": "gemini-3.1-flash-lite-preview",
+    "provider": "google-gla",
+    "thinking_mode": "minimal"
+  },
+  "overall_case_success_rate": 1.0,
+  "prompt": {
+    "family": "todo_extraction",
+    "sha": "8d2720d336d35b8bfd655ce8fe731e6185c21934ae7148d133986a94036dbeed",
+    "version": "v1"
+  },
+  "repeat": 5,
+  "span_id": "a23d7a211a827624",
+  "task_retries": 2,
+  "timestamp": "2026-04-07T15:50:43Z",
+  "trace_id": "019d68a916104e81571fad37b7839ddb"
+}
