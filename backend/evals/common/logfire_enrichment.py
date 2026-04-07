@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -61,8 +63,30 @@ def _load_json_file(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text())
 
 
-def _write_json_file(path: Path, payload: Mapping[str, Any]) -> None:
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+def _atomic_write_json_file(path: Path, payload: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        delete=False,
+    ) as temp_file:
+        temp_path = Path(temp_file.name)
+        try:
+            json.dump(payload, temp_file, indent=2, sort_keys=True)
+            temp_file.write("\n")
+            temp_file.flush()
+            os.fsync(temp_file.fileno())
+        except Exception:
+            temp_path.unlink(missing_ok=True)
+            raise
+    try:
+        os.replace(temp_path, path)
+    except Exception:
+        temp_path.unlink(missing_ok=True)
+        raise
 
 
 def _load_artifact_paths(result_dir: Path) -> list[Path]:
@@ -71,6 +95,16 @@ def _load_artifact_paths(result_dir: Path) -> list[Path]:
         for path in result_dir.glob("*.json")
         if path.is_file() and path.name != SUMMARY_FILENAME
     )
+
+
+def _artifact_validation_reason(payload: Mapping[str, Any]) -> str | None:
+    if not isinstance(payload.get("experiment_id"), str):
+        return "invalid_experiment_artifact"
+    if not isinstance(payload.get("cases"), list):
+        return "invalid_experiment_artifact"
+    if not isinstance(payload.get("failures"), list):
+        return "invalid_experiment_artifact"
+    return None
 
 
 def _is_experiment_artifact_payload(payload: Mapping[str, Any]) -> bool:
@@ -400,37 +434,42 @@ async def enrich_experiment_artifact(
     artifact_path: Path,
     *,
     read_token: str | None = None,
+    artifact_payload: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    artifact_payload = _load_json_file(artifact_path)
-    if not _is_experiment_artifact_payload(artifact_payload):
+    if artifact_payload is not None:
+        payload = dict(artifact_payload)
+    else:
+        payload = _load_json_file(artifact_path)
+    validation_reason = _artifact_validation_reason(payload)
+    if validation_reason is not None:
         return {
             "artifact_path": artifact_path,
             "enrichment_status": ENRICHMENT_STATUS_SKIPPED,
-            "enrichment_reason": "invalid_experiment_artifact",
+            "enrichment_reason": validation_reason,
         }
 
     resolved_read_token = read_token or _read_backend_env_var("LOGFIRE_READ_TOKEN")
     if not resolved_read_token:
         enriched_payload = _build_enriched_artifact(
-            artifact_payload,
+            payload,
             status=ENRICHMENT_STATUS_SKIPPED,
             reason="missing_logfire_read_token",
         )
-        _write_json_file(artifact_path, enriched_payload)
+        _atomic_write_json_file(artifact_path, enriched_payload)
         return {
             "artifact_path": artifact_path,
             "enrichment_status": ENRICHMENT_STATUS_SKIPPED,
             "enrichment_reason": "missing_logfire_read_token",
         }
 
-    trace_id = artifact_payload.get("trace_id")
+    trace_id = payload.get("trace_id")
     if not isinstance(trace_id, str) or not trace_id:
         enriched_payload = _build_enriched_artifact(
-            artifact_payload,
+            payload,
             status=ENRICHMENT_STATUS_PARTIAL,
             reason="missing_trace_id",
         )
-        _write_json_file(artifact_path, enriched_payload)
+        _atomic_write_json_file(artifact_path, enriched_payload)
         return {
             "artifact_path": artifact_path,
             "enrichment_status": ENRICHMENT_STATUS_PARTIAL,
@@ -444,11 +483,11 @@ async def enrich_experiment_artifact(
         )
     except Exception:
         enriched_payload = _build_enriched_artifact(
-            artifact_payload,
+            payload,
             status=ENRICHMENT_STATUS_PARTIAL,
             reason="logfire_query_failed",
         )
-        _write_json_file(artifact_path, enriched_payload)
+        _atomic_write_json_file(artifact_path, enriched_payload)
         return {
             "artifact_path": artifact_path,
             "enrichment_status": ENRICHMENT_STATUS_PARTIAL,
@@ -457,11 +496,11 @@ async def enrich_experiment_artifact(
 
     if not rows:
         enriched_payload = _build_enriched_artifact(
-            artifact_payload,
+            payload,
             status=ENRICHMENT_STATUS_PARTIAL,
             reason="logfire_query_returned_no_rows",
         )
-        _write_json_file(artifact_path, enriched_payload)
+        _atomic_write_json_file(artifact_path, enriched_payload)
         return {
             "artifact_path": artifact_path,
             "enrichment_status": ENRICHMENT_STATUS_PARTIAL,
@@ -469,17 +508,41 @@ async def enrich_experiment_artifact(
         }
 
     enriched_payload = _build_enriched_artifact(
-        artifact_payload,
+        payload,
         status=ENRICHMENT_STATUS_OK,
         reason=None,
         rows=rows,
     )
-    _write_json_file(artifact_path, enriched_payload)
+    _atomic_write_json_file(artifact_path, enriched_payload)
     return {
         "artifact_path": artifact_path,
         "enrichment_status": ENRICHMENT_STATUS_OK,
         "enrichment_reason": None,
     }
+
+
+def _resolve_artifact_inputs(
+    *,
+    result_dir: Path,
+    artifact_paths: Sequence[Path] | None,
+    artifact_payloads: Sequence[Mapping[str, Any]] | None,
+) -> list[tuple[Path, Mapping[str, Any] | None]]:
+    if artifact_payloads is not None and artifact_paths is None:
+        raise ValueError("artifact_payloads requires artifact_paths")
+
+    if artifact_paths is None:
+        return [(path, None) for path in _load_artifact_paths(result_dir)]
+
+    resolved_paths = [Path(path) for path in artifact_paths]
+    if artifact_payloads is None:
+        return [(path, None) for path in resolved_paths]
+
+    if len(resolved_paths) != len(artifact_payloads):
+        raise ValueError(
+            "artifact_paths and artifact_payloads must have the same length"
+        )
+
+    return list(zip(resolved_paths, artifact_payloads, strict=True))
 
 
 async def write_run_summary(
@@ -489,23 +552,19 @@ async def write_run_summary(
     artifact_paths: Sequence[Path] | None = None,
     artifact_payloads: Sequence[Mapping[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
-    resolved_paths = (
-        [Path(path) for path in artifact_paths]
-        if artifact_paths is not None
-        else _load_artifact_paths(result_dir)
+    resolved_inputs = _resolve_artifact_inputs(
+        result_dir=result_dir,
+        artifact_paths=artifact_paths,
+        artifact_payloads=artifact_payloads,
     )
-    if artifact_payloads is not None and artifact_paths is None:
-        return []
 
     results: list[dict[str, Any]] = []
-    for artifact_path in resolved_paths:
-        payload = _load_json_file(artifact_path)
-        if not _is_experiment_artifact_payload(payload):
-            continue
+    for artifact_path, artifact_payload in resolved_inputs:
         results.append(
             await enrich_experiment_artifact(
                 artifact_path,
                 read_token=read_token,
+                artifact_payload=artifact_payload,
             )
         )
     return results
