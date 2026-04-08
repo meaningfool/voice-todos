@@ -1,10 +1,8 @@
-import json
 from datetime import UTC, datetime
 from importlib import import_module
 from pathlib import Path
 
 import pytest
-from pydantic_evals.reporting import EvaluationReport, ReportCase, ReportCaseFailure
 
 from app.extract import ExtractionConfig
 from app.models import Todo
@@ -72,7 +70,6 @@ async def test_run_case_threads_previous_todos_across_steps(monkeypatch):
             "replay_steps": replay_steps,
         },
         experiment=experiment,
-        metadata={"experiment": experiment.name},
     )
 
     assert calls == [
@@ -160,6 +157,7 @@ def test_main_rejects_negative_task_retries():
     with pytest.raises(SystemExit):
         runner.main(["--all", "--task-retries", "-1"])
 
+
 def test_main_fails_fast_when_tracked_mode_has_no_logfire_credentials(monkeypatch):
     import evals.incremental_extraction_quality.run as runner
 
@@ -173,7 +171,13 @@ def test_main_allows_explicit_untracked_mode(monkeypatch):
     import evals.incremental_extraction_quality.run as runner
 
     monkeypatch.setattr(runner, "has_logfire_write_credentials", lambda: False)
-    monkeypatch.setattr(runner, "_run", lambda args: 0)
+    monkeypatch.setattr(runner, "configure_logfire", lambda **kwargs: None)
+    monkeypatch.setattr(
+        runner,
+        "_build_eval_dataset",
+        lambda path=None: type("DS", (), {"name": "unused", "cases": []})(),
+    )
+    monkeypatch.setattr(runner, "_selected_experiments", lambda **kwargs: [])
 
     assert (
         runner.main(
@@ -291,6 +295,14 @@ async def test_run_uses_batch_metadata_and_dataset_override(monkeypatch, tmp_pat
         "fake-replay-experiment-a",
         "fake-replay-experiment-b",
     }
+    assert all(
+        call["metadata"]["suite"] == "incremental_extraction_quality"
+        for call in evaluate_calls
+    )
+    assert all(
+        call["metadata"]["dataset_name"] == "override-incremental"
+        for call in evaluate_calls
+    )
     batch_ids = {call["metadata"]["batch_id"] for call in evaluate_calls}
     assert len(batch_ids) == 1
     assert next(iter(batch_ids))

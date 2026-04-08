@@ -6,10 +6,8 @@ import argparse
 import asyncio
 import json
 import os
-import subprocess
 import sys
 from collections.abc import Sequence
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +16,6 @@ if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
 from pydantic_evals import Dataset, set_eval_attribute
-from pydantic_evals.reporting import ReportCase, ReportCaseFailure
 
 from app.extract import extract_todos
 from app.logfire_setup import (
@@ -149,43 +146,6 @@ def _ensure_provider_env(experiment: ExperimentDefinition) -> None:
         os.environ.setdefault(provider_env_var, api_key)
 
 
-def _run_git_command(*args: str) -> str | None:
-    completed = subprocess.run(
-        ["git", *args],
-        cwd=BACKEND_ROOT,
-        capture_output=True,
-        check=False,
-        text=True,
-    )
-    if completed.returncode != 0:
-        return None
-    value = completed.stdout.strip()
-    return value or None
-
-
-def _get_git_branch() -> str:
-    return _run_git_command("branch", "--show-current") or "unknown"
-
-
-def _get_git_commit_sha() -> str:
-    return _run_git_command("rev-parse", "HEAD") or "unknown"
-
-
-def _experiment_metadata(
-    experiment: ExperimentDefinition,
-    *,
-    dataset_name: str | None = None,
-    task_retries: int = 0,
-) -> dict[str, Any]:
-    return {
-        **experiment.identity_metadata,
-        "dataset_name": dataset_name or "unknown",
-        "task_retries": task_retries,
-        "git_branch": _get_git_branch(),
-        "git_commit_sha": _get_git_commit_sha(),
-    }
-
-
 def _build_eval_dataset(
     *,
     path: Path | None = None,
@@ -202,7 +162,6 @@ async def _run_case(
     inputs: dict[str, Any],
     *,
     experiment: ExperimentDefinition,
-    metadata: dict[str, str],
 ) -> ReplayRunResult:
     previous_todos: list[Todo] | None = None
     step_results: list[ReplayStepResult] = []
@@ -238,61 +197,11 @@ async def _run_case(
 
 def _build_task(
     experiment: ExperimentDefinition,
-    *,
-    metadata: dict[str, str],
 ):
     async def run_case(inputs: dict[str, Any]) -> ReplayRunResult:
-        return await _run_case(
-            inputs,
-            experiment=experiment,
-            metadata=metadata,
-        )
+        return await _run_case(inputs, experiment=experiment)
 
     return run_case
-
-
-def serialize_replay_case(
-    case: ReportCase[Any, ReplayRunResult, Any],
-) -> dict[str, Any]:
-    return {
-        "name": case.name,
-        "source_fixture": (case.metadata or {}).get("source_fixture"),
-        "expected_final_todo_count": case.metrics.get(
-            "expected_final_todo_count",
-            len(case.expected_output or []),
-        ),
-        "predicted_final_todo_count": case.metrics.get(
-            "predicted_final_todo_count",
-            len(case.output.final_todos),
-        ),
-        "step_results": [
-            {
-                "step_index": step_result.step_index,
-                "transcript": step_result.transcript,
-                "todos": [
-                    todo.model_dump(mode="json", exclude_none=True)
-                    for todo in step_result.todos
-                ],
-            }
-            for step_result in case.output.step_results
-        ],
-        "trace_id": case.trace_id,
-        "span_id": case.span_id,
-    }
-
-
-def serialize_replay_failure(
-    case: ReportCaseFailure[Any, Any, Any],
-) -> dict[str, Any]:
-    return {
-        "name": case.name,
-        "source_fixture": (case.metadata or {}).get("source_fixture"),
-        "expected_final_todo_count": len(case.expected_output or []),
-        "predicted_final_todo_count": None,
-        "error_message": case.error_message,
-        "trace_id": case.trace_id,
-        "span_id": case.span_id,
-    }
 
 
 async def _run(args: argparse.Namespace) -> int:
@@ -350,7 +259,7 @@ async def _run(args: argparse.Namespace) -> int:
             },
         )
         report = await dataset.evaluate(
-            _build_task(experiment, metadata=metadata),
+            _build_task(experiment),
             name=experiment.name,
             task_name="extract_todos_replay",
             metadata=metadata,
