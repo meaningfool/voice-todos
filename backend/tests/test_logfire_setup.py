@@ -68,3 +68,42 @@ def test_configure_logfire_reads_token_from_backend_env(monkeypatch, tmp_path):
     logfire_setup.configure_logfire()
 
     assert captured["token"] == "logfire-token-from-env-file"
+
+
+def test_has_logfire_write_credentials_reads_token_from_backend_env(
+    monkeypatch, tmp_path
+):
+    env_file = tmp_path / ".env"
+    env_file.write_text("LOGFIRE_TOKEN=logfire-token-from-env-file\n")
+
+    monkeypatch.delenv("LOGFIRE_TOKEN", raising=False)
+    monkeypatch.delenv("LOGFIRE_CREDENTIALS_DIR", raising=False)
+    monkeypatch.setattr(logfire_setup, "BACKEND_ENV_PATH", env_file)
+
+    assert logfire_setup.has_logfire_write_credentials() is True
+
+
+def test_has_logfire_write_credentials_respects_credentials_dir_override(
+    monkeypatch, tmp_path
+):
+    credentials_dir = tmp_path / "shared-logfire"
+    credentials_dir.mkdir()
+    (credentials_dir / "logfire_credentials.json").write_text("{}\n")
+
+    monkeypatch.delenv("LOGFIRE_TOKEN", raising=False)
+    monkeypatch.setenv("LOGFIRE_CREDENTIALS_DIR", str(credentials_dir))
+
+    assert logfire_setup.has_logfire_write_credentials() is True
+
+
+def test_has_logfire_write_credentials_returns_false_without_token_or_file(
+    monkeypatch, tmp_path
+):
+    env_file = tmp_path / ".env"
+    credentials_dir = tmp_path / "shared-logfire"
+
+    monkeypatch.delenv("LOGFIRE_TOKEN", raising=False)
+    monkeypatch.setenv("LOGFIRE_CREDENTIALS_DIR", str(credentials_dir))
+    monkeypatch.setattr(logfire_setup, "BACKEND_ENV_PATH", env_file)
+
+    assert logfire_setup.has_logfire_write_credentials() is False
