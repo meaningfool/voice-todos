@@ -26,10 +26,16 @@ link_shared_path() {
 if [ -n "$ROOT_PATH" ]; then
   link_shared_path "$ROOT_PATH/backend/.env" "backend/.env"
   link_shared_path "$ROOT_PATH/backend/.logfire" "backend/.logfire"
+  link_shared_path "$ROOT_PATH/.codex/superpowers" ".codex/superpowers"
 
   if [ ! -e "$ROOT_PATH/backend/.env" ]; then
     echo "Warning: shared backend/.env not found at $ROOT_PATH/backend/.env"
     echo "Create it from backend/.env.example and add SONIOX_API_KEY / GEMINI_API_KEY."
+  fi
+
+  if [ ! -e "$ROOT_PATH/.codex/superpowers" ]; then
+    echo "Warning: shared .codex/superpowers not found at $ROOT_PATH/.codex/superpowers"
+    echo "Superpowers skills will be unavailable in this worktree until that path exists."
   fi
 else
   echo "CONDUCTOR_ROOT_PATH is not set; skipping shared file linking."
