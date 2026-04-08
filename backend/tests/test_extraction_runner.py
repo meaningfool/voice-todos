@@ -18,6 +18,8 @@ EXPECTED_EXPERIMENTS = [
     "gemini31_flash_lite_default",
     "gemini31_flash_lite_minimal_thinking",
     "mistral_small_4_default",
+    "deepinfra_qwen35_9b_default",
+    "deepinfra_qwen35_4b_structured_tuned",
 ]
 
 
@@ -51,6 +53,19 @@ def test_mistral_experiment_reports_provider_unavailability(monkeypatch):
     assert (
         EXPERIMENTS["mistral_small_4_default"].unavailable_reason()
         == "mistral provider unavailable"
+    )
+
+
+def test_deepinfra_experiment_reports_provider_unavailability(monkeypatch):
+    monkeypatch.setattr(
+        experiment_configs,
+        "_deepinfra_unavailable_reason",
+        lambda: "deepinfra provider unavailable",
+    )
+
+    assert (
+        EXPERIMENTS["deepinfra_qwen35_9b_default"].unavailable_reason()
+        == "deepinfra provider unavailable"
     )
 
 

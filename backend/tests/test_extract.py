@@ -57,11 +57,15 @@ def _reset_agent():
 def test_get_agent_uses_configured_gemini_api_key():
     """The cached agent should be built with the configured Gemini API key."""
     fake_gemini_lookup = Mock(return_value="gemini-test-key")
+    fake_mistral_lookup = Mock(return_value=None)
+    fake_deepinfra_lookup = Mock(return_value=None)
     fake_model = object()
     fake_agent = object()
 
     with (
         patch("app.extract._get_gemini_api_key", fake_gemini_lookup),
+        patch("app.extract._get_mistral_api_key", fake_mistral_lookup),
+        patch("app.extract._get_deepinfra_api_key", fake_deepinfra_lookup),
         patch("app.extract.build_model", return_value=fake_model) as mock_build_model,
         patch("app.extract.Agent", return_value=fake_agent) as mock_agent,
     ):
@@ -70,11 +74,16 @@ def test_get_agent_uses_configured_gemini_api_key():
     assert agent is fake_agent
     mock_build_model.assert_called_once_with(
         "gemini-3-flash-preview",
+        provider=None,
         gemini_api_key_getter=fake_gemini_lookup,
+        mistral_api_key_getter=fake_mistral_lookup,
+        deepinfra_api_key_getter=fake_deepinfra_lookup,
     )
     gemini_api_key_getter = mock_build_model.call_args.kwargs["gemini_api_key_getter"]
     assert gemini_api_key_getter() == "gemini-test-key"
     fake_gemini_lookup.assert_called_once_with()
+    fake_mistral_lookup.assert_not_called()
+    fake_deepinfra_lookup.assert_not_called()
     mock_agent.assert_called_once_with(
         fake_model,
         output_type=ExtractionResult,
@@ -119,6 +128,7 @@ def test_build_model_uses_mistral_factory_lazily():
     gemini_api_key_getter = Mock(
         side_effect=AssertionError("Gemini lookup should not happen for Mistral")
     )
+    mistral_api_key_getter = Mock(return_value="mistral-test-key")
 
     class FakeMistralProvider:
         def __init__(self, *, api_key):
@@ -141,13 +151,59 @@ def test_build_model_uses_mistral_factory_lazily():
     ):
         model = model_providers.build_model(
             "mistral-small-latest",
+            provider="mistral",
             gemini_api_key_getter=gemini_api_key_getter,
+            mistral_api_key_getter=mistral_api_key_getter,
         )
 
     assert isinstance(model, FakeMistralModel)
     assert model.model_name == "mistral-small-latest"
-    assert model.provider.api_key == os.getenv("MISTRAL_API_KEY")
+    assert model.provider.api_key == "mistral-test-key"
     gemini_api_key_getter.assert_not_called()
+    mistral_api_key_getter.assert_called_once_with()
+
+
+def test_build_model_uses_deepinfra_factory_lazily():
+    from app import model_providers
+
+    gemini_api_key_getter = Mock(
+        side_effect=AssertionError("Gemini lookup should not happen for DeepInfra")
+    )
+    deepinfra_api_key_getter = Mock(return_value="deepinfra-test-key")
+
+    class FakeOpenAIProvider:
+        def __init__(self, *, base_url, api_key):
+            self.base_url = base_url
+            self.api_key = api_key
+
+    class FakeOpenAIChatModel:
+        def __init__(self, model_name, *, provider):
+            self.model_name = model_name
+            self.provider = provider
+
+    fake_openai_module = SimpleNamespace(OpenAIChatModel=FakeOpenAIChatModel)
+    fake_provider_module = SimpleNamespace(OpenAIProvider=FakeOpenAIProvider)
+
+    with patch.dict(
+        sys.modules,
+        {
+            "pydantic_ai.models.openai": fake_openai_module,
+            "pydantic_ai.providers.openai": fake_provider_module,
+        },
+    ):
+        model = model_providers.build_model(
+            "Qwen/Qwen3.5-9B",
+            provider="deepinfra",
+            gemini_api_key_getter=gemini_api_key_getter,
+            deepinfra_api_key_getter=deepinfra_api_key_getter,
+        )
+
+    assert isinstance(model, FakeOpenAIChatModel)
+    assert model.model_name == "Qwen/Qwen3.5-9B"
+    assert model.provider.base_url == "https://api.deepinfra.com/v1/openai"
+    assert model.provider.api_key == "deepinfra-test-key"
+    gemini_api_key_getter.assert_not_called()
+    deepinfra_api_key_getter.assert_called_once_with()
 
 
 def test_build_extraction_agent_delegates_to_model_provider():
@@ -157,29 +213,42 @@ def test_build_extraction_agent_delegates_to_model_provider():
     fake_agent = object()
 
     with (
-        patch("app.extract._get_gemini_api_key") as mock_key,
+        patch("app.extract._get_gemini_api_key") as mock_gemini_key,
+        patch("app.extract._get_mistral_api_key") as mock_mistral_key,
+        patch("app.extract._get_deepinfra_api_key") as mock_deepinfra_key,
         patch("app.extract.build_model", return_value=fake_model) as mock_build_model,
         patch("app.extract.Agent", return_value=fake_agent) as mock_agent,
     ):
         agent = build_extraction_agent(
-            ExtractionConfig(model_name="mistral-small-latest")
+            ExtractionConfig(
+                model_name="Qwen/Qwen3.5-9B",
+                provider="deepinfra",
+                model_settings={},
+            )
         )
 
     assert agent is fake_agent
     mock_build_model.assert_called_once_with(
-        "mistral-small-latest",
-        gemini_api_key_getter=mock_key,
+        "Qwen/Qwen3.5-9B",
+        provider="deepinfra",
+        gemini_api_key_getter=mock_gemini_key,
+        mistral_api_key_getter=mock_mistral_key,
+        deepinfra_api_key_getter=mock_deepinfra_key,
     )
-    mock_key.assert_not_called()
+    mock_gemini_key.assert_not_called()
+    mock_mistral_key.assert_not_called()
+    mock_deepinfra_key.assert_not_called()
     mock_agent.assert_called_once_with(
         fake_model,
         output_type=ExtractionResult,
         instructions=_extract_mod.get_extraction_prompt_ref(
-            ExtractionConfig(model_name="mistral-small-latest")
+            ExtractionConfig(
+                model_name="Qwen/Qwen3.5-9B",
+                provider="deepinfra",
+                model_settings={},
+            )
         ).content,
-        model_settings={
-            "google_thinking_config": {"thinking_level": "minimal"}
-        },
+        model_settings={},
     )
 
 
@@ -190,6 +259,8 @@ def test_get_agent_uses_minimal_google_thinking():
 
     with (
         patch("app.extract._get_gemini_api_key", return_value="test-key"),
+        patch("app.extract._get_mistral_api_key", return_value=None),
+        patch("app.extract._get_deepinfra_api_key", return_value=None),
         patch("app.extract.build_model", return_value=fake_model),
         patch("app.extract.Agent", return_value=fake_agent) as mock_agent,
     ):
@@ -229,9 +300,13 @@ async def test_extract_todos_uses_override_model():
     )
     fake_model = object()
     fake_key = Mock(return_value="test-key")
+    fake_mistral_key = Mock(return_value=None)
+    fake_deepinfra_key = Mock(return_value=None)
 
     with (
         patch("app.extract._get_gemini_api_key", fake_key),
+        patch("app.extract._get_mistral_api_key", fake_mistral_key),
+        patch("app.extract._get_deepinfra_api_key", fake_deepinfra_key),
         patch("app.extract.build_model", return_value=fake_model) as mock_build_model,
         patch("app.extract.Agent", return_value=fake_agent),
     ):
@@ -243,7 +318,10 @@ async def test_extract_todos_uses_override_model():
 
     mock_build_model.assert_called_once_with(
         "google-gla:gemini-3-pro-preview",
+        provider=None,
         gemini_api_key_getter=fake_key,
+        mistral_api_key_getter=fake_mistral_key,
+        deepinfra_api_key_getter=fake_deepinfra_key,
     )
     assert _extract_mod.ExtractionConfig().model_name == "gemini-3-flash-preview"
 
@@ -253,11 +331,15 @@ def test_extract_todos_passes_model_settings():
     from app.extract import ExtractionConfig, build_extraction_agent
 
     fake_key = Mock(return_value="gemini-test-key")
+    fake_mistral_key = Mock(return_value=None)
+    fake_deepinfra_key = Mock(return_value=None)
     fake_model = object()
     fake_agent = object()
 
     with (
         patch("app.extract._get_gemini_api_key", fake_key),
+        patch("app.extract._get_mistral_api_key", fake_mistral_key),
+        patch("app.extract._get_deepinfra_api_key", fake_deepinfra_key),
         patch("app.extract.build_model", return_value=fake_model) as mock_build_model,
         patch("app.extract.Agent", return_value=fake_agent) as mock_agent,
     ):
@@ -270,7 +352,10 @@ def test_extract_todos_passes_model_settings():
     assert agent is fake_agent
     mock_build_model.assert_called_once_with(
         "gemini-3-flash-preview",
+        provider=None,
         gemini_api_key_getter=fake_key,
+        mistral_api_key_getter=fake_mistral_key,
+        deepinfra_api_key_getter=fake_deepinfra_key,
     )
     mock_agent.assert_called_once_with(
         fake_model,

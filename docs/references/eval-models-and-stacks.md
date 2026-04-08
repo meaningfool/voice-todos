@@ -9,7 +9,7 @@ These evals run locally. The tables below summarize the current model candidates
 | Block | Candidates |
 |------|------------|
 | STT | `stt-rt-v4`, `chirp_3`, `voxtral-mini-transcribe-realtime-2602` |
-| LLM extraction | `gemini-3-flash-preview` (default), `gemini-3-flash-preview` (`thinking_level="minimal"`), `gemini-3.1-flash-lite-preview` (default), `gemini-3.1-flash-lite-preview` (`thinking_level="minimal"`), `mistral-small-2603` |
+| LLM extraction | `gemini-3-flash-preview` (default), `gemini-3-flash-preview` (`thinking_level="minimal"`), `gemini-3.1-flash-lite-preview` (default), `gemini-3.1-flash-lite-preview` (`thinking_level="minimal"`), `mistral-small-2603`, `Qwen/Qwen3.5-9B`, `Qwen/Qwen3.5-4B` |
 
 | Stack | App host | STT | LLM |
 |------|----------|-----|-----|
@@ -121,6 +121,16 @@ Decision records:
 - **Official docs:**
   - Model page: https://docs.mistral.ai/models/mistral-small-4-0-26-03
   - Model catalog: https://docs.mistral.ai/getting-started/models/
+
+### DeepInfra Qwen 3.5 family
+
+- **Models:** `Qwen/Qwen3.5-9B`, `Qwen/Qwen3.5-4B`
+- **Role in evals:** DeepInfra-hosted Qwen 3.5 comparison set for extraction experiments after narrowing the matrix with live smoke tests.
+- **Notes:** `Qwen/Qwen3.5-9B` works in the current structured extraction path with provider-default settings. `Qwen/Qwen3.5-4B` stays in the matrix with a tuned config (`temperature=0`, `max_tokens=1024`). `Qwen/Qwen3.5-2B` and `Qwen/Qwen3.5-0.8B` were removed after failing structured-output smoke tests despite successful authentication and direct chat-completion access.
+- **Reference:** `docs/references/2026-04-07-deepinfra-qwen-smoke-test.md`
+- **Official docs:**
+  - DeepInfra API reference example: https://stage.deepinfra.com/zai-org/GLM-4.5V/api
+  - DeepInfra models catalog: https://stage.deepinfra.com/models/featured/2
 
 ## Envisioned Colocated Stacks
 
