@@ -1,0 +1,16 @@
+{
+  "dataset": "todo_extraction_smoke_v1",
+  "cases": [
+    {
+      "name": "buy-milk",
+      "source_fixture": "smoke-buy-milk",
+      "reference_dt": "2026-04-08T09:30:00+00:00",
+      "previous_todos": null,
+      "transcript": "Buy milk on the way home.",
+      "expected_todos": [
+        { "text": "Buy milk on the way home" }
+      ]
+    }
+  ]
+}
+

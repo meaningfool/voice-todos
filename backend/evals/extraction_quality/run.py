@@ -5,10 +5,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import os
-import subprocess
 import sys
 from collections.abc import Sequence
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -16,24 +14,26 @@ BACKEND_ROOT = Path(__file__).resolve().parents[2]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-from pydantic_evals import Dataset, set_eval_attribute
+from pydantic_evals import Dataset
 
 from app.extract import extract_todos
-from app.logfire_setup import configure_logfire
+from app.logfire_setup import configure_logfire, has_logfire_write_credentials
 from app.models import Todo
-from evals.common import logfire_enrichment
+from evals.common.experiment_metadata import (
+    build_batch_id,
+    build_experiment_metadata,
+)
 from evals.common.retry_policy import build_retry_task_config
+from evals.extraction_quality import (
+    dataset_loader as extraction_dataset_loader,
+    evaluators as extraction_evaluators,
+)
 from evals.extraction_quality.dataset_loader import load_extraction_quality_dataset
 from evals.extraction_quality.evaluators import EXTRACTION_QUALITY_EVALUATORS
 from evals.extraction_quality.experiment_configs import (
     EXPERIMENTS,
     ExperimentDefinition,
     _read_backend_env_var,
-)
-from evals.extraction_quality.result_artifacts import (
-    DEFAULT_RESULTS_DIR,
-    reserve_result_dir,
-    write_report_artifact,
 )
 
 
@@ -76,15 +76,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print configured experiment names and availability.",
     )
     parser.add_argument(
-        "--output-dir",
+        "--dataset-path",
         type=Path,
-        default=DEFAULT_RESULTS_DIR,
-        help="Directory where JSON result artifacts are written.",
+        help="Optional dataset override, mainly for smoke runs.",
     )
     parser.add_argument(
-        "--skip-logfire-enrichment",
+        "--allow-untracked",
         action="store_true",
-        help="Skip the post-run Logfire artifact enrichment pass.",
+        help="Allow a local smoke run without Logfire write credentials.",
     )
     return parser
 
@@ -122,8 +121,11 @@ def _selected_experiments(
     return [EXPERIMENTS[name] for name in deduped_names]
 
 
-def _build_eval_dataset() -> Dataset[dict[str, Any], list[Todo], dict[str, str]]:
-    dataset = load_extraction_quality_dataset()
+def _build_eval_dataset(
+    *,
+    path: Path | None = None,
+) -> Dataset[dict[str, Any], list[Todo], dict[str, str]]:
+    dataset = load_extraction_quality_dataset(path=path)
     return Dataset(
         name=dataset.name,
         cases=dataset.cases,
@@ -144,52 +146,8 @@ def _ensure_provider_env(experiment: ExperimentDefinition) -> None:
         os.environ.setdefault(provider_env_var, api_key)
 
 
-def _run_git_command(*args: str) -> str | None:
-    completed = subprocess.run(
-        ["git", *args],
-        cwd=BACKEND_ROOT,
-        capture_output=True,
-        check=False,
-        text=True,
-    )
-    if completed.returncode != 0:
-        return None
-    value = completed.stdout.strip()
-    return value or None
-
-
-def _get_git_branch() -> str:
-    return _run_git_command("branch", "--show-current") or "unknown"
-
-
-def _get_git_commit_sha() -> str:
-    return _run_git_command("rev-parse", "HEAD") or "unknown"
-
-
-def _experiment_metadata(
-    experiment: ExperimentDefinition,
-    *,
-    dataset_name: str | None = None,
-    task_retries: int = 0,
-) -> dict[str, Any]:
-    return {
-        **experiment.identity_metadata,
-        "dataset_name": dataset_name or "unknown",
-        "task_retries": task_retries,
-        "git_branch": _get_git_branch(),
-        "git_commit_sha": _get_git_commit_sha(),
-    }
-
-
-def _build_task(
-    experiment: ExperimentDefinition,
-    *,
-    metadata: dict[str, str],
-):
+def _build_task(experiment: ExperimentDefinition):
     async def run_case(inputs: dict[str, Any]) -> list[Todo]:
-        for name, value in metadata.items():
-            set_eval_attribute(name, value)
-
         return await extract_todos(
             inputs["transcript"],
             reference_dt=inputs["reference_dt"],
@@ -200,66 +158,20 @@ def _build_task(
     return run_case
 
 
-async def _run_experiment(
-    experiment: ExperimentDefinition,
-    *,
-    repeat: int,
-    task_retries: int,
-    max_concurrency: int,
-    result_dir: Path,
-    artifact_timestamp: datetime,
-) -> Path:
-    _ensure_provider_env(experiment)
-    dataset = _build_eval_dataset()
-    metadata = _experiment_metadata(
-        experiment,
-        dataset_name=dataset.name,
-        task_retries=task_retries,
-    )
-    report = await dataset.evaluate(
-        _build_task(experiment, metadata=metadata),
-        name=experiment.name,
-        task_name="extract_todos",
-        metadata=metadata,
-        repeat=repeat,
-        max_concurrency=max_concurrency,
-        retry_task=build_retry_task_config(task_retries),
-    )
-    report.print(include_metadata=True)
-    artifact_path = write_report_artifact(
-        report,
-        result_dir=result_dir,
-        repeat=repeat,
-        max_concurrency=max_concurrency,
-        task_retries=task_retries,
-        timestamp=artifact_timestamp,
-    )
-    print(f"Wrote artifact: {artifact_path}")
-    return artifact_path
-
-
-async def enrich_experiment_artifacts(
-    *,
-    artifact_paths: Sequence[Path],
-    read_token: str | None = None,
-) -> list[dict[str, Any]]:
-    results: list[dict[str, Any]] = []
-    for artifact_path in artifact_paths:
-        results.append(
-            await logfire_enrichment.enrich_experiment_artifact(
-                artifact_path,
-                read_token=read_token,
-            )
-        )
-    return results
-
-
 async def _run(args: argparse.Namespace) -> int:
+    if not args.allow_untracked and not has_logfire_write_credentials():
+        raise ValueError(
+            "Tracked runs require Logfire write credentials. "
+            "Pass --allow-untracked for a local smoke run."
+        )
+
     configure_logfire(
         service_name="voice-todos-backend",
         instrument_pydantic_ai=True,
     )
-    artifact_timestamp = datetime.now(UTC)
+    batch_id = build_batch_id()
+    dataset_path = args.dataset_path or extraction_dataset_loader.DATASET_PATH
+    dataset = _build_eval_dataset(path=args.dataset_path)
     selected_experiments = _selected_experiments(
         all_experiments=args.all,
         requested_names=args.experiment,
@@ -277,35 +189,41 @@ async def _run(args: argparse.Namespace) -> int:
         print("No runnable experiments selected.")
         return 0
 
-    result_dir = reserve_result_dir(
-        output_dir=args.output_dir,
-        timestamp=artifact_timestamp,
-    )
-
-    artifact_paths: list[Path] = []
     for experiment in runnable_experiments:
-        artifact_paths.append(
-            await _run_experiment(
-                experiment,
-                repeat=args.repeat,
-                task_retries=args.task_retries,
-                max_concurrency=args.max_concurrency,
-                result_dir=result_dir,
-                artifact_timestamp=artifact_timestamp,
-            )
+        _ensure_provider_env(experiment)
+        metadata = build_experiment_metadata(
+            suite="extraction_quality",
+            dataset_name=dataset.name,
+            dataset_path=dataset_path,
+            evaluators_path=Path(extraction_evaluators.__file__),
+            experiment_id=experiment.name,
+            model_name=experiment.extraction_config.model_name,
+            prompt_sha=experiment.prompt_metadata["prompt_sha"],
+            repeat=args.repeat,
+            task_retries=args.task_retries,
+            batch_id=batch_id,
+            full_config={
+                "provider": experiment.provider,
+                "thinking_mode": experiment.thinking_mode,
+                "model_settings": experiment.extraction_config.model_settings,
+                "prompt_version": experiment.extraction_config.prompt_version,
+                "repeat": args.repeat,
+                "task_retries": args.task_retries,
+                "max_concurrency": args.max_concurrency,
+            },
         )
+        report = await dataset.evaluate(
+            _build_task(experiment),
+            name=experiment.name,
+            task_name="extract_todos",
+            metadata=metadata,
+            repeat=args.repeat,
+            max_concurrency=args.max_concurrency,
+            retry_task=build_retry_task_config(args.task_retries),
+        )
+        report.print(include_metadata=True)
 
-    if not args.skip_logfire_enrichment:
-        try:
-            await enrich_experiment_artifacts(
-                artifact_paths=artifact_paths,
-            )
-        except Exception as exc:
-            print(
-                f"Best-effort Logfire enrichment failed: {exc}",
-                file=sys.stderr,
-            )
-
+    print(f"Batch ID: {batch_id}")
     return 0
 
 
@@ -327,7 +245,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("--max-concurrency must be >= 1.")
 
     try:
-        return asyncio.run(_run(args))
+        result = _run(args)
+        if asyncio.iscoroutine(result):
+            return asyncio.run(result)
+        return result
     except ValueError as exc:
         parser.error(str(exc))
 

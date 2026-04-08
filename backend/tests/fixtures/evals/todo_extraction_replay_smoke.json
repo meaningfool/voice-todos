@@ -1,0 +1,18 @@
+{
+  "dataset": "todo_extraction_replay_smoke_v1",
+  "cases": [
+    {
+      "name": "buy-milk-incremental",
+      "source_fixture": "smoke-buy-milk-incremental",
+      "reference_dt": "2026-04-08T09:30:00+00:00",
+      "replay_steps": [
+        { "step_index": 1, "transcript": "Buy milk." },
+        { "step_index": 2, "transcript": "Buy milk on the way home." }
+      ],
+      "expected_final_todos": [
+        { "text": "Buy milk on the way home" }
+      ]
+    }
+  ]
+}
+

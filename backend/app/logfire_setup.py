@@ -36,6 +36,12 @@ def _logfire_data_dir() -> Path:
     return BACKEND_ROOT / ".logfire"
 
 
+def has_logfire_write_credentials() -> bool:
+    if _read_backend_env_var("LOGFIRE_TOKEN"):
+        return True
+    return (_logfire_data_dir() / "logfire_credentials.json").exists()
+
+
 def configure_logfire(
     *,
     service_name: str = "voice-todos-backend",
