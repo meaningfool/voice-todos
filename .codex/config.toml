@@ -1,2 +1,3 @@
 [mcp_servers.logfire]
 url = "https://logfire-eu.pydantic.dev/mcp"
+bearer_token_env_var = "LOGFIRE_MCP_TOKEN"
