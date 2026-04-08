@@ -92,6 +92,7 @@ def test_has_logfire_write_credentials_respects_credentials_dir_override(
 
     monkeypatch.delenv("LOGFIRE_TOKEN", raising=False)
     monkeypatch.setenv("LOGFIRE_CREDENTIALS_DIR", str(credentials_dir))
+    monkeypatch.setattr(logfire_setup, "BACKEND_ENV_PATH", tmp_path / ".env")
 
     assert logfire_setup.has_logfire_write_credentials() is True
 
