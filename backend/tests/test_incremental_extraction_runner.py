@@ -305,7 +305,14 @@ async def test_run_uses_batch_metadata_and_dataset_override(monkeypatch, tmp_pat
     )
     batch_ids = {call["metadata"]["batch_id"] for call in evaluate_calls}
     assert len(batch_ids) == 1
-    assert next(iter(batch_ids))
+    batch_id = next(iter(batch_ids))
+    assert batch_id
+    assert {
+        call["metadata"]["experiment_run_id"] for call in evaluate_calls
+    } == {
+        f"{batch_id}--fake-replay-experiment-a",
+        f"{batch_id}--fake-replay-experiment-b",
+    }
     assert all(
         call["name"] in {"fake-replay-experiment-a", "fake-replay-experiment-b"}
         for call in evaluate_calls

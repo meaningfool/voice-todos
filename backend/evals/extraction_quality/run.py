@@ -191,12 +191,13 @@ async def _run(args: argparse.Namespace) -> int:
 
     for experiment in runnable_experiments:
         _ensure_provider_env(experiment)
+        experiment_id = experiment.name
         metadata = build_experiment_metadata(
             suite="extraction_quality",
             dataset_name=dataset.name,
             dataset_path=dataset_path,
             evaluators_path=Path(extraction_evaluators.__file__),
-            experiment_id=experiment.name,
+            experiment_id=experiment_id,
             model_name=experiment.extraction_config.model_name,
             prompt_sha=experiment.prompt_metadata["prompt_sha"],
             repeat=args.repeat,
@@ -214,7 +215,7 @@ async def _run(args: argparse.Namespace) -> int:
         )
         report = await dataset.evaluate(
             _build_task(experiment),
-            name=experiment.name,
+            name=experiment_id,
             task_name="extract_todos",
             metadata=metadata,
             repeat=args.repeat,

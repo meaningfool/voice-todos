@@ -1,9 +1,19 @@
 import hashlib
 
 from evals.common.experiment_metadata import (
+    build_experiment_run_id,
     build_experiment_metadata,
     config_fingerprint,
 )
+
+
+def test_build_experiment_run_id_is_unique_per_run_instance():
+    run_id = build_experiment_run_id(
+        experiment_id="gemini3_flash_default",
+        batch_id="2026-04-09T12-00-00Z-deadbeef",
+    )
+
+    assert run_id == "2026-04-09T12-00-00Z-deadbeef--gemini3_flash_default"
 
 
 def test_build_experiment_metadata_includes_required_core_fields(tmp_path):
@@ -33,6 +43,7 @@ def test_build_experiment_metadata_includes_required_core_fields(tmp_path):
         "dataset_sha",
         "evaluator_contract_sha",
         "experiment_id",
+        "experiment_run_id",
         "model_name",
         "prompt_sha",
         "config_fingerprint",
@@ -49,6 +60,7 @@ def test_build_experiment_metadata_includes_required_core_fields(tmp_path):
         evaluators_path.read_bytes()
     ).hexdigest()
     assert metadata["experiment_id"] == "gemini3_flash_default"
+    assert metadata["experiment_run_id"] == "batch-123--gemini3_flash_default"
     assert metadata["model_name"] == "gemini-3-flash-preview"
     assert metadata["prompt_sha"] == "prompt-sha-123"
     assert metadata["config_fingerprint"] == config_fingerprint(full_config)
