@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
+from typing import Any
 
 import logfire
 
@@ -36,6 +38,19 @@ def _logfire_data_dir() -> Path:
     return BACKEND_ROOT / ".logfire"
 
 
+def _read_logfire_credentials_field(name: str) -> Any | None:
+    credentials_path = _logfire_data_dir() / "logfire_credentials.json"
+    if not credentials_path.exists():
+        return None
+
+    try:
+        credentials = json.loads(credentials_path.read_text())
+    except json.JSONDecodeError:
+        return None
+
+    return credentials.get(name)
+
+
 def has_logfire_write_credentials() -> bool:
     if _read_backend_env_var("LOGFIRE_TOKEN"):
         return True
@@ -47,7 +62,15 @@ def get_logfire_read_token() -> str | None:
 
 
 def get_logfire_project_name() -> str | None:
-    return _read_backend_env_var("LOGFIRE_PROJECT")
+    return _read_backend_env_var("LOGFIRE_PROJECT") or _read_logfire_credentials_field(
+        "project_name"
+    )
+
+
+def get_logfire_api_url() -> str | None:
+    return _read_backend_env_var("LOGFIRE_API_URL") or _read_logfire_credentials_field(
+        "logfire_api_url"
+    )
 
 
 def configure_logfire(
