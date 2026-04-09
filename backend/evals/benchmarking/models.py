@@ -14,9 +14,6 @@ class AttachedExperimentRef(BaseModel):
     experiment_run_id: str
     note: str | None = None
 
-    def __getitem__(self, key: str) -> str | None:
-        return getattr(self, key)
-
 
 class BenchmarkManifest(BaseModel):
     benchmark_id: str
