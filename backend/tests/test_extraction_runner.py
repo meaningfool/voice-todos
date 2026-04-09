@@ -171,7 +171,7 @@ async def test_run_uses_batch_metadata_and_dataset_override(
     assert exit_code == 0
     assert load_calls == [dataset_override]
     assert len(evaluate_calls) == 2
-    assert {call["metadata"]["experiment_id"] for call in evaluate_calls} == {
+    assert {call["name"] for call in evaluate_calls} == {
         "fake-experiment-a",
         "fake-experiment-b",
     }
@@ -179,13 +179,9 @@ async def test_run_uses_batch_metadata_and_dataset_override(
     assert len(batch_ids) == 1
     batch_id = next(iter(batch_ids))
     assert batch_id
-    assert {
-        call["metadata"]["experiment_run_id"] for call in evaluate_calls
-    } == {
-        f"{batch_id}--fake-experiment-a",
-        f"{batch_id}--fake-experiment-b",
-    }
-    assert all(
-        call["name"] in {"fake-experiment-a", "fake-experiment-b"}
-        for call in evaluate_calls
-    )
+    for call in evaluate_calls:
+        assert call["metadata"]["experiment_id"] == call["name"]
+        assert (
+            call["metadata"]["experiment_run_id"]
+            == f"{call['metadata']['batch_id']}--{call['name']}"
+        )
