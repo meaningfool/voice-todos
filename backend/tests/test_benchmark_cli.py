@@ -1,7 +1,15 @@
+import subprocess
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
-from evals.benchmarking.models import AxisDefinition, BenchmarkManifest
+import evals.benchmarking.run as benchmark_run
+from evals.benchmarking.models import (
+    AxisDefinition,
+    BenchmarkCoverage,
+    BenchmarkManifest,
+)
+from evals.benchmarking.reporting import BenchmarkReport
 from evals.benchmarking.run import main
 from evals.extraction_quality.experiment_configs import EXPERIMENTS
 
@@ -167,3 +175,71 @@ def test_launch_command_missing_only_appends_new_batch_refs(monkeypatch, tmp_pat
         "batch-old--gemini3_flash_default",
         "batch-new--gemini31_flash_lite_default",
     ]
+
+
+def test_coverage_command_prints_coverage_json(monkeypatch, tmp_path, capsys):
+    manifest_path = tmp_path / "benchmark.json"
+    manifest_path.write_text(
+        Path(
+            "tests/fixtures/evals/benchmarks/todo_extraction_model_smoke.json"
+        ).read_text()
+    )
+
+    monkeypatch.setattr(benchmark_run, "_fetch_attached_records", lambda manifest: [])
+    monkeypatch.setattr(
+        benchmark_run,
+        "build_benchmark_coverage",
+        lambda manifest, fetched: BenchmarkCoverage(
+            compatible_count=1,
+            incompatible_count=0,
+            compatible_coordinates=[{"model_name": "model-a"}],
+            missing_coordinates=[{"model_name": "model-b"}],
+            compatible_experiment_run_ids=["run-a"],
+        ),
+    )
+
+    exit_code = main(["coverage", str(manifest_path)])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert '"compatible_count": 1' in captured.out
+    assert '"missing_coordinates"' in captured.out
+
+
+def test_report_command_prints_report_json(monkeypatch, tmp_path, capsys):
+    manifest_path = tmp_path / "benchmark.json"
+    manifest_path.write_text(
+        Path(
+            "tests/fixtures/evals/benchmarks/todo_extraction_model_smoke.json"
+        ).read_text()
+    )
+
+    monkeypatch.setattr(
+        benchmark_run,
+        "build_benchmark_report",
+        lambda **kwargs: BenchmarkReport(
+            benchmark_id="todo_model_smoke_v1",
+            compatible_experiments=["run-a"],
+            missing_coordinates=[{"model_name": "model-b"}],
+        ),
+    )
+
+    exit_code = main(["report", str(manifest_path)])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert '"benchmark_id": "todo_model_smoke_v1"' in captured.out
+    assert '"compatible_experiments"' in captured.out
+
+
+def test_benchmark_cli_script_path_runs_help():
+    result = subprocess.run(
+        [sys.executable, "evals/benchmarking/run.py", "--help"],
+        cwd=Path(__file__).resolve().parents[1],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "Benchmark workflows for eval experiments." in result.stdout
