@@ -7,6 +7,7 @@ import asyncio
 import os
 import sys
 from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +36,12 @@ from evals.extraction_quality.experiment_configs import (
     ExperimentDefinition,
     _read_backend_env_var,
 )
+
+
+@dataclass
+class LaunchResult:
+    batch_id: str
+    launched_experiments: list[dict[str, str]]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -158,7 +165,7 @@ def _build_task(experiment: ExperimentDefinition):
     return run_case
 
 
-async def _run(args: argparse.Namespace) -> int:
+async def launch_experiments(args: argparse.Namespace) -> LaunchResult:
     if not args.allow_untracked and not has_logfire_write_credentials():
         raise ValueError(
             "Tracked runs require Logfire write credentials. "
@@ -169,7 +176,6 @@ async def _run(args: argparse.Namespace) -> int:
         service_name="voice-todos-backend",
         instrument_pydantic_ai=True,
     )
-    batch_id = build_batch_id()
     dataset_path = args.dataset_path or extraction_dataset_loader.DATASET_PATH
     dataset = _build_eval_dataset(path=args.dataset_path)
     selected_experiments = _selected_experiments(
@@ -187,8 +193,10 @@ async def _run(args: argparse.Namespace) -> int:
 
     if not runnable_experiments:
         print("No runnable experiments selected.")
-        return 0
+        return LaunchResult(batch_id="", launched_experiments=[])
 
+    batch_id = build_batch_id()
+    launched_experiments: list[dict[str, str]] = []
     for experiment in runnable_experiments:
         _ensure_provider_env(experiment)
         experiment_id = experiment.name
@@ -223,8 +231,24 @@ async def _run(args: argparse.Namespace) -> int:
             retry_task=build_retry_task_config(args.task_retries),
         )
         report.print(include_metadata=True)
+        launched_experiments.append(
+            {
+                "batch_id": batch_id,
+                "experiment_id": experiment_id,
+                "experiment_run_id": metadata["experiment_run_id"],
+            }
+        )
 
-    print(f"Batch ID: {batch_id}")
+    return LaunchResult(
+        batch_id=batch_id,
+        launched_experiments=launched_experiments,
+    )
+
+
+async def _run(args: argparse.Namespace) -> int:
+    launch_result = await launch_experiments(args)
+    if launch_result.launched_experiments:
+        print(f"Batch ID: {launch_result.batch_id}")
     return 0
 
 

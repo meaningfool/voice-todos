@@ -185,3 +185,87 @@ async def test_run_uses_batch_metadata_and_dataset_override(
             call["metadata"]["experiment_run_id"]
             == f"{call['metadata']['batch_id']}--{call['name']}"
         )
+
+
+@pytest.mark.asyncio
+async def test_launch_experiments_returns_batch_and_attached_refs(
+    monkeypatch, tmp_path
+):
+    import evals.extraction_quality.run as runner
+
+    dataset_override = tmp_path / "dataset.json"
+    dataset_override.write_text('{"dataset":"override"}')
+
+    experiments = [
+        SimpleNamespace(
+            name="fake-experiment-a",
+            provider="provider-a",
+            thinking_mode="default",
+            extraction_config=SimpleNamespace(
+                model_name="model-a",
+                model_settings={"temperature": 0},
+                prompt_version="v1",
+            ),
+            prompt_metadata={"prompt_sha": "prompt-a"},
+            unavailable_reason=lambda: None,
+        ),
+        SimpleNamespace(
+            name="fake-experiment-b",
+            provider="provider-b",
+            thinking_mode="minimal",
+            extraction_config=SimpleNamespace(
+                model_name="model-b",
+                model_settings={"temperature": 1},
+                prompt_version="v2",
+            ),
+            prompt_metadata={"prompt_sha": "prompt-b"},
+            unavailable_reason=lambda: None,
+        ),
+    ]
+
+    class FakeReport:
+        def print(self, include_metadata: bool) -> None:
+            assert include_metadata is True
+
+    async def fake_evaluate(self, task, **kwargs):
+        return FakeReport()
+
+    monkeypatch.setattr(runner, "has_logfire_write_credentials", lambda: True)
+    monkeypatch.setattr(runner, "configure_logfire", lambda **kwargs: None)
+    monkeypatch.setattr(
+        runner,
+        "_selected_experiments",
+        lambda **kwargs: experiments,
+    )
+    monkeypatch.setattr(
+        runner,
+        "load_extraction_quality_dataset",
+        lambda path=None: SimpleNamespace(name="override-dataset", cases=[]),
+    )
+    monkeypatch.setattr(runner.Dataset, "evaluate", fake_evaluate)
+
+    result = await runner.launch_experiments(
+        SimpleNamespace(
+            all=False,
+            experiment=["fake-experiment-a", "fake-experiment-b"],
+            repeat=2,
+            task_retries=1,
+            max_concurrency=3,
+            dataset_path=dataset_override,
+            allow_untracked=False,
+        )
+    )
+
+    assert result.batch_id
+    assert result.launched_experiments == [
+        {
+            "batch_id": result.batch_id,
+            "experiment_id": "fake-experiment-a",
+            "experiment_run_id": f"{result.batch_id}--fake-experiment-a",
+        },
+        {
+            "batch_id": result.batch_id,
+            "experiment_id": "fake-experiment-b",
+            "experiment_run_id": f"{result.batch_id}--fake-experiment-b",
+        },
+    ]
