@@ -15,7 +15,9 @@ from evals.benchmarking.storage import (
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Benchmark workflows for eval experiments.")
+    parser = argparse.ArgumentParser(
+        description="Benchmark workflows for eval experiments."
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     attach = subparsers.add_parser("attach")
@@ -93,7 +95,9 @@ def _selected_coordinates(
         return coordinates
 
     axis_fields = {axis.field for axis in manifest.axes}
-    selectors = [_parse_coordinate_selector(raw_selector) for raw_selector in raw_selectors]
+    selectors = [
+        _parse_coordinate_selector(raw_selector) for raw_selector in raw_selectors
+    ]
     for selector in selectors:
         unknown_fields = sorted(set(selector) - axis_fields)
         if unknown_fields:
@@ -136,7 +140,8 @@ def _resolve_experiment_names(
         )
         if not matches:
             raise ValueError(
-                f"No experiments match benchmark coordinate {coordinate} for suite '{suite}'."
+                "No experiments match benchmark coordinate "
+                f"{coordinate} for suite '{suite}'."
             )
         if len(matches) > 1:
             raise ValueError(
@@ -156,8 +161,7 @@ def _launch_command(args: argparse.Namespace) -> int:
 
     if args.missing_only:
         missing_coordinate_keys = {
-            _coordinate_key(coordinate)
-            for coordinate in _missing_coordinates(manifest)
+            _coordinate_key(coordinate) for coordinate in _missing_coordinates(manifest)
         }
         selected_coordinates = [
             coordinate

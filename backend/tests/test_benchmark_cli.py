@@ -1,8 +1,7 @@
 from pathlib import Path
 from types import SimpleNamespace
 
-from evals.benchmarking.models import AxisDefinition
-from evals.benchmarking.models import BenchmarkManifest
+from evals.benchmarking.models import AxisDefinition, BenchmarkManifest
 from evals.benchmarking.run import main
 from evals.extraction_quality.experiment_configs import EXPERIMENTS
 
@@ -10,7 +9,9 @@ from evals.extraction_quality.experiment_configs import EXPERIMENTS
 def test_attach_command_appends_experiment_ref(tmp_path):
     manifest_path = tmp_path / "benchmark.json"
     manifest_path.write_text(
-        Path("tests/fixtures/evals/benchmarks/todo_extraction_model_smoke.json").read_text()
+        Path(
+            "tests/fixtures/evals/benchmarks/todo_extraction_model_smoke.json"
+        ).read_text()
     )
 
     exit_code = main(
@@ -119,14 +120,16 @@ def test_launch_command_missing_only_appends_new_batch_refs(monkeypatch, tmp_pat
     monkeypatch.setattr(
         "evals.benchmarking.run.build_benchmark_report",
         lambda **kwargs: SimpleNamespace(
-                missing_coordinates=[
-                    {
-                        "model_name": second_experiment.identity_metadata["model_name"],
-                        "thinking_mode": second_experiment.identity_metadata["thinking_mode"],
-                    }
-                ]
-            ),
-        )
+            missing_coordinates=[
+                {
+                    "model_name": second_experiment.identity_metadata["model_name"],
+                    "thinking_mode": second_experiment.identity_metadata[
+                        "thinking_mode"
+                    ],
+                }
+            ]
+        ),
+    )
 
     launch_calls: list[dict[str, object]] = []
 

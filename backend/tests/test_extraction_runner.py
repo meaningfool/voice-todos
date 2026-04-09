@@ -93,9 +93,7 @@ def test_main_allows_explicit_untracked_mode(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_run_uses_batch_metadata_and_dataset_override(
-    monkeypatch, tmp_path
-):
+async def test_run_uses_batch_metadata_and_dataset_override(monkeypatch, tmp_path):
     import evals.extraction_quality.run as runner
 
     dataset_override = tmp_path / "dataset.json"

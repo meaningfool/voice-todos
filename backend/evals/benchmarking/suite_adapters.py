@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from collections.abc import Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 from evals.extraction_quality import run as extraction_quality_run
 from evals.incremental_extraction_quality import (

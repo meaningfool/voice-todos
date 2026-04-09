@@ -62,7 +62,11 @@ async def test_run_case_threads_previous_todos_across_steps(monkeypatch):
     ]
 
     monkeypatch.setattr(runner, "extract_todos", fake_extract_todos)
-    monkeypatch.setattr(runner, "set_eval_attribute", lambda n, v: attr_calls.append((n, v)))
+    monkeypatch.setattr(
+        runner,
+        "set_eval_attribute",
+        lambda n, v: attr_calls.append((n, v)),
+    )
 
     result = await runner._run_case(
         {
@@ -384,7 +388,11 @@ async def test_launch_experiments_returns_batch_and_attached_refs(
     monkeypatch.setattr(
         runner,
         "load_incremental_replay_dataset",
-        lambda path=None: type("DS", (), {"name": "override-incremental", "cases": []})(),
+        lambda path=None: type(
+            "DS",
+            (),
+            {"name": "override-incremental", "cases": []},
+        )(),
     )
     monkeypatch.setattr(runner.Dataset, "evaluate", fake_evaluate)
 
