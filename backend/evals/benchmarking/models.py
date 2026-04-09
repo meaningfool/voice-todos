@@ -26,3 +26,14 @@ class BenchmarkManifest(BaseModel):
     fixed_config: dict[str, str]
     axes: list[AxisDefinition]
     attached_experiment_runs: list[AttachedExperimentRef] = Field(default_factory=list)
+
+
+class BenchmarkCoverage(BaseModel):
+    compatible_count: int
+    incompatible_count: int
+    compatible_coordinates: list[dict[str, str]] = Field(default_factory=list)
+    missing_coordinates: list[dict[str, str]] = Field(default_factory=list)
+    compatible_experiment_run_ids: list[str] = Field(default_factory=list)
+    incompatible_experiment_run_ids: list[str] = Field(default_factory=list)
+    missing_attached_experiment_run_ids: list[str] = Field(default_factory=list)
+    unmappable_experiment_run_ids: list[str] = Field(default_factory=list)
