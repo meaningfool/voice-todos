@@ -19,22 +19,39 @@ class BenchmarkReport(BaseModel):
     unattached_candidates: list[str] = Field(default_factory=list)
 
 
-def _fetch_attached_experiments(
+def _dedupe_fetched_records(
+    records: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    seen_run_ids: set[str] = set()
+    deduped_records: list[dict[str, str]] = []
+
+    for record in records:
+        experiment_run_id = record.get("experiment_run_id")
+        if not experiment_run_id or experiment_run_id in seen_run_ids:
+            continue
+
+        seen_run_ids.add(experiment_run_id)
+        deduped_records.append(record)
+
+    return deduped_records
+
+
+async def _fetch_attached_experiments_async(
     query_client: object,
     attachments: list[AttachedExperimentRef],
 ) -> list[dict[str, str]]:
     result = query_client.fetch_attached_experiments(attachments)
     if inspect.isawaitable(result):
-        return asyncio.run(result)
-    return result
+        result = await result
+    return _dedupe_fetched_records(result)
 
 
-def build_benchmark_report(
+async def build_benchmark_report_async(
     *,
     manifest: BenchmarkManifest,
     query_client: object,
 ) -> BenchmarkReport:
-    fetched_records = _fetch_attached_experiments(
+    fetched_records = await _fetch_attached_experiments_async(
         query_client,
         manifest.attached_experiment_runs,
     )
@@ -48,4 +65,25 @@ def build_benchmark_report(
         unmappable_experiments=coverage.unmappable_experiment_run_ids,
         missing_coordinates=coverage.missing_coordinates,
         unattached_candidates=[],
+    )
+
+
+def build_benchmark_report(
+    *,
+    manifest: BenchmarkManifest,
+    query_client: object,
+) -> BenchmarkReport:
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(
+            build_benchmark_report_async(
+                manifest=manifest,
+                query_client=query_client,
+            )
+        )
+
+    raise RuntimeError(
+        "build_benchmark_report cannot run inside an active event loop; "
+        "use build_benchmark_report_async instead."
     )

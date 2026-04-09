@@ -22,6 +22,7 @@ def _build_attached_experiments_query(
 
     return f"""
 SELECT
+  start_timestamp,
   attributes->>'experiment_run_id' AS experiment_run_id,
   attributes->>'experiment_id' AS experiment_id,
   attributes->>'batch_id' AS batch_id,
@@ -32,7 +33,7 @@ SELECT
   attributes->>'prompt_sha' AS prompt_sha
 FROM records
 WHERE attributes->>'experiment_run_id' IN ({run_ids})
-LIMIT {len(attachments)}
+ORDER BY start_timestamp DESC
 """.strip()
 
 
@@ -81,7 +82,6 @@ class LogfireBenchmarkQueryClient:
         }
         params = {
             "sql": sql,
-            "limit": str(len(attachments)),
             "row_oriented": "true",
         }
         if self.project_name:
