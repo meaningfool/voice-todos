@@ -17,7 +17,10 @@ def is_compatible(manifest: BenchmarkManifest, record: dict[str, Any]) -> bool:
         record.get("suite") == manifest.suite
         and record.get("dataset_sha") == manifest.dataset_sha
         and record.get("evaluator_contract_sha") == manifest.evaluator_contract_sha
-        and all(record.get(key) == value for key, value in manifest.fixed_config.items())
+        and all(
+            record.get(key) == value
+            for key, value in manifest.fixed_config.items()
+        )
     )
 
 
@@ -74,7 +77,10 @@ def build_benchmark_coverage(
         compatible_experiment_run_ids.append(attached_ref.experiment_run_id)
         compatible_coordinates.append(coordinate)
 
-    covered_keys = {_coordinate_key(coordinate) for coordinate in compatible_coordinates}
+    covered_keys = {
+        _coordinate_key(coordinate)
+        for coordinate in compatible_coordinates
+    }
     missing_coordinates = [
         coordinate
         for coordinate in expected_coordinates(manifest)

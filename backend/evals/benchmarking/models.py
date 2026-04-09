@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class AxisDefinition(BaseModel):
@@ -26,6 +26,22 @@ class BenchmarkManifest(BaseModel):
     fixed_config: dict[str, str]
     axes: list[AxisDefinition]
     attached_experiment_runs: list[AttachedExperimentRef] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_unique_axis_fields(self) -> BenchmarkManifest:
+        seen_fields: set[str] = set()
+        duplicate_fields: set[str] = set()
+
+        for axis in self.axes:
+            if axis.field in seen_fields:
+                duplicate_fields.add(axis.field)
+            seen_fields.add(axis.field)
+
+        if duplicate_fields:
+            duplicate_list = ", ".join(sorted(duplicate_fields))
+            raise ValueError(f"axis.field values must be unique: {duplicate_list}")
+
+        return self
 
 
 class BenchmarkCoverage(BaseModel):
