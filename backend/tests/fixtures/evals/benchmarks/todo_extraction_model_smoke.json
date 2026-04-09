@@ -1,0 +1,22 @@
+{
+  "benchmark_id": "todo_model_smoke_v1",
+  "title": "Todo extraction smoke model benchmark",
+  "suite": "extraction_quality",
+  "dataset_name": "todo_extraction_smoke_v1",
+  "dataset_sha": "dataset-sha",
+  "evaluator_contract_sha": "eval-sha",
+  "fixed_config": {
+    "prompt_sha": "prompt-sha"
+  },
+  "axes": [
+    {
+      "name": "model",
+      "field": "model_name",
+      "values": [
+        "model-a",
+        "model-b"
+      ]
+    }
+  ],
+  "attached_experiment_runs": []
+}

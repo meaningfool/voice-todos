@@ -119,6 +119,22 @@ After a tracked replay run finishes:
 
 That is now the standard path for timings, traces, and replay inspection.
 
+## Benchmark Workflow
+
+Replay benchmarks use the same benchmark CLI and manifest structure documented
+in `backend/evals/benchmarks/README.md`.
+
+Use that workflow when you want a curated comparison set above individual
+replay experiment runs:
+
+- define a benchmark manifest in `backend/evals/benchmarks/`
+- attach existing `experiment_run_id`s or launch from the benchmark
+- inspect coverage before adding more replay runs
+- generate a stable report from the attached replay runs
+
+Benchmark membership still lives in the manifest, not in the experiment
+records.
+
 ## Network Note
 
 Replay evals still require normal outbound DNS and HTTPS access for provider

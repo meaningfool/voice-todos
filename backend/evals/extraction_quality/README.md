@@ -114,6 +114,25 @@ After a tracked run finishes:
 That is now the normal inspection path for timings, traces, and per-case
 results.
 
+## Benchmark Workflow
+
+For curated multi-run comparisons, use the benchmark manifests under
+`backend/evals/benchmarks/`.
+
+Start with:
+
+- `backend/evals/benchmarks/README.md`
+- `backend/evals/benchmarks/todo_extraction_model_smoke_v1.json`
+
+The benchmark CLI lets you:
+
+- attach existing `experiment_run_id`s
+- launch benchmark coordinates and append successful runs to the manifest
+- inspect coverage and gaps
+- generate a stable report from attached runs
+
+Benchmark membership lives in the manifest, not in experiment metadata.
+
 ## Network Note
 
 Provider-backed evals still need normal outbound DNS and HTTPS access. If a run

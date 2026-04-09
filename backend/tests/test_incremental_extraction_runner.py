@@ -62,7 +62,11 @@ async def test_run_case_threads_previous_todos_across_steps(monkeypatch):
     ]
 
     monkeypatch.setattr(runner, "extract_todos", fake_extract_todos)
-    monkeypatch.setattr(runner, "set_eval_attribute", lambda n, v: attr_calls.append((n, v)))
+    monkeypatch.setattr(
+        runner,
+        "set_eval_attribute",
+        lambda n, v: attr_calls.append((n, v)),
+    )
 
     result = await runner._run_case(
         {
@@ -291,7 +295,7 @@ async def test_run_uses_batch_metadata_and_dataset_override(monkeypatch, tmp_pat
     assert exit_code == 0
     assert load_calls == [dataset_override]
     assert len(evaluate_calls) == 2
-    assert {call["metadata"]["experiment_id"] for call in evaluate_calls} == {
+    assert {call["name"] for call in evaluate_calls} == {
         "fake-replay-experiment-a",
         "fake-replay-experiment-b",
     }
@@ -305,8 +309,122 @@ async def test_run_uses_batch_metadata_and_dataset_override(monkeypatch, tmp_pat
     )
     batch_ids = {call["metadata"]["batch_id"] for call in evaluate_calls}
     assert len(batch_ids) == 1
-    assert next(iter(batch_ids))
-    assert all(
-        call["name"] in {"fake-replay-experiment-a", "fake-replay-experiment-b"}
-        for call in evaluate_calls
+    batch_id = next(iter(batch_ids))
+    assert batch_id
+    for call in evaluate_calls:
+        assert call["metadata"]["experiment_id"] == call["name"]
+        assert (
+            call["metadata"]["experiment_run_id"]
+            == f"{call['metadata']['batch_id']}--{call['name']}"
+        )
+
+
+@pytest.mark.asyncio
+async def test_launch_experiments_returns_batch_and_attached_refs(
+    monkeypatch, tmp_path
+):
+    import evals.incremental_extraction_quality.run as runner
+
+    dataset_override = tmp_path / "dataset.json"
+    dataset_override.write_text('{"dataset":"override-incremental"}')
+
+    class FakeReport:
+        def print(self, include_metadata: bool) -> None:
+            assert include_metadata is True
+
+    async def fake_evaluate(self, task, **kwargs):
+        return FakeReport()
+
+    experiments = [
+        type(
+            "FakeExperiment",
+            (),
+            {
+                "name": "fake-replay-experiment-a",
+                "provider": "provider-a",
+                "thinking_mode": "default",
+                "extraction_config": type(
+                    "Cfg",
+                    (),
+                    {
+                        "model_name": "model-a",
+                        "model_settings": {"temperature": 0},
+                        "prompt_version": "v1",
+                    },
+                )(),
+                "prompt_metadata": {"prompt_sha": "prompt-a"},
+                "unavailable_reason": staticmethod(lambda: None),
+            },
+        )(),
+        type(
+            "FakeExperiment",
+            (),
+            {
+                "name": "fake-replay-experiment-b",
+                "provider": "provider-b",
+                "thinking_mode": "minimal",
+                "extraction_config": type(
+                    "Cfg",
+                    (),
+                    {
+                        "model_name": "model-b",
+                        "model_settings": {"temperature": 1},
+                        "prompt_version": "v2",
+                    },
+                )(),
+                "prompt_metadata": {"prompt_sha": "prompt-b"},
+                "unavailable_reason": staticmethod(lambda: None),
+            },
+        )(),
+    ]
+
+    monkeypatch.setattr(runner, "has_logfire_write_credentials", lambda: True)
+    monkeypatch.setattr(runner, "configure_logfire", lambda **kwargs: None)
+    monkeypatch.setattr(
+        runner,
+        "_selected_experiments",
+        lambda **kwargs: experiments,
     )
+    monkeypatch.setattr(
+        runner,
+        "load_incremental_replay_dataset",
+        lambda path=None: type(
+            "DS",
+            (),
+            {"name": "override-incremental", "cases": []},
+        )(),
+    )
+    monkeypatch.setattr(runner.Dataset, "evaluate", fake_evaluate)
+
+    result = await runner.launch_experiments(
+        type(
+            "Args",
+            (),
+            {
+                "all": False,
+                "experiment": [
+                    "fake-replay-experiment-a",
+                    "fake-replay-experiment-b",
+                ],
+                "repeat": 2,
+                "task_retries": 1,
+                "max_concurrency": 3,
+                "dataset_path": dataset_override,
+                "allow_untracked": False,
+            },
+        )()
+    )
+
+    assert result.batch_id
+    assert result.launched_experiments == [
+        {
+            "batch_id": result.batch_id,
+            "experiment_id": "fake-replay-experiment-a",
+            "experiment_run_id": f"{result.batch_id}--fake-replay-experiment-a",
+        },
+        {
+            "batch_id": result.batch_id,
+            "experiment_id": "fake-replay-experiment-b",
+            "experiment_run_id": f"{result.batch_id}--fake-replay-experiment-b",
+        },
+    ]

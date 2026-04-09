@@ -13,6 +13,10 @@ def build_batch_id(now: datetime | None = None) -> str:
     return f"{timestamp}-{secrets.token_hex(4)}"
 
 
+def build_experiment_run_id(*, experiment_id: str, batch_id: str) -> str:
+    return f"{batch_id}--{experiment_id}"
+
+
 def _sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
@@ -42,6 +46,10 @@ def build_experiment_metadata(
         "dataset_sha": _sha256_bytes(dataset_path.read_bytes()),
         "evaluator_contract_sha": _sha256_bytes(evaluators_path.read_bytes()),
         "experiment_id": experiment_id,
+        "experiment_run_id": build_experiment_run_id(
+            experiment_id=experiment_id,
+            batch_id=batch_id,
+        ),
         "model_name": model_name,
         "prompt_sha": prompt_sha,
         "config_fingerprint": config_fingerprint(full_config),

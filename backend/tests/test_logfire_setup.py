@@ -108,3 +108,53 @@ def test_has_logfire_write_credentials_returns_false_without_token_or_file(
     monkeypatch.setattr(logfire_setup, "BACKEND_ENV_PATH", env_file)
 
     assert logfire_setup.has_logfire_write_credentials() is False
+
+
+def test_get_logfire_read_token_reads_backend_env(monkeypatch, tmp_path):
+    env_file = tmp_path / ".env"
+    env_file.write_text("LOGFIRE_READ_TOKEN=logfire-read-token-from-env-file\n")
+
+    monkeypatch.delenv("LOGFIRE_READ_TOKEN", raising=False)
+    monkeypatch.setattr(logfire_setup, "BACKEND_ENV_PATH", env_file)
+
+    assert logfire_setup.get_logfire_read_token() == "logfire-read-token-from-env-file"
+
+
+def test_get_logfire_project_name_reads_backend_env(monkeypatch, tmp_path):
+    env_file = tmp_path / ".env"
+    env_file.write_text("LOGFIRE_PROJECT=acme/todo-benchmarks\n")
+
+    monkeypatch.delenv("LOGFIRE_PROJECT", raising=False)
+    monkeypatch.setattr(logfire_setup, "BACKEND_ENV_PATH", env_file)
+
+    assert logfire_setup.get_logfire_project_name() == "acme/todo-benchmarks"
+
+
+def test_get_logfire_project_name_falls_back_to_credentials_file(
+    monkeypatch, tmp_path
+):
+    credentials_dir = tmp_path / "shared-logfire"
+    credentials_dir.mkdir()
+    (credentials_dir / "logfire_credentials.json").write_text(
+        '{"project_name":"meaningfool/voice-todos"}\n'
+    )
+
+    monkeypatch.delenv("LOGFIRE_PROJECT", raising=False)
+    monkeypatch.setenv("LOGFIRE_CREDENTIALS_DIR", str(credentials_dir))
+    monkeypatch.setattr(logfire_setup, "BACKEND_ENV_PATH", tmp_path / ".env")
+
+    assert logfire_setup.get_logfire_project_name() == "meaningfool/voice-todos"
+
+
+def test_get_logfire_api_url_falls_back_to_credentials_file(monkeypatch, tmp_path):
+    credentials_dir = tmp_path / "shared-logfire"
+    credentials_dir.mkdir()
+    (credentials_dir / "logfire_credentials.json").write_text(
+        '{"logfire_api_url":"https://logfire-eu.pydantic.dev"}\n'
+    )
+
+    monkeypatch.delenv("LOGFIRE_API_URL", raising=False)
+    monkeypatch.setenv("LOGFIRE_CREDENTIALS_DIR", str(credentials_dir))
+    monkeypatch.setattr(logfire_setup, "BACKEND_ENV_PATH", tmp_path / ".env")
+
+    assert logfire_setup.get_logfire_api_url() == "https://logfire-eu.pydantic.dev"
