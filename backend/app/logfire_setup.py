@@ -42,6 +42,14 @@ def has_logfire_write_credentials() -> bool:
     return (_logfire_data_dir() / "logfire_credentials.json").exists()
 
 
+def get_logfire_read_token() -> str | None:
+    return _read_backend_env_var("LOGFIRE_READ_TOKEN")
+
+
+def get_logfire_project_name() -> str | None:
+    return _read_backend_env_var("LOGFIRE_PROJECT")
+
+
 def configure_logfire(
     *,
     service_name: str = "voice-todos-backend",

@@ -108,3 +108,23 @@ def test_has_logfire_write_credentials_returns_false_without_token_or_file(
     monkeypatch.setattr(logfire_setup, "BACKEND_ENV_PATH", env_file)
 
     assert logfire_setup.has_logfire_write_credentials() is False
+
+
+def test_get_logfire_read_token_reads_backend_env(monkeypatch, tmp_path):
+    env_file = tmp_path / ".env"
+    env_file.write_text("LOGFIRE_READ_TOKEN=logfire-read-token-from-env-file\n")
+
+    monkeypatch.delenv("LOGFIRE_READ_TOKEN", raising=False)
+    monkeypatch.setattr(logfire_setup, "BACKEND_ENV_PATH", env_file)
+
+    assert logfire_setup.get_logfire_read_token() == "logfire-read-token-from-env-file"
+
+
+def test_get_logfire_project_name_reads_backend_env(monkeypatch, tmp_path):
+    env_file = tmp_path / ".env"
+    env_file.write_text("LOGFIRE_PROJECT=acme/todo-benchmarks\n")
+
+    monkeypatch.delenv("LOGFIRE_PROJECT", raising=False)
+    monkeypatch.setattr(logfire_setup, "BACKEND_ENV_PATH", env_file)
+
+    assert logfire_setup.get_logfire_project_name() == "acme/todo-benchmarks"
