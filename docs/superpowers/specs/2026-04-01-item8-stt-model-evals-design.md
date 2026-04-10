@@ -1,4 +1,4 @@
-# Item 7 Design: STT Model Evals
+# Item 8 Design: STT Model Evals
 
 Scope: define the local STT eval set for comparing dedicated speech-to-text candidates on the same recorded audio with WER and speed as the main outputs.
 
@@ -58,7 +58,7 @@ We do not need every provider to expose the same features. We only need the mapp
 
 ## Relationship To Extraction Evals
 
-- Item 7 answers which STT path gives the best transcript quality and speed
+- Item 8 answers which STT path gives the best transcript quality and speed
 - Item 6 answers which LLM best converts a finalized transcript into todos
 - End-to-end stack trials can happen later after both tracks are independently measured
 

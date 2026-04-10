@@ -25,12 +25,12 @@ This reference doc reflects the decisions captured in this thread and recorded i
 - STT evals now focus on dedicated transcription models rather than conversational live/omni models
 - `qwen3.5-omni-plus-realtime` is removed from the current STT eval matrix
 - Google STT moves from Gemini Live to Google Cloud Speech-to-Text `chirp_3`
-- Item 7 should optimize for WER and speed, with provider capability differences recorded explicitly
+- Item 8 should optimize for WER and speed, with provider capability differences recorded explicitly
 
 Decision records:
 
-- `docs/superpowers/specs/2026-04-01-item7-stt-model-evals-design.md`
-- `docs/superpowers/plans/2026-04-01-item7-stt-model-evals.md`
+- `docs/superpowers/specs/2026-04-01-item8-stt-model-evals-design.md`
+- `docs/superpowers/plans/2026-04-01-item8-stt-model-evals.md`
 - `docs/superpowers/plans/2026-03-25-item6-extraction-model-evals.md`
 
 ## STT Candidates

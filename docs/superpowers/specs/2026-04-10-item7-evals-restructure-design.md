@@ -1,4 +1,4 @@
-# Item 9 Design: Restructure Evals Around Stable Benchmarks
+# Item 7 Design: Restructure Evals Around Stable Benchmarks
 
 Scope: move eval-owned data and orchestration out of `backend/evals`, define a
 small benchmark-first contract for datasets and benchmark definitions, and
@@ -24,7 +24,7 @@ There is also a benchmark-modeling problem:
 - the current registry is not the most readable source of truth for a human who
   wants to compare a deliberate set of model and prompt candidates
 
-Item 9 exists to make the eval system easier to understand and easier to evolve
+Item 7 exists to make the eval system easier to understand and easier to evolve
 without pretending that evals are part of the backend app itself.
 
 ## Goals
@@ -98,7 +98,7 @@ Important rule:
 
 Production extraction code stays in `backend/app/`.
 
-For Item 9, `backend/app/extract.py` remains the production implementation that
+For Item 7, `backend/app/extract.py` remains the production implementation that
 evals call into. Renaming that file can be done later if desired, but it is not
 required to achieve the architecture split.
 
@@ -382,7 +382,7 @@ history in Logfire.
 
 ### 8. Benchmark report output contract
 
-Item 9 should define what `benchmark report <benchmark_id>` returns.
+Item 7 should define what `benchmark report <benchmark_id>` returns.
 
 The default terminal report should contain:
 
@@ -484,7 +484,7 @@ Gemini 3 Flash / default
 - while-speaking-two-todos: 4.86s
 ```
 
-Item 9 does not need to define markdown, CSV, or rich history views. Those can
+Item 7 does not need to define markdown, CSV, or rich history views. Those can
 be added later.
 
 ### 9. CLI should be benchmark-first, not path-first and not execution-first
@@ -511,13 +511,13 @@ Behavior:
   described above
 
 There may still be an internal per-invocation identifier in Logfire, but that is
-an implementation detail, not a primary user-facing concept in Item 9.
+an implementation detail, not a primary user-facing concept in Item 7.
 
 ### 10. Packaging note for this repo
 
 This repo's current Python project root is `backend/`, not the repo root.
 
-Item 9's target layout still moves eval-owned code to top-level `evals/`, but
+Item 7's target layout still moves eval-owned code to top-level `evals/`, but
 the transition should not require solving repo-wide Python packaging in the same
 step as the eval architecture split.
 
@@ -559,7 +559,7 @@ Automated acceptance criteria:
 
 Required automated tests:
 
-- `tests/test_item9_dataset_migration.py`
+- `tests/test_item7_dataset_migration.py`
   - verifies the new extraction dataset has the same row IDs as the current
     canonical extraction dataset
   - verifies the new replay dataset has the same row IDs as the current
@@ -567,7 +567,7 @@ Required automated tests:
   - verifies row counts match old and new sources exactly
   - verifies representative row payloads still contain the expected input and
     expected-output structure
-- `tests/test_item9_benchmark_definitions.py`
+- `tests/test_item7_benchmark_definitions.py`
   - verifies benchmark files parse successfully
   - verifies every benchmark entry has a unique `id`
   - verifies every benchmark entry has a non-empty human-readable `label`
@@ -583,7 +583,7 @@ Automated gate:
 - a dedicated automated test target for new dataset and benchmark parsing must
   pass before Phase 2 begins
 - expected gate command:
-  - `cd backend && uv run pytest tests/test_item9_dataset_migration.py tests/test_item9_benchmark_definitions.py`
+  - `cd backend && uv run pytest tests/test_item7_dataset_migration.py tests/test_item7_benchmark_definitions.py`
 - the gate must run without live provider credentials
 - the gate must run without live Logfire access
 
@@ -620,13 +620,13 @@ Automated acceptance criteria:
 
 Required automated tests:
 
-- `tests/test_item9_benchmark_cli.py`
+- `tests/test_item7_benchmark_cli.py`
   - verifies `benchmark list` returns the expected benchmark IDs
   - verifies `benchmark show <id>` returns the expected benchmark structure
   - verifies `benchmark show <id>` exposes entry `label` plus full `config`
   - verifies `benchmark run <id>` plans only missing entries by default
   - verifies `benchmark run <id> --all` plans all entries
-- `tests/test_item9_extraction_runner.py`
+- `tests/test_item7_extraction_runner.py`
   - verifies each extraction benchmark entry resolves to the expected concrete
     extraction config
   - verifies the runner calls the production extraction path with the expected
@@ -640,7 +640,7 @@ Automated gate:
 - a dedicated automated test target for benchmark CLI resolution and extraction
   benchmark execution must pass before Phase 3 begins
 - expected gate command:
-  - `cd backend && uv run pytest tests/test_item9_benchmark_cli.py tests/test_item9_extraction_runner.py`
+  - `cd backend && uv run pytest tests/test_item7_benchmark_cli.py tests/test_item7_extraction_runner.py`
 - the gate must not depend on live providers or live Logfire
 
 Phase gate rule:
@@ -680,14 +680,14 @@ Automated acceptance criteria:
 
 Required automated tests:
 
-- `tests/test_item9_replay_runner.py`
+- `tests/test_item7_replay_runner.py`
   - verifies replay benchmark entries resolve correctly
   - verifies replay execution threads prior todos across steps correctly
   - verifies replay benchmark metadata includes benchmark ID, dataset identity,
     entry ID, repeat, and task-retry settings
   - verifies default benchmark population skips already populated entries
   - verifies `--all` forces full replay rerun planning
-- `tests/test_item9_benchmark_report.py`
+- `tests/test_item7_benchmark_report.py`
   - verifies benchmark report assembly returns the expected terminal summary
     sections
   - verifies terminal report rows use benchmark entry `label` rather than
@@ -701,7 +701,7 @@ Required automated tests:
     compatible results exist for one entry
   - verifies missing entries are reported as missing rather than silently
     omitted
-- `tests/test_item9_logfire_report_integration.py`
+- `tests/test_item7_logfire_report_integration.py`
   - verifies report queries work against a dedicated Logfire dev project
   - verifies the report can fetch and assemble benchmark state from real tracked
     data
@@ -713,9 +713,9 @@ Automated gate:
 - a dedicated automated test target for replay benchmark execution, additive
   benchmark population, and report assembly must pass before Phase 4 begins
 - expected gate command:
-  - `cd backend && uv run pytest tests/test_item9_replay_runner.py tests/test_item9_benchmark_report.py`
+  - `cd backend && uv run pytest tests/test_item7_replay_runner.py tests/test_item7_benchmark_report.py`
 - required live Logfire integration gate:
-  - `cd backend && uv run pytest tests/test_item9_logfire_report_integration.py`
+  - `cd backend && uv run pytest tests/test_item7_logfire_report_integration.py`
 - the local gate must not depend on live providers or live Logfire
 - the live Logfire gate must run against a dedicated Logfire dev project
 - the live Logfire gate must not depend on live provider calls; it may use a
@@ -765,13 +765,13 @@ Required automated tests:
 
 Automated gate:
 
-- the full automated Item 9 test target covering dataset loading, benchmark
+- the full automated Item 7 test target covering dataset loading, benchmark
   parsing, extraction execution, replay execution, and benchmark reporting must
   pass before old backend eval paths are removed or demoted
 - expected gate command:
-  - `cd backend && uv run pytest tests/test_item9_dataset_migration.py tests/test_item9_benchmark_definitions.py tests/test_item9_benchmark_cli.py tests/test_item9_extraction_runner.py tests/test_item9_replay_runner.py tests/test_item9_benchmark_report.py`
+  - `cd backend && uv run pytest tests/test_item7_dataset_migration.py tests/test_item7_benchmark_definitions.py tests/test_item7_benchmark_cli.py tests/test_item7_extraction_runner.py tests/test_item7_replay_runner.py tests/test_item7_benchmark_report.py`
 - expected live Logfire gate command:
-  - `cd backend && uv run pytest tests/test_item9_logfire_report_integration.py tests/test_item9_benchmark_smoke_integration.py`
+  - `cd backend && uv run pytest tests/test_item7_logfire_report_integration.py tests/test_item7_benchmark_smoke_integration.py`
 - the final phase requires both the full local gate and the live Logfire gate
   to pass
 
@@ -781,7 +781,7 @@ Phase gate rule:
 
 ## Verification Principles
 
-Item 9 must be verification-led.
+Item 7 must be verification-led.
 
 That means:
 
@@ -796,12 +796,12 @@ That means:
 - local deterministic tests and live Logfire integration tests serve different
   purposes and both are required once reporting is in scope
 
-This is deliberate. Item 9 is primarily an architecture and ownership refactor.
+This is deliberate. Item 7 is primarily an architecture and ownership refactor.
 Its local gates should prove structural correctness and behavioral equivalence,
 while its live Logfire gates should prove that benchmark reporting works against
 the real tracked-results system boundary.
 
-## Open Questions To Keep Out Of Scope For Item 9
+## Open Questions To Keep Out Of Scope For Item 7
 
 - whether `backend/app/extract.py` should later be renamed
 - whether the repo should later move Python packaging from `backend/` to the
@@ -811,5 +811,5 @@ the real tracked-results system boundary.
 - whether benchmark files should later gain optional labels or descriptions for
   presentation
 
-Those may become follow-up items, but Item 9 should stay focused on the minimal
+Those may become follow-up items, but Item 7 should stay focused on the minimal
 restructure described above.
