@@ -354,7 +354,63 @@ That means:
 This keeps the benchmark stable and readable while still preserving tracked run
 history in Logfire.
 
-### 8. CLI should be benchmark-first, not path-first and not execution-first
+### 8. Benchmark report output contract
+
+Item 9 should define what `benchmark report <benchmark_id>` returns.
+
+The default terminal report should contain:
+
+- benchmark header:
+  - `benchmark_id`
+  - dataset `name`
+  - dataset `version`
+  - `repeat`
+  - `task_retries`
+  - `max_concurrency`
+- benchmark population summary:
+  - total benchmark entry count
+  - populated entry count
+  - missing entry count
+- one row per benchmark entry showing:
+  - `entry_id`
+  - `provider`
+  - `model`
+  - `prompt_version`
+  - compact `model_settings` summary
+  - status:
+    - `current`
+    - `missing`
+  - latest compatible result timestamp when present
+  - completed case count
+  - failure count
+  - primary evaluator result summary for that suite
+
+For extraction benchmarks, the initial primary evaluator result summary should
+include:
+
+- `todo_count_match` aggregate or pass-rate summary
+
+For replay benchmarks, the initial primary evaluator result summary should
+include:
+
+- `final_todo_count_match` aggregate or pass-rate summary
+
+`benchmark report <benchmark_id>` should also support a machine-readable output
+mode such as `--json`.
+
+The JSON report should include:
+
+- benchmark metadata
+- current compatibility contract
+- a list of current entry states
+- missing entry IDs
+- history references sufficient to trace the selected current result back to
+  Logfire
+
+Item 9 does not need to define markdown, CSV, or rich history views. Those can
+be added later.
+
+### 9. CLI should be benchmark-first, not path-first and not execution-first
 
 The public CLI should operate on benchmark IDs, not file paths.
 
@@ -373,11 +429,14 @@ Behavior:
 - `benchmark run <id>`: run only missing entries by default
 - `benchmark run <id> --all`: force recomputation of all entries
 - `benchmark report <id>`: show the current assembled benchmark state
+- default report output is human-readable terminal output
+- `benchmark report <id> --json` returns the machine-readable report contract
+  described above
 
 There may still be an internal per-invocation identifier in Logfire, but that is
 an implementation detail, not a primary user-facing concept in Item 9.
 
-### 9. Packaging note for this repo
+### 10. Packaging note for this repo
 
 This repo's current Python project root is `backend/`, not the repo root.
 
@@ -421,6 +480,25 @@ Automated acceptance criteria:
 - benchmark entries resolve to the same concrete configs as the current
   extraction experiment registry for equivalent candidates
 
+Required automated tests:
+
+- `tests/test_item9_dataset_migration.py`
+  - verifies the new extraction dataset has the same row IDs as the current
+    canonical extraction dataset
+  - verifies the new replay dataset has the same row IDs as the current
+    canonical replay dataset
+  - verifies row counts match old and new sources exactly
+  - verifies representative row payloads still contain the expected input and
+    expected-output structure
+- `tests/test_item9_benchmark_definitions.py`
+  - verifies benchmark files parse successfully
+  - verifies every benchmark entry has a unique `id`
+  - verifies benchmark entries resolve to the same concrete provider, model,
+    prompt, and model-settings values as the current legacy experiment registry
+    for equivalent entries
+  - verifies benchmark-level settings such as `repeat` and `task_retries` are
+    parsed as required contract fields
+
 Automated gate:
 
 - a dedicated automated test target for new dataset and benchmark parsing must
@@ -460,6 +538,22 @@ Automated acceptance criteria:
   without live vendor calls, using stubbed or smoke-path execution where needed
 - benchmark metadata written for tracked runs includes benchmark ID, dataset
   identity, entry ID, repeat, and task-retry settings
+
+Required automated tests:
+
+- `tests/test_item9_benchmark_cli.py`
+  - verifies `benchmark list` returns the expected benchmark IDs
+  - verifies `benchmark show <id>` returns the expected benchmark structure
+  - verifies `benchmark run <id>` plans only missing entries by default
+  - verifies `benchmark run <id> --all` plans all entries
+- `tests/test_item9_extraction_runner.py`
+  - verifies each extraction benchmark entry resolves to the expected concrete
+    extraction config
+  - verifies the runner calls the production extraction path with the expected
+    config for each entry
+  - verifies benchmark metadata includes benchmark ID, dataset identity, entry
+    ID, repeat, and task-retry settings
+  - verifies deterministic local execution works without live provider access
 
 Automated gate:
 
@@ -504,17 +598,47 @@ Automated acceptance criteria:
 - `benchmark run <id>` skips already populated entries
 - `benchmark run <id> --all` forces rerun planning for all entries
 
+Required automated tests:
+
+- `tests/test_item9_replay_runner.py`
+  - verifies replay benchmark entries resolve correctly
+  - verifies replay execution threads prior todos across steps correctly
+  - verifies replay benchmark metadata includes benchmark ID, dataset identity,
+    entry ID, repeat, and task-retry settings
+  - verifies default benchmark population skips already populated entries
+  - verifies `--all` forces full replay rerun planning
+- `tests/test_item9_benchmark_report.py`
+  - verifies benchmark report assembly returns the expected terminal summary
+    sections
+  - verifies machine-readable report output contains benchmark metadata, current
+    entry states, and missing entry IDs
+  - verifies latest compatible result selection logic when multiple historical
+    compatible results exist for one entry
+  - verifies missing entries are reported as missing rather than silently
+    omitted
+- `tests/test_item9_logfire_report_integration.py`
+  - verifies report queries work against a dedicated Logfire dev project
+  - verifies the report can fetch and assemble benchmark state from real tracked
+    data
+  - verifies the selected current result for each entry matches the latest
+    compatible tracked result in Logfire
+
 Automated gate:
 
 - a dedicated automated test target for replay benchmark execution, additive
   benchmark population, and report assembly must pass before Phase 4 begins
 - expected gate command:
   - `cd backend && uv run pytest tests/test_item9_replay_runner.py tests/test_item9_benchmark_report.py`
-- the gate must not depend on live providers or live Logfire
+- required live Logfire integration gate:
+  - `cd backend && uv run pytest tests/test_item9_logfire_report_integration.py`
+- the local gate must not depend on live providers or live Logfire
+- the live Logfire gate must run against a dedicated Logfire dev project
+- the live Logfire gate must not depend on live provider calls; it may use a
+  deterministic tracked test path
 
 Phase gate rule:
 
-- do not start Phase 4 until all Phase 3 automated acceptance criteria pass
+- do not start Phase 4 until both the local gate and the live Logfire gate pass
 
 ### Phase 4: Cut over to the new structure and reduce the old backend eval layout
 
@@ -543,6 +667,17 @@ Automated acceptance criteria:
   compatibility shims
 - the new benchmark-first path remains green for both extraction and replay
 
+Required automated tests:
+
+- the Phase 1 dataset and benchmark-definition tests remain green
+- the Phase 2 CLI and extraction-runner tests remain green
+- the Phase 3 replay-runner, benchmark-report, and Logfire-report integration
+  tests remain green
+- one full benchmark smoke test verifies end-to-end benchmark execution and
+  benchmark reporting through the new paths
+- one compatibility test verifies any retained legacy backend eval entrypoint
+  either delegates correctly or fails with an intentional deprecation path
+
 Automated gate:
 
 - the full automated Item 9 test target covering dataset loading, benchmark
@@ -550,6 +685,10 @@ Automated gate:
   pass before old backend eval paths are removed or demoted
 - expected gate command:
   - `cd backend && uv run pytest tests/test_item9_dataset_migration.py tests/test_item9_benchmark_definitions.py tests/test_item9_benchmark_cli.py tests/test_item9_extraction_runner.py tests/test_item9_replay_runner.py tests/test_item9_benchmark_report.py`
+- expected live Logfire gate command:
+  - `cd backend && uv run pytest tests/test_item9_logfire_report_integration.py tests/test_item9_benchmark_smoke_integration.py`
+- the final phase requires both the full local gate and the live Logfire gate
+  to pass
 
 Phase gate rule:
 
@@ -564,14 +703,18 @@ That means:
 - each phase must define automated acceptance criteria before implementation is
   considered complete
 - no phase may claim completion without passing its automated gate
-- every automated gate must be runnable without live provider access
-- every automated gate must be runnable without live Logfire access
-- live vendor or live Logfire checks may exist as optional follow-up validation,
-  but they are not phase gates
+- every phase must have a local deterministic automated gate
+- no phase gate should require live provider access
+- phases that touch benchmark-state reporting against tracked data must also have
+  a dedicated live Logfire integration gate
+- live Logfire gates must target a dedicated dev project rather than production
+- local deterministic tests and live Logfire integration tests serve different
+  purposes and both are required once reporting is in scope
 
 This is deliberate. Item 9 is primarily an architecture and ownership refactor.
-Its gates should prove structural correctness and behavioral equivalence without
-making progress depend on external systems.
+Its local gates should prove structural correctness and behavioral equivalence,
+while its live Logfire gates should prove that benchmark reporting works against
+the real tracked-results system boundary.
 
 ## Open Questions To Keep Out Of Scope For Item 9
 
