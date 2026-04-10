@@ -257,6 +257,8 @@ Required benchmark fields:
 
 - `benchmark_id`
 - `dataset`
+- `focus`
+- `headline_metric`
 - `repeat`
 - `task_retries`
 - `max_concurrency`
@@ -265,16 +267,32 @@ Required benchmark fields:
 Each entry should contain:
 
 - `id`
-- `provider`
+- `label`
+- `config`
+
+`focus` should describe what the benchmark is mainly comparing in human terms.
+
+Examples:
+
 - `model`
-- `prompt_version`
-- `model_settings`
+- `prompt`
+- `provider_stack`
+
+`headline_metric` should tell the report which evaluator output to emphasize by
+default.
+
+Examples:
+
+- `todo_count_match`
+- `final_todo_count_match`
 
 Example:
 
 ```yaml
 benchmark_id: extraction_llm_matrix_v1
 dataset: evals/datasets/extraction/todo_extraction_v1.json
+focus: model
+headline_metric: todo_count_match
 
 repeat: 3
 task_retries: 1
@@ -282,32 +300,40 @@ max_concurrency: 1
 
 entries:
   - id: gemini3_flash_default
-    provider: google-gla
-    model: gemini-3-flash-preview
-    prompt_version: v1
-    model_settings: {}
+    label: Gemini 3 Flash / default
+    config:
+      provider: google-gla
+      model: gemini-3-flash-preview
+      prompt_version: v1
+      model_settings: {}
 
   - id: gemini3_flash_minimal_thinking
-    provider: google-gla
-    model: gemini-3-flash-preview
-    prompt_version: v1
-    model_settings:
-      google_thinking_config:
-        thinking_level: minimal
+    label: Gemini 3 Flash / minimal thinking
+    config:
+      provider: google-gla
+      model: gemini-3-flash-preview
+      prompt_version: v1
+      model_settings:
+        google_thinking_config:
+          thinking_level: minimal
 
   - id: mistral_small_4_default
-    provider: mistral
-    model: mistral-small-2603
-    prompt_version: v1
-    model_settings: {}
+    label: Mistral Small 4 / default
+    config:
+      provider: mistral
+      model: mistral-small-2603
+      prompt_version: v1
+      model_settings: {}
 
   - id: deepinfra_qwen35_4b_structured_tuned
-    provider: deepinfra
-    model: Qwen/Qwen3.5-4B
-    prompt_version: v1
-    model_settings:
-      temperature: 0
-      max_tokens: 1024
+    label: Qwen 3.5 4B / structured tuned
+    config:
+      provider: deepinfra
+      model: Qwen/Qwen3.5-4B
+      prompt_version: v1
+      model_settings:
+        temperature: 0
+        max_tokens: 1024
 ```
 
 ### 6. Benchmark identity versus execution history
@@ -364,6 +390,8 @@ The default terminal report should contain:
   - `benchmark_id`
   - dataset `name`
   - dataset `version`
+  - `focus`
+  - `headline_metric`
   - `repeat`
   - `task_retries`
   - `max_concurrency`
@@ -373,27 +401,42 @@ The default terminal report should contain:
   - missing entry count
 - one row per benchmark entry showing:
   - `entry_id`
-  - `provider`
-  - `model`
-  - `prompt_version`
-  - compact `model_settings` summary
+  - `label`
   - status:
     - `current`
     - `missing`
   - latest compatible result timestamp when present
+  - headline metric summary
   - completed case count
   - failure count
-  - primary evaluator result summary for that suite
+  - average case duration
+  - maximum case duration
+  - aggregate token or cost summary when available
 
-For extraction benchmarks, the initial primary evaluator result summary should
-include:
+The default terminal report should also include two detail sections:
 
-- `todo_count_match` aggregate or pass-rate summary
+- `Failures`
+  - one row per current entry that has failures
+  - for each failed case:
+    - case ID or source fixture
+    - failure category
+    - short exception summary
+    - duration
+- `Slowest Cases`
+  - for each current entry, the top few slowest cases by duration
 
-For replay benchmarks, the initial primary evaluator result summary should
-include:
+The default terminal report should not repeat full config on every row.
 
-- `final_todo_count_match` aggregate or pass-rate summary
+Human-readable summaries should use:
+
+- benchmark `focus`
+- entry `label`
+
+Full entry config should be available through:
+
+- `benchmark show <benchmark_id>`
+- `benchmark report <benchmark_id> --json`
+- optional later `--verbose` output if needed
 
 `benchmark report <benchmark_id>` should also support a machine-readable output
 mode such as `--json`.
@@ -403,9 +446,43 @@ The JSON report should include:
 - benchmark metadata
 - current compatibility contract
 - a list of current entry states
+- each entry state's full `config`
 - missing entry IDs
 - history references sufficient to trace the selected current result back to
   Logfire
+
+Illustrative terminal example, based on the historical extraction artifacts under
+`backend/evals/extraction_quality/results/2026-04-07T11-17-58Z/`:
+
+```text
+Benchmark: extraction_llm_matrix_v1
+Dataset: todo_extraction v1
+Focus: model
+Headline metric: todo_count_match
+Settings: repeat=1, task_retries=1, max_concurrency=1
+
+Current state: 5/5 entries populated
+
+Label                               Score   Avg case s  Max case s  Failures  Cost USD
+Gemini 3.1 Flash-Lite / default     8/9     1.20        2.18        1         0.000229
+Gemini 3.1 Flash-Lite / minimal     9/9     1.04        1.60        0         0.000244
+Gemini 3 Flash / default            9/9     3.50        7.61        0         0.001937
+Gemini 3 Flash / minimal thinking   9/9     1.20        1.80        0         0.000483
+Mistral Small 4 / default           9/9     2.49        7.87        0         n/a
+
+Failures
+Gemini 3.1 Flash-Lite / default
+- call-mom-memo-supplier
+  category: output_validation_failure
+  duration_s: 2.18
+  summary: Exceeded maximum retries (1) for output validation
+
+Slowest Cases
+Gemini 3 Flash / default
+- call-mom-memo-supplier: 7.61s
+- continuous-speech: 6.52s
+- while-speaking-two-todos: 4.86s
+```
 
 Item 9 does not need to define markdown, CSV, or rich history views. Those can
 be added later.
@@ -493,9 +570,11 @@ Required automated tests:
 - `tests/test_item9_benchmark_definitions.py`
   - verifies benchmark files parse successfully
   - verifies every benchmark entry has a unique `id`
-  - verifies benchmark entries resolve to the same concrete provider, model,
-    prompt, and model-settings values as the current legacy experiment registry
-    for equivalent entries
+  - verifies every benchmark entry has a non-empty human-readable `label`
+  - verifies benchmark entries resolve from `config` to the same concrete
+    provider, model, prompt, and model-settings values as the current legacy
+    experiment registry for equivalent entries
+  - verifies `focus` and `headline_metric` parse as required benchmark fields
   - verifies benchmark-level settings such as `repeat` and `task_retries` are
     parsed as required contract fields
 
@@ -544,6 +623,7 @@ Required automated tests:
 - `tests/test_item9_benchmark_cli.py`
   - verifies `benchmark list` returns the expected benchmark IDs
   - verifies `benchmark show <id>` returns the expected benchmark structure
+  - verifies `benchmark show <id>` exposes entry `label` plus full `config`
   - verifies `benchmark run <id>` plans only missing entries by default
   - verifies `benchmark run <id> --all` plans all entries
 - `tests/test_item9_extraction_runner.py`
@@ -610,8 +690,13 @@ Required automated tests:
 - `tests/test_item9_benchmark_report.py`
   - verifies benchmark report assembly returns the expected terminal summary
     sections
+  - verifies terminal report rows use benchmark entry `label` rather than
+    repeating full config
+  - verifies terminal report includes headline metric, average case duration,
+    maximum case duration, and failure count per entry
+  - verifies terminal report includes `Failures` and `Slowest Cases` sections
   - verifies machine-readable report output contains benchmark metadata, current
-    entry states, and missing entry IDs
+    entry states, missing entry IDs, and full entry config
   - verifies latest compatible result selection logic when multiple historical
     compatible results exist for one entry
   - verifies missing entries are reported as missing rather than silently
