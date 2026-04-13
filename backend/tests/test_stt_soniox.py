@@ -1,5 +1,7 @@
+from unittest.mock import AsyncMock
+
 from app.stt import BoundaryState
-from app.stt_soniox import build_soniox_config, translate_soniox_event
+from app.stt_soniox import SonioxSession, build_soniox_config, translate_soniox_event
 
 
 def test_build_soniox_config_matches_current_production_defaults():
@@ -29,3 +31,9 @@ def test_translate_soniox_event_sets_fin_and_endpoint_flags():
     assert event.finalization_state is BoundaryState.OBSERVED
     assert event.endpoint_state is BoundaryState.OBSERVED
     assert event.is_finished is False
+
+
+def test_soniox_session_final_transcript_text_defaults_to_none():
+    session = SonioxSession(AsyncMock())
+
+    assert session.final_transcript_text is None
