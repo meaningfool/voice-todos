@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-import os
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from pydantic_ai import Agent
 
+from app.backend_env import read_backend_env_var
 from app.config import get_settings
 from app.model_providers import (
     GoogleModel as _GoogleModel,
@@ -41,9 +40,6 @@ _DEFAULT_MODEL_SETTINGS: dict[str, Any] = {
 }
 
 _agent_cache: dict[tuple[Any, ...], Agent[None, ExtractionResult]] = {}
-_BACKEND_ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
-
-
 def _freeze_for_cache(value: Any) -> Any:
     if isinstance(value, dict):
         return tuple(
@@ -89,39 +85,19 @@ def _resolve_model_settings(config: ExtractionConfig) -> dict[str, Any]:
     return deepcopy(_DEFAULT_MODEL_SETTINGS)
 
 
-def _read_backend_env_var(name: str) -> str | None:
-    value = os.getenv(name)
-    if value:
-        return value
-
-    if not _BACKEND_ENV_PATH.exists():
-        return None
-
-    for line in _BACKEND_ENV_PATH.read_text().splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#") or "=" not in stripped:
-            continue
-        key, raw_value = stripped.split("=", 1)
-        if key.strip() != name:
-            continue
-        return raw_value.strip().strip('"').strip("'")
-
-    return None
-
-
 def _get_gemini_api_key() -> str:
-    gemini_api_key = _read_backend_env_var("GEMINI_API_KEY")
+    gemini_api_key = read_backend_env_var("GEMINI_API_KEY")
     if gemini_api_key:
         return gemini_api_key
     return get_settings().gemini_api_key
 
 
 def _get_mistral_api_key() -> str | None:
-    return _read_backend_env_var("MISTRAL_API_KEY")
+    return read_backend_env_var("MISTRAL_API_KEY")
 
 
 def _get_deepinfra_api_key() -> str | None:
-    return _read_backend_env_var("DEEPINFRA_API_KEY")
+    return read_backend_env_var("DEEPINFRA_API_KEY")
 
 
 def _build_model(config: ExtractionConfig) -> Any:

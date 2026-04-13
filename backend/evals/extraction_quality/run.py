@@ -36,7 +36,8 @@ from evals.extraction_quality.evaluators import EXTRACTION_QUALITY_EVALUATORS
 from evals.extraction_quality.experiment_configs import (
     EXPERIMENTS,
     ExperimentDefinition,
-    _read_backend_env_var,
+    experiment_definition_from_entry_config,
+    read_backend_env_var,
 )
 
 
@@ -150,7 +151,7 @@ def _ensure_provider_env(experiment: ExperimentDefinition) -> None:
     if provider_env_var is None:
         return
 
-    api_key = _read_backend_env_var(provider_env_var)
+    api_key = read_backend_env_var(provider_env_var)
     if api_key:
         os.environ.setdefault(provider_env_var, api_key)
 
@@ -168,7 +169,30 @@ def _build_task(experiment: ExperimentDefinition):
 
 
 async def launch_experiments(args: argparse.Namespace) -> LaunchResult:
-    if not args.allow_untracked and not has_logfire_write_credentials():
+    selected_experiments = _selected_experiments(
+        all_experiments=args.all,
+        requested_names=args.experiment,
+    )
+    return await launch_experiments_for_definitions(
+        experiments=selected_experiments,
+        dataset_path=args.dataset_path,
+        repeat=args.repeat,
+        task_retries=args.task_retries,
+        max_concurrency=args.max_concurrency,
+        allow_untracked=args.allow_untracked,
+    )
+
+
+async def launch_experiments_for_definitions(
+    *,
+    experiments: Sequence[ExperimentDefinition],
+    dataset_path: Path | None,
+    repeat: int,
+    task_retries: int,
+    max_concurrency: int,
+    allow_untracked: bool,
+) -> LaunchResult:
+    if not allow_untracked and not has_logfire_write_credentials():
         raise ValueError(
             "Tracked runs require Logfire write credentials. "
             "Pass --allow-untracked for a local smoke run."
@@ -178,15 +202,11 @@ async def launch_experiments(args: argparse.Namespace) -> LaunchResult:
         service_name="voice-todos-backend",
         instrument_pydantic_ai=True,
     )
-    dataset_path = args.dataset_path or extraction_dataset_loader.DATASET_PATH
-    dataset = _build_eval_dataset(path=args.dataset_path)
-    selected_experiments = _selected_experiments(
-        all_experiments=args.all,
-        requested_names=args.experiment,
-    )
+    resolved_dataset_path = dataset_path or extraction_dataset_loader.DATASET_PATH
+    dataset = _build_eval_dataset(path=dataset_path)
 
     runnable_experiments: list[ExperimentDefinition] = []
-    for experiment in selected_experiments:
+    for experiment in experiments:
         unavailable_reason = experiment.unavailable_reason()
         if unavailable_reason is not None:
             print(f"Skipping {experiment.name}: {unavailable_reason}")
@@ -205,22 +225,22 @@ async def launch_experiments(args: argparse.Namespace) -> LaunchResult:
         metadata = build_experiment_metadata(
             suite="extraction_quality",
             dataset_name=dataset.name,
-            dataset_path=dataset_path,
+            dataset_path=resolved_dataset_path,
             evaluators_path=Path(extraction_evaluators.__file__),
             experiment_id=experiment_id,
             model_name=experiment.extraction_config.model_name,
             prompt_sha=experiment.prompt_metadata["prompt_sha"],
-            repeat=args.repeat,
-            task_retries=args.task_retries,
+            repeat=repeat,
+            task_retries=task_retries,
             batch_id=batch_id,
             full_config={
                 "provider": experiment.provider,
                 "thinking_mode": experiment.thinking_mode,
                 "model_settings": experiment.extraction_config.model_settings,
                 "prompt_version": experiment.extraction_config.prompt_version,
-                "repeat": args.repeat,
-                "task_retries": args.task_retries,
-                "max_concurrency": args.max_concurrency,
+                "repeat": repeat,
+                "task_retries": task_retries,
+                "max_concurrency": max_concurrency,
             },
         )
         report = await dataset.evaluate(
@@ -228,9 +248,9 @@ async def launch_experiments(args: argparse.Namespace) -> LaunchResult:
             name=experiment_id,
             task_name="extract_todos",
             metadata=metadata,
-            repeat=args.repeat,
-            max_concurrency=args.max_concurrency,
-            retry_task=build_retry_task_config(args.task_retries),
+            repeat=repeat,
+            max_concurrency=max_concurrency,
+            retry_task=build_retry_task_config(task_retries),
         )
         report.print(include_metadata=True)
         launched_experiments.append(
@@ -245,6 +265,38 @@ async def launch_experiments(args: argparse.Namespace) -> LaunchResult:
         batch_id=batch_id,
         launched_experiments=launched_experiments,
     )
+
+
+async def launch_extraction_entry(
+    *,
+    entry,
+    resolved_config,
+    dataset_path: Path | None,
+    repeat: int,
+    task_retries: int,
+    max_concurrency: int,
+    allow_untracked: bool,
+) -> dict[str, str]:
+    experiment = experiment_definition_from_entry_config(
+        experiment_name_hint=entry.id,
+        provider=resolved_config.provider,
+        model_name=resolved_config.model_name,
+        prompt_version=resolved_config.prompt_version,
+        model_settings=resolved_config.model_settings,
+    )
+    result = await launch_experiments_for_definitions(
+        experiments=[experiment],
+        dataset_path=dataset_path,
+        repeat=repeat,
+        task_retries=task_retries,
+        max_concurrency=max_concurrency,
+        allow_untracked=allow_untracked,
+    )
+    return {
+        "entry_id": entry.id,
+        "batch_id": result.batch_id,
+        "experiment_id": experiment.name,
+    }
 
 
 async def _run(args: argparse.Namespace) -> int:

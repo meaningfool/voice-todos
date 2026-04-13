@@ -1,8 +1,8 @@
 import hashlib
 
 from evals.common.experiment_metadata import (
-    build_experiment_run_id,
     build_experiment_metadata,
+    build_experiment_run_id,
     config_fingerprint,
 )
 
@@ -67,6 +67,8 @@ def test_build_experiment_metadata_includes_required_core_fields(tmp_path):
     assert metadata["repeat"] == 2
     assert metadata["task_retries"] == 3
     assert metadata["batch_id"] == "batch-123"
+    assert "benchmark_id" not in metadata
+    assert "benchmark_entry_id" not in metadata
 
 
 def test_config_fingerprint_changes_when_execution_config_changes():

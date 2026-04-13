@@ -42,7 +42,7 @@ Use Logfire to:
 
 ## Files
 
-- `todo_extraction_replay_v1.json`: canonical replay dataset
+- `../../evals/datasets/replay/todo_extraction_replay_v1.json`: canonical replay dataset
 - `dataset_loader.py`: replay dataset loader
 - `evaluators.py`: replay evaluator definitions
 - `experiment_configs.py`: shared experiment registry
@@ -121,19 +121,26 @@ That is now the standard path for timings, traces, and replay inspection.
 
 ## Benchmark Workflow
 
-Replay benchmarks use the same benchmark CLI and manifest structure documented
-in `backend/evals/benchmarks/README.md`.
+Replay benchmarks use the repo-root benchmark definitions and the same
+benchmark-first CLI as transcript extraction.
 
-Use that workflow when you want a curated comparison set above individual
-replay experiment runs:
+Key files:
 
-- define a benchmark manifest in `backend/evals/benchmarks/`
-- attach existing `experiment_run_id`s or launch from the benchmark
-- inspect coverage before adding more replay runs
-- generate a stable report from the attached replay runs
+- `../evals/benchmarks/replay_llm_matrix_v1.yaml`
+- `../evals/datasets/replay/todo_extraction_replay_v1.json`
 
-Benchmark membership still lives in the manifest, not in the experiment
-records.
+Primary commands:
+
+```bash
+cd backend && uv run python ../evals/cli.py benchmark list
+cd backend && uv run python ../evals/cli.py benchmark show replay_llm_matrix_v1
+cd backend && uv run python ../evals/cli.py benchmark run replay_llm_matrix_v1
+cd backend && uv run python ../evals/cli.py benchmark report replay_llm_matrix_v1
+```
+
+Tracked replay runs stay benchmark-agnostic. Benchmark state is reconstructed by
+matching replay benchmark entries against experiment-scoped metadata in tracked
+history.
 
 ## Network Note
 

@@ -366,6 +366,38 @@ Material benchmark change that should create a new benchmark version:
 - change the evaluator contract in a way that makes old and new results
   semantically non-comparable
 
+### 6.5. Benchmarks must not leak into experiment identity
+
+Benchmark definitions and experiment executions are related, but they are not
+the same object and must not collapse into each other.
+
+The benchmark may decide:
+
+- which entry configs should be executed
+- which runs count as compatible for a given benchmark entry
+- which missing entries still need population
+
+But the tracked experiment/run record in Logfire should remain benchmark-agnostic.
+
+That means:
+
+- experiment metadata may include experiment-scoped identity and compatibility
+  fields such as dataset identity, evaluator contract identity, model or prompt
+  identity, config fingerprint, repeat, task retries, and batch ID
+- experiment metadata must not include benchmark membership fields such as
+  `benchmark_id` or `benchmark_entry_id`
+- running the same experiment outside any benchmark should produce the same
+  experiment identity shape
+- benchmark state must be reconstructed by matching benchmark entry definitions
+  against experiment/run metadata, not by reading benchmark membership back out
+  of the experiment record
+
+This keeps the ownership boundary clean:
+
+- benchmarks own comparison intent
+- experiments own execution facts
+- reports assemble benchmark state from execution history
+
 ### 7. Benchmark report semantics
 
 `benchmark report <benchmark_id>` should show the current benchmark state.
@@ -379,6 +411,12 @@ That means:
 
 This keeps the benchmark stable and readable while still preserving tracked run
 history in Logfire.
+
+Important consequence:
+
+- untracked local smoke runs are useful for execution validation, but they are
+  not expected to populate benchmark state for `benchmark report`
+- benchmark reporting is assembled from tracked execution history only
 
 ### 8. Benchmark report output contract
 
@@ -529,6 +567,36 @@ Therefore:
 - if a compatibility launcher or path bridge is needed during migration, that is
   acceptable as long as the public benchmark-first command model is preserved
 
+### 10.5. End-to-end smoke validation stays live in Item 7
+
+Item 7 should not add a full dependency-injected fake-execution architecture just
+to make the public CLI smoke path run fully offline.
+
+Why:
+
+- the main value of Item 7 is benchmark ownership, benchmark-first orchestration,
+  additive population, report semantics, and metadata boundaries
+- those behaviors can be covered by deterministic automated tests at the parsing,
+  resolution, planning, metadata, and report-assembly layers
+- forcing the real subprocess CLI path to run offline would require extra
+  execution-abstraction work whose main purpose is testability rather than Item
+  7's core structural goal
+
+Therefore:
+
+- Phases 1 through 3 should remain deterministic and automated
+- Phase 4 should keep a deterministic local gate for the structural migration and
+  compatibility behavior
+- the true end-to-end `benchmark run ...` plus `benchmark report ...` smoke check
+  should be a live dev-environment validation against real provider credentials
+  and a dedicated Logfire dev project
+- this live smoke check may be automated in a suitable dev environment, but it is
+  not required to be part of the always-green local or CI deterministic gate
+- if the same test file contains both deterministic checks and live smoke checks,
+  the live smoke checks must require an explicit opt-in flag in addition to the
+  real dev credentials so the local deterministic gate does not become live by
+  accident when credentials are present in the environment
+
 ## Phased Delivery
 
 ### Phase 1: Introduce top-level canonical data and benchmark definitions
@@ -615,8 +683,11 @@ Automated acceptance criteria:
   the current code-first experiment registry for equivalent entries
 - the new extraction benchmark runner can execute through a local automated path
   without live vendor calls, using stubbed or smoke-path execution where needed
-- benchmark metadata written for tracked runs includes benchmark ID, dataset
-  identity, entry ID, repeat, and task-retry settings
+- tracked runs keep experiment-scoped metadata sufficient for later benchmark
+  matching, including dataset identity, evaluator contract identity, experiment
+  or config identity, repeat, and task-retry settings
+- tracked runs do not store benchmark membership fields such as `benchmark_id`
+  or `benchmark_entry_id`
 
 Required automated tests:
 
@@ -631,8 +702,8 @@ Required automated tests:
     extraction config
   - verifies the runner calls the production extraction path with the expected
     config for each entry
-  - verifies benchmark metadata includes benchmark ID, dataset identity, entry
-    ID, repeat, and task-retry settings
+  - verifies tracked experiment metadata remains benchmark-agnostic while still
+    carrying the experiment-scoped fields needed for compatibility matching
   - verifies deterministic local execution works without live provider access
 
 Automated gate:
@@ -640,7 +711,7 @@ Automated gate:
 - a dedicated automated test target for benchmark CLI resolution and extraction
   benchmark execution must pass before Phase 3 begins
 - expected gate command:
-  - `cd backend && uv run pytest tests/test_item7_benchmark_cli.py tests/test_item7_extraction_runner.py`
+  - `cd backend && uv run pytest tests/test_item7_benchmark_cli.py tests/test_item7_extraction_runner.py tests/test_eval_experiment_metadata.py`
 - the gate must not depend on live providers or live Logfire
 
 Phase gate rule:
@@ -683,8 +754,9 @@ Required automated tests:
 - `tests/test_item7_replay_runner.py`
   - verifies replay benchmark entries resolve correctly
   - verifies replay execution threads prior todos across steps correctly
-  - verifies replay benchmark metadata includes benchmark ID, dataset identity,
-    entry ID, repeat, and task-retry settings
+  - verifies replay tracked experiment metadata remains benchmark-agnostic while
+    still carrying the experiment-scoped fields needed for compatibility
+    matching
   - verifies default benchmark population skips already populated entries
   - verifies `--all` forces full replay rerun planning
 - `tests/test_item7_benchmark_report.py`
@@ -697,6 +769,8 @@ Required automated tests:
   - verifies terminal report includes `Failures` and `Slowest Cases` sections
   - verifies machine-readable report output contains benchmark metadata, current
     entry states, missing entry IDs, and full entry config
+  - verifies benchmark state is assembled by matching entry definitions against
+    experiment-scoped metadata rather than benchmark-tagged runs
   - verifies latest compatible result selection logic when multiple historical
     compatible results exist for one entry
   - verifies missing entries are reported as missing rather than silently
@@ -713,7 +787,7 @@ Automated gate:
 - a dedicated automated test target for replay benchmark execution, additive
   benchmark population, and report assembly must pass before Phase 4 begins
 - expected gate command:
-  - `cd backend && uv run pytest tests/test_item7_replay_runner.py tests/test_item7_benchmark_report.py`
+  - `cd backend && uv run pytest tests/test_item7_replay_runner.py tests/test_item7_benchmark_report.py tests/test_eval_experiment_metadata.py`
 - required live Logfire integration gate:
   - `cd backend && uv run pytest tests/test_item7_logfire_report_integration.py`
 - the local gate must not depend on live providers or live Logfire
@@ -758,8 +832,11 @@ Required automated tests:
 - the Phase 2 CLI and extraction-runner tests remain green
 - the Phase 3 replay-runner, benchmark-report, and Logfire-report integration
   tests remain green
-- one full benchmark smoke test verifies end-to-end benchmark execution and
-  benchmark reporting through the new paths
+- one deterministic local compatibility test verifies the public CLI bootstrap and
+  any retained legacy backend eval entrypoint behavior without requiring live
+  providers
+- one live dev-environment smoke check verifies end-to-end benchmark execution
+  and benchmark reporting through the new paths
 - one compatibility test verifies any retained legacy backend eval entrypoint
   either delegates correctly or fails with an intentional deprecation path
 
@@ -769,9 +846,9 @@ Automated gate:
   parsing, extraction execution, replay execution, and benchmark reporting must
   pass before old backend eval paths are removed or demoted
 - expected gate command:
-  - `cd backend && uv run pytest tests/test_item7_dataset_migration.py tests/test_item7_benchmark_definitions.py tests/test_item7_benchmark_cli.py tests/test_item7_extraction_runner.py tests/test_item7_replay_runner.py tests/test_item7_benchmark_report.py`
+  - `cd backend && uv run pytest tests/test_item7_dataset_migration.py tests/test_item7_benchmark_definitions.py tests/test_item7_benchmark_cli.py tests/test_item7_extraction_runner.py tests/test_eval_experiment_metadata.py tests/test_item7_replay_runner.py tests/test_item7_benchmark_report.py tests/test_item7_benchmark_smoke_integration.py`
 - expected live Logfire gate command:
-  - `cd backend && uv run pytest tests/test_item7_logfire_report_integration.py tests/test_item7_benchmark_smoke_integration.py`
+  - `cd backend && ITEM7_ENABLE_LIVE_SMOKE=1 uv run pytest tests/test_item7_logfire_report_integration.py tests/test_item7_benchmark_smoke_integration.py`
 - the final phase requires both the full local gate and the live Logfire gate
   to pass
 
