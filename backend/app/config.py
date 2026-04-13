@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     record_sessions: bool = False
     soniox_stop_timeout_seconds: float = 30.0
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 @lru_cache
