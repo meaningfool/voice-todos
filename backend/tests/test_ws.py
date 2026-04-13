@@ -117,6 +117,32 @@ def test_ws_start_surfaces_connect_errors():
             assert "boom" in response["message"]
 
 
+def test_ws_mistral_start_surfaces_mistral_connect_error():
+    with (
+        patch(
+            "app.ws.get_settings",
+            return_value=_settings(
+                stt_provider="mistral",
+                mistral_api_key="mistral-test-key",
+            ),
+        ),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(side_effect=RuntimeError("boom")),
+            create=True,
+        ),
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            response = ws.receive_json()
+
+    assert response == {
+        "type": "error",
+        "message": "mistral connection failed: boom",
+    }
+
+
 def test_ws_stop_without_start():
     """Sending stop without a prior start is handled gracefully (no-op)."""
     with (
@@ -236,7 +262,7 @@ def test_ws_stop_sends_todos_before_stopped():
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
         patch(
-            "app.ws._relay_soniox_to_browser",
+            "app.ws._relay_stt_to_browser",
             side_effect=relay_with_finalized_transcript,
         ),
         patch("app.ws.extract_todos", new_callable=AsyncMock, return_value=mock_todos),
@@ -295,7 +321,7 @@ def test_ws_stop_emits_stop_timing_events():
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
         patch(
-            "app.ws._relay_soniox_to_browser",
+            "app.ws._relay_stt_to_browser",
             side_effect=relay_with_finalized_transcript,
         ),
         patch("app.ws.extract_todos", new_callable=AsyncMock, return_value=[]),
@@ -372,7 +398,7 @@ def test_ws_stop_uses_finalized_transcript_for_final_pass():
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
         patch(
-            "app.ws._relay_soniox_to_browser",
+            "app.ws._relay_stt_to_browser",
             side_effect=relay_with_finalized_transcript,
         ),
         patch(
@@ -417,7 +443,7 @@ def test_ws_stop_surfaces_final_extraction_failure():
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
         patch(
-            "app.ws._relay_soniox_to_browser",
+            "app.ws._relay_stt_to_browser",
             side_effect=relay_with_finalized_transcript,
         ),
         patch(
@@ -462,7 +488,7 @@ def test_ws_stop_reuses_latest_snapshot_without_rerunning_final_extraction():
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
         patch(
-            "app.ws._relay_soniox_to_browser",
+            "app.ws._relay_stt_to_browser",
             side_effect=relay_with_finalized_transcript,
         ),
         patch(
@@ -545,7 +571,7 @@ def test_ws_stop_waits_for_fin_not_finished():
     with (
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
-        patch("app.ws._relay_soniox_to_browser", side_effect=relay_with_fin),
+        patch("app.ws._relay_stt_to_browser", side_effect=relay_with_fin),
         patch(
             "app.ws.extract_todos",
             new_callable=AsyncMock,
@@ -588,7 +614,7 @@ def test_ws_stop_requests_final_transcript_before_end_of_stream():
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
         patch(
-            "app.ws._relay_soniox_to_browser",
+            "app.ws._relay_stt_to_browser",
             side_effect=relay_with_finalized_transcript,
         ),
         patch("app.ws.extract_todos", new_callable=AsyncMock, return_value=[]),
@@ -1146,7 +1172,7 @@ def test_ws_stop_timeout_skips_extraction_and_surfaces_warning():
             return_value=_settings(soniox_stop_timeout_seconds=0.01),
         ),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
-        patch("app.ws._relay_soniox_to_browser", side_effect=slow_relay),
+        patch("app.ws._relay_stt_to_browser", side_effect=slow_relay),
         patch("app.ws.extract_todos", new_callable=AsyncMock) as mock_extract,
     ):
         mock_connect.return_value = _mock_soniox(messages=[])
