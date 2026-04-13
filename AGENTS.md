@@ -8,4 +8,14 @@
 
 ## Specs And Plans
 
-- When writing specs or plans, the phased acceptance-gate guidance in [docs/references/2026-04-13-phased-spec-plan-acceptance-gates.md](/Users/josselinperrus/conductor/workspaces/voice-todos/andorra/docs/references/2026-04-13-phased-spec-plan-acceptance-gates.md:1) takes precedence over the default superpowers skill instructions.
+- When writing specs or plans, the phased acceptance-gate guidance in [docs/references/2026-04-13-phased-spec-plan-acceptance-gates.md](/Users/josselinperrus/conductor/workspaces/voice-todos/kingston/docs/references/2026-04-13-phased-spec-plan-acceptance-gates.md:1) takes precedence over the default superpowers skill instructions.
+
+## Acceptance Tests
+
+- Treat acceptance tests as the behavioral contract tests explicitly named by the current spec or plan.
+- Acceptance is a role, not a test layer: an acceptance test may be unit, integration, CLI, browser, backend, or frontend depending on what is required to prove the behavior.
+- Keep tests where they naturally belong technically. Do not move a test into a special location just because it is used as an acceptance test.
+- Distinguish acceptance tests from supporting verification in specs and plans.
+- When behavior changes, update, replace, add, or remove acceptance tests deliberately to keep the acceptance surface small and current.
+- Do not name tests after item numbers or phase numbers.
+- Reference: `docs/references/2026-04-13-acceptance-tests-and-verification-policy.md`

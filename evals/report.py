@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from evals.hosted_datasets import canonical_dataset_hash, export_hosted_dataset
 from evals.logfire_query import LogfireBenchmarkQueryClient
 from evals.models import BenchmarkEntryState, BenchmarkReport
 from evals.resolution import build_entry_query_selector
-from evals.storage import load_benchmark_by_id
+from evals.storage import benchmark_lock_path, load_benchmark_by_id, load_benchmark_lock
 
 
 def build_benchmark_report(
@@ -14,6 +15,7 @@ def build_benchmark_report(
     query_client: object | None = None,
 ) -> BenchmarkReport:
     benchmark = load_benchmark_by_id(benchmark_id)
+    lock_state = _safe_lock_state(benchmark)
     selectors = [
         build_entry_query_selector(benchmark=benchmark, entry=entry)
         for entry in benchmark.entries
@@ -66,8 +68,15 @@ def build_benchmark_report(
 
     return BenchmarkReport(
         benchmark_id=benchmark.benchmark_id,
+        hosted_dataset=benchmark.hosted_dataset,
         focus=benchmark.focus,
         headline_metric=benchmark.headline_metric,
+        active_lock_path=(
+            str(lock_state.lock_path) if lock_state.active_lock_exists else None
+        ),
+        locked_dataset_hash=lock_state.locked_dataset_hash,
+        current_hosted_dataset_hash=lock_state.current_hosted_dataset_hash,
+        stale=lock_state.stale,
         entries=entries,
         missing_entry_ids=[
             entry.entry_id for entry in entries if entry.status == "missing"
@@ -78,8 +87,10 @@ def build_benchmark_report(
 def render_terminal_report(report: BenchmarkReport) -> str:
     lines = [
         f"Benchmark: {report.benchmark_id}",
+        f"Hosted dataset: {report.hosted_dataset}",
         f"Focus: {report.focus}",
         f"Headline metric: {report.headline_metric}",
+        f"Stale: {str(report.stale).lower()}",
         "",
         "Entries",
     ]
@@ -170,3 +181,36 @@ def _list_or_empty(value) -> list[dict]:
     if isinstance(value, list):
         return [item for item in value if isinstance(item, dict)]
     return []
+
+
+def _safe_lock_state(benchmark):
+    try:
+        lock = load_benchmark_lock(benchmark.benchmark_id)
+        exported = export_hosted_dataset(benchmark.hosted_dataset)
+        current_hash = canonical_dataset_hash(exported)
+        from evals.run import BenchmarkLockState
+
+        return BenchmarkLockState(
+            active_lock_exists=lock is not None,
+            stale=(
+                lock is not None and current_hash != lock.benchmark_lock.dataset_hash
+            ),
+            lock_path=benchmark_lock_path(benchmark.benchmark_id),
+            locked_dataset_hash=(
+                lock.benchmark_lock.dataset_hash if lock is not None else None
+            ),
+            current_hosted_dataset_hash=current_hash,
+            exported_payload=exported,
+        )
+    except Exception:
+        from evals.run import BenchmarkLockState
+
+        lock = load_benchmark_lock(benchmark.benchmark_id)
+        return BenchmarkLockState(
+            active_lock_exists=lock is not None,
+            stale=False,
+            lock_path=benchmark_lock_path(benchmark.benchmark_id),
+            locked_dataset_hash=(
+                lock.benchmark_lock.dataset_hash if lock is not None else None
+            ),
+        )

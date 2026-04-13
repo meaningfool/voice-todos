@@ -58,6 +58,7 @@ def configure_logfire(
     *,
     service_name: str = "voice-todos-backend",
     instrument_pydantic_ai: bool = False,
+    environment: str | None = None,
 ) -> None:
     logfire_token = read_backend_env_var("LOGFIRE_TOKEN")
     logfire.configure(
@@ -65,6 +66,7 @@ def configure_logfire(
         send_to_logfire="if-token-present",
         data_dir=_logfire_data_dir(),
         token=logfire_token,
+        environment=environment or read_backend_env_var("LOGFIRE_ENVIRONMENT"),
     )
     if instrument_pydantic_ai:
         logfire.instrument_pydantic_ai()

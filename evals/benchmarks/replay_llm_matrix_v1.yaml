@@ -1,63 +1,64 @@
 benchmark_id: replay_llm_matrix_v1
-dataset: evals/datasets/replay/todo_extraction_replay_v1.json
+hosted_dataset: 67e47498-3e57-4be1-ad3d-39a4ec598570
+dataset_family: replay
 focus: model
 headline_metric: final_todo_count_match
 repeat: 1
 task_retries: 1
 max_concurrency: 1
 entries:
-  - id: gemini3_flash_default
-    label: Gemini 3 Flash / default
-    config:
-      provider: google-gla
-      model: gemini-3-flash-preview
-      prompt_version: v1
-      model_settings: {}
-  - id: gemini3_flash_minimal_thinking
-    label: Gemini 3 Flash / minimal thinking
-    config:
-      provider: google-gla
-      model: gemini-3-flash-preview
-      prompt_version: v1
-      model_settings:
-        google_thinking_config:
-          thinking_level: minimal
-  - id: gemini31_flash_lite_default
-    label: Gemini 3.1 Flash-Lite / default
-    config:
-      provider: google-gla
-      model: gemini-3.1-flash-lite-preview
-      prompt_version: v1
-      model_settings: {}
-  - id: gemini31_flash_lite_minimal_thinking
-    label: Gemini 3.1 Flash-Lite / minimal thinking
-    config:
-      provider: google-gla
-      model: gemini-3.1-flash-lite-preview
-      prompt_version: v1
-      model_settings:
-        google_thinking_config:
-          thinking_level: minimal
-  - id: mistral_small_4_default
-    label: Mistral Small 4 / default
-    config:
-      provider: mistral
-      model: mistral-small-2603
-      prompt_version: v1
-      model_settings: {}
-  - id: deepinfra_qwen35_9b_default
-    label: Qwen 3.5 9B / default
-    config:
-      provider: deepinfra
-      model: Qwen/Qwen3.5-9B
-      prompt_version: v1
-      model_settings: {}
-  - id: deepinfra_qwen35_4b_structured_tuned
-    label: Qwen 3.5 4B / structured tuned
-    config:
-      provider: deepinfra
-      model: Qwen/Qwen3.5-4B
-      prompt_version: v1
-      model_settings:
-        temperature: 0
-        max_tokens: 1024
+- id: gemini3_flash_default
+  label: Gemini 3 Flash / default
+  config:
+    provider: google-gla
+    model: gemini-3-flash-preview
+    prompt_version: v1
+    model_settings: {}
+- id: gemini3_flash_minimal_thinking
+  label: Gemini 3 Flash / minimal thinking
+  config:
+    provider: google-gla
+    model: gemini-3-flash-preview
+    prompt_version: v1
+    model_settings:
+      google_thinking_config:
+        thinking_level: minimal
+- id: gemini31_flash_lite_default
+  label: Gemini 3.1 Flash-Lite / default
+  config:
+    provider: google-gla
+    model: gemini-3.1-flash-lite-preview
+    prompt_version: v1
+    model_settings: {}
+- id: gemini31_flash_lite_minimal_thinking
+  label: Gemini 3.1 Flash-Lite / minimal thinking
+  config:
+    provider: google-gla
+    model: gemini-3.1-flash-lite-preview
+    prompt_version: v1
+    model_settings:
+      google_thinking_config:
+        thinking_level: minimal
+- id: mistral_small_4_default
+  label: Mistral Small 4 / default
+  config:
+    provider: mistral
+    model: mistral-small-2603
+    prompt_version: v1
+    model_settings: {}
+- id: deepinfra_qwen35_9b_default
+  label: Qwen 3.5 9B / default
+  config:
+    provider: deepinfra
+    model: Qwen/Qwen3.5-9B
+    prompt_version: v1
+    model_settings: {}
+- id: deepinfra_qwen35_4b_structured_tuned
+  label: Qwen 3.5 4B / structured tuned
+  config:
+    provider: deepinfra
+    model: Qwen/Qwen3.5-4B
+    prompt_version: v1
+    model_settings:
+      temperature: 0
+      max_tokens: 1024

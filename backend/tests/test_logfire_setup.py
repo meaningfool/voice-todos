@@ -158,3 +158,22 @@ def test_get_logfire_api_url_falls_back_to_credentials_file(monkeypatch, tmp_pat
     monkeypatch.setattr(backend_env, "BACKEND_ENV_PATH", tmp_path / ".env")
 
     assert logfire_setup.get_logfire_api_url() == "https://logfire-eu.pydantic.dev"
+
+
+def test_configure_logfire_uses_explicit_environment_when_present(monkeypatch):
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        logfire_setup.logfire,
+        "configure",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    monkeypatch.setattr(
+        logfire_setup.logfire,
+        "instrument_pydantic_ai",
+        lambda: None,
+    )
+
+    logfire_setup.configure_logfire(environment="development")
+
+    assert captured["environment"] == "development"

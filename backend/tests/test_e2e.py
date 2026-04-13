@@ -17,6 +17,7 @@ from typing import Any
 
 import pytest
 import websockets
+from app.backend_env import read_backend_env_var
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 DEFAULT_BACKEND_WS_URL = "ws://localhost:8000/ws"
@@ -32,8 +33,8 @@ STOP_DRAIN_TIMEOUT_SECONDS = 60.0
 
 def _e2e_enabled() -> bool:
     return bool(
-        os.environ.get("SONIOX_API_KEY")
-        and os.environ.get("GEMINI_API_KEY")
+        read_backend_env_var("SONIOX_API_KEY")
+        and read_backend_env_var("GEMINI_API_KEY")
         and os.environ.get("RUN_E2E_INTEGRATION") == "1"
     )
 

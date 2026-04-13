@@ -53,11 +53,18 @@ For live smoke validation, use:
 
 ## Setup
 
-Provider credentials still come from `backend/.env` when they are not already in
-the environment.
+Provider credentials still come from the shared `backend/.env` when they are
+not already in the environment.
 
 Tracked runs require Logfire write credentials. The runner checks the standard
 Logfire credential locations described in `backend/app/logfire_setup.py`.
+
+Hosted dataset bootstrap and later hosted dataset updates require a
+dataset-scoped `LOGFIRE_DATASETS_TOKEN` in the shared `backend/.env`.
+
+The credential storage model for Conductor worktrees is documented in:
+
+- `docs/references/2026-04-13-credential-storage-and-logfire-access.md`
 
 ## Running
 

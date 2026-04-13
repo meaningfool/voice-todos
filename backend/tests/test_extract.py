@@ -8,11 +8,12 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 import app.extract as _extract_mod
+from app.backend_env import read_backend_env_var
 from app.models import ExtractionResult, Todo
 
 requires_gemini = pytest.mark.skipif(
     not (
-        os.environ.get("GEMINI_API_KEY")
+        read_backend_env_var("GEMINI_API_KEY")
         and os.environ.get("RUN_GEMINI_INTEGRATION") == "1"
     ),
     reason=(
