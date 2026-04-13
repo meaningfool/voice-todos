@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from app.stt_mistral_probe import (
     FIXTURES_DIR,
     build_trace_record,
     default_trace_output_path,
+    record_probe_run,
     resolve_fixture_audio_path,
     summarize_stop_semantics,
 )
@@ -63,3 +66,36 @@ def test_summarize_stop_semantics_compares_last_delta_and_done_text():
 def test_resolve_fixture_audio_path_raises_for_missing_fixture():
     with pytest.raises(FileNotFoundError, match="does-not-exist"):
         resolve_fixture_audio_path("does-not-exist")
+
+
+@pytest.mark.asyncio
+async def test_record_probe_run_writes_trace_and_returns_stop_summary(tmp_path):
+    async def fake_events():
+        yield {"type": "transcription.text.delta", "text": "Buy milk"}
+        yield {
+            "type": "transcription.segment",
+            "text": "Buy milk",
+            "start": 0.0,
+            "end": 0.8,
+        }
+        yield {"type": "transcription.done", "text": "Buy milk tomorrow"}
+
+    output_path = tmp_path / "trace.jsonl"
+
+    summary = await record_probe_run(
+        fixture="stop-the-button",
+        model="voxtral-mini-transcribe-realtime-2602",
+        output_path=output_path,
+        event_stream=fake_events(),
+    )
+
+    lines = [json.loads(line) for line in output_path.read_text().splitlines()]
+
+    assert [line["event_type"] for line in lines] == [
+        "transcription.text.delta",
+        "transcription.segment",
+        "transcription.done",
+    ]
+    assert summary.streaming_text == "Buy milk"
+    assert summary.done_text == "Buy milk tomorrow"
+    assert summary.done_differs_from_streaming_text is True
