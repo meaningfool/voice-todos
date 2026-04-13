@@ -13,18 +13,36 @@ from app.extraction_loop import ExtractionLoop
 from app.extraction_thresholds import EXTRACTION_TOKEN_THRESHOLD
 from app.models import Todo
 from app.session_recorder import SessionRecorder
+from app.stt import SttSession
+from app.stt_factory import create_stt_session as _create_stt_session
+from app.stt_soniox import connect_soniox
 from app.transcript_accumulator import TranscriptAccumulator
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-SONIOX_WS_URL = "wss://stt-rt.soniox.com/transcribe-websocket"
 TOKEN_THRESHOLD = EXTRACTION_TOKEN_THRESHOLD
 
 
+async def create_stt_session(
+    settings,
+    *,
+    recorder: SessionRecorder | None = None,
+) -> SttSession:
+    return await _create_stt_session(
+        settings,
+        recorder=recorder,
+        connect_soniox_fn=lambda api_key, **kwargs: connect_soniox(
+            api_key,
+            connect_fn=websockets.connect,
+            **kwargs,
+        ),
+    )
+
+
 async def _relay_soniox_to_browser(
-    soniox_ws: websockets.ClientConnection,
+    stt_session: SttSession,
     browser_ws: WebSocket,
     transcript: TranscriptAccumulator,
     extraction_loop: ExtractionLoop,
@@ -37,18 +55,13 @@ async def _relay_soniox_to_browser(
     browser_relay_count = 0
     with logfire.span("ws.soniox_relay") as relay_span:
         try:
-            async for message in soniox_ws:
-                if recorder:
-                    recorder.write_soniox_message(
-                        message if isinstance(message, str) else message.decode()
-                    )
-                event = json.loads(message)
+            async for event in stt_session:
                 soniox_event_count += 1
 
-                if event.get("finished"):
+                if event.is_finished:
                     return
 
-                result = transcript.apply_event(event)
+                result = transcript.apply_stt_event(event)
                 if result.has_fin:
                     finalized_event.set()
                 tokens = result.tokens
@@ -81,7 +94,7 @@ async def websocket_endpoint(browser_ws: WebSocket):
     await browser_ws.accept()
 
     settings = get_settings()
-    soniox_ws = None
+    stt_session = None
     relay_task = None
     finalized_event = asyncio.Event()
     transcript = TranscriptAccumulator()
@@ -149,10 +162,10 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             with contextlib.suppress(asyncio.CancelledError):
                                 await relay_task
                             relay_task = None
-                        if soniox_ws is not None:
+                        if stt_session is not None:
                             with contextlib.suppress(Exception):
-                                await soniox_ws.close()
-                            soniox_ws = None
+                                await stt_session.close()
+                            stt_session = None
                         finalized_event = asyncio.Event()
                         if extraction_loop is not None:
                             extraction_loop.cancel()
@@ -160,33 +173,15 @@ async def websocket_endpoint(browser_ws: WebSocket):
                         if recorder:
                             recorder.stop()
 
-                        soniox_config = {
-                            "api_key": settings.soniox_api_key,
-                            "model": "stt-rt-v4",
-                            "audio_format": "pcm_s16le",
-                            "sample_rate": 16000,
-                            "num_channels": 1,
-                            "enable_endpoint_detection": True,
-                            "max_endpoint_delay_ms": 1000,
-                            "context": {
-                                "general": [
-                                    {
-                                        "key": "topic",
-                                        "value": (
-                                            "The user is dictating tasks and todos "
-                                            "into a voice-driven todo list application."
-                                        ),
-                                    },
-                                ],
-                            },
-                        }
-
                         # Open Soniox connection
                         try:
                             ws_phase = "connecting_to_soniox"
-                            soniox_ws = await websockets.connect(SONIOX_WS_URL)
-                            ws_phase = "sending_soniox_config"
-                            await soniox_ws.send(json.dumps(soniox_config))
+                            if recorder:
+                                recorder.start()
+                            stt_session = await create_stt_session(
+                                settings,
+                                recorder=recorder,
+                            )
                             transcript.reset()
                             latest_todo_items = []
                             todo_send_count = 0
@@ -196,11 +191,9 @@ async def websocket_endpoint(browser_ws: WebSocket):
                                 extract_fn=extract_todos,
                                 token_threshold=TOKEN_THRESHOLD,
                             )
-                            if recorder:
-                                recorder.start()
                             relay_task = asyncio.create_task(
                                 _relay_soniox_to_browser(
-                                    soniox_ws,
+                                    stt_session,
                                     browser_ws,
                                     transcript,
                                     extraction_loop,
@@ -215,6 +208,8 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             if extraction_loop is not None:
                                 extraction_loop.cancel()
                                 extraction_loop = None
+                            if recorder:
+                                recorder.stop()
                             await browser_ws.send_json(
                                 {
                                     "type": "error",
@@ -222,22 +217,20 @@ async def websocket_endpoint(browser_ws: WebSocket):
                                 }
                             )
 
-                    elif msg_type == "stop" and soniox_ws:
+                    elif msg_type == "stop" and stt_session:
                         logfire.info("ws.stop_received", connection_id=connection_id)
                         ws_phase = "stop_finalize"
-                        # Finalize forces Soniox to emit all pending interim
-                        # tokens as final, then sends a <fin> marker token.
-                        # Only after that do we send the empty frame to close.
-                        await soniox_ws.send(json.dumps({"type": "finalize"}))
+                        await stt_session.request_final_transcript()
                         ws_phase = "stop_eos"
-                        await soniox_ws.send(b"")  # Empty frame = end of stream
+                        await stt_session.end_stream()
                         warning_message: str | None = None
                         try:
-                            # <fin> means Soniox has finalized transcript state for all
-                            # prior audio; `finished` and socket close can happen later.
                             ws_phase = "stop_waiting_for_fin"
                             await asyncio.wait_for(
-                                finalized_event.wait(),
+                                _wait_for_final_transcript(
+                                    stt_session,
+                                    finalized_event=finalized_event,
+                                ),
                                 timeout=settings.soniox_stop_timeout_seconds,
                             )
                         except TimeoutError:
@@ -306,20 +299,20 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             extraction_loop = None
                         ws_phase = "stop_closing_soniox"
                         with contextlib.suppress(Exception):
-                            await soniox_ws.close()
+                            await stt_session.close()
                         if relay_task and not relay_task.done():
                             relay_task.cancel()
                             with contextlib.suppress(asyncio.CancelledError):
                                 await relay_task
                         relay_task = None
-                        soniox_ws = None
+                        stt_session = None
 
                 # Binary message = audio frame
                 elif "bytes" in message:
-                    if soniox_ws:
+                    if stt_session:
                         if recorder:
                             recorder.write_audio(message["bytes"])
-                        await soniox_ws.send(message["bytes"])
+                        await stt_session.send_audio(message["bytes"])
 
         except WebSocketDisconnect:
             logger.info(
@@ -341,6 +334,24 @@ async def websocket_endpoint(browser_ws: WebSocket):
                     await relay_task
             if extraction_loop is not None:
                 extraction_loop.cancel()
-            if soniox_ws:
+            if stt_session:
                 with contextlib.suppress(Exception):
-                    await soniox_ws.close()
+                    await stt_session.close()
+
+
+async def _wait_for_final_transcript(
+    stt_session: SttSession,
+    *,
+    finalized_event: asyncio.Event,
+) -> None:
+    wait_tasks = [
+        asyncio.create_task(stt_session.wait_for_final_transcript()),
+        asyncio.create_task(finalized_event.wait()),
+    ]
+    done, pending = await asyncio.wait(wait_tasks, return_when=asyncio.FIRST_COMPLETED)
+    for task in pending:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+    for task in done:
+        task.result()

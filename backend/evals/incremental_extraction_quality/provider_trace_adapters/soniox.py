@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.extraction_thresholds import EXTRACTION_TOKEN_THRESHOLD
+from app.stt_soniox import translate_soniox_event
 from app.transcript_accumulator import TranscriptAccumulator
 
 
@@ -25,7 +26,7 @@ def build_soniox_checkpoint_candidates(
         if event.get("finished"):
             break
 
-        result = transcript.apply_event(event)
+        result = transcript.apply_stt_event(translate_soniox_event(event))
         snapshot = transcript.full_text
 
         if result.has_endpoint:

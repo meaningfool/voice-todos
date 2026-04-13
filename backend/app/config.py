@@ -4,8 +4,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    stt_provider: str = "soniox"
     soniox_api_key: str
     gemini_api_key: str
+    google_cloud_project_id: str | None = None
+    mistral_api_key: str | None = None
     record_sessions: bool = False
     soniox_stop_timeout_seconds: float = 30.0
 

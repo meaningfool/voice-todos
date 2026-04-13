@@ -60,13 +60,41 @@ def test_settings_loads_gemini_key(monkeypatch, tmp_path):
     assert s.gemini_api_key == "gemini-test-key"
 
 
+def test_settings_default_stt_provider_to_soniox(monkeypatch, tmp_path):
+    monkeypatch.setenv("SONIOX_API_KEY", "soniox-test")
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-test-key")
+    env_file = tmp_path / ".env"
+    env_file.write_text("")
+
+    from app.config import Settings
+
+    s = Settings(_env_file=str(env_file))
+    assert s.stt_provider == "soniox"
+
+
+def test_settings_default_optional_future_stt_keys_to_none(monkeypatch, tmp_path):
+    monkeypatch.setenv("SONIOX_API_KEY", "soniox-test")
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-test-key")
+    monkeypatch.delenv("GOOGLE_CLOUD_PROJECT_ID", raising=False)
+    monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
+    env_file = tmp_path / ".env"
+    env_file.write_text("")
+
+    from app.config import Settings
+
+    s = Settings(_env_file=str(env_file))
+    assert s.google_cloud_project_id is None
+    assert s.mistral_api_key is None
+
+
 def test_settings_ignores_unrelated_env_file_keys(monkeypatch, tmp_path):
     """Settings should ignore extra keys that share the developer .env file."""
     monkeypatch.delenv("SONIOX_API_KEY", raising=False)
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     monkeypatch.delenv("RECORD_SESSIONS", raising=False)
     monkeypatch.delenv("SONIOX_STOP_TIMEOUT_SECONDS", raising=False)
-
+    monkeypatch.delenv("LOGFIRE_READ_TOKEN", raising=False)
+    monkeypatch.delenv("DEEPINFRA_API_KEY", raising=False)
     env_file = tmp_path / ".env"
     env_file.write_text(
         "\n".join(
