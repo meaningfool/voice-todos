@@ -76,8 +76,8 @@ async def _relay_soniox_to_browser(
 
                 if result.has_endpoint:
                     await extraction_loop.on_endpoint()
-                elif result.final_token_count > 0:
-                    extraction_loop.on_tokens(result.final_token_count)
+                elif result.transcript_changed:
+                    extraction_loop.on_transcript_changed()
         except websockets.ConnectionClosed:
             logger.warning("Soniox connection closed unexpectedly during relay")
         except Exception as e:

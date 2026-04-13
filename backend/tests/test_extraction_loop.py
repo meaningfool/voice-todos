@@ -21,7 +21,7 @@ async def _trigger_endpoint(loop: ExtractionLoop) -> None:
 
 
 async def _trigger_token_threshold(loop: ExtractionLoop) -> None:
-    loop.on_tokens(3)
+    loop.on_transcript_changed()
     await _wait_for_background(loop)
 
 
@@ -34,7 +34,7 @@ async def _trigger_stop(loop: ExtractionLoop) -> None:
     ("trigger_reason", "trigger"),
     [
         ("endpoint", _trigger_endpoint),
-        ("token_threshold", _trigger_token_threshold),
+        ("transcript_threshold", _trigger_token_threshold),
         ("stop", _trigger_stop),
     ],
 )
@@ -42,7 +42,12 @@ async def test_extraction_cycle_span_includes_expected_attributes(
     trigger_reason: str,
     trigger,
 ):
-    transcript = TranscriptAccumulator(final_parts=["Buy milk"])
+    transcript_text = (
+        "Buy milk tomorrow"
+        if trigger_reason == "transcript_threshold"
+        else "Buy milk"
+    )
+    transcript = TranscriptAccumulator(final_parts=[transcript_text])
     extract_fn = AsyncMock(return_value=[Todo(text="Buy milk")])
     send_fn = AsyncMock()
     loop = ExtractionLoop(
@@ -62,7 +67,7 @@ async def test_extraction_cycle_span_includes_expected_attributes(
     _, kwargs = mock_span.call_args
     assert kwargs["_span_name"] == "extraction_cycle"
     assert kwargs["trigger_reason"] == trigger_reason
-    assert kwargs["transcript_length"] == len("Buy milk")
+    assert kwargs["transcript_length"] == len(transcript_text)
     assert kwargs["previous_todo_count"] == 0
 
 
@@ -89,8 +94,8 @@ async def test_on_endpoint_triggers_extraction():
 
 
 @pytest.mark.asyncio
-async def test_on_tokens_triggers_extraction_when_threshold_is_reached():
-    transcript = TranscriptAccumulator(final_parts=["Buy milk"])
+async def test_on_transcript_changed_triggers_extraction_when_threshold_is_reached():
+    transcript = TranscriptAccumulator(final_parts=["Buy milk tomorrow"])
     extract_fn = AsyncMock(return_value=[Todo(text="Buy milk")])
     send_fn = AsyncMock()
     loop = ExtractionLoop(
@@ -100,16 +105,15 @@ async def test_on_tokens_triggers_extraction_when_threshold_is_reached():
         token_threshold=3,
     )
 
-    loop.on_tokens(2)
-    loop.on_tokens(1)
+    loop.on_transcript_changed()
     await _wait_for_background(loop)
 
-    extract_fn.assert_awaited_once_with("Buy milk", previous_todos=None)
+    extract_fn.assert_awaited_once_with("Buy milk tomorrow", previous_todos=None)
     send_fn.assert_awaited_once_with([Todo(text="Buy milk")])
 
 
 @pytest.mark.asyncio
-async def test_on_tokens_below_threshold_does_not_trigger_extraction():
+async def test_on_transcript_changed_below_threshold_does_not_trigger_extraction():
     transcript = TranscriptAccumulator(final_parts=["Buy milk"])
     extract_fn = AsyncMock(return_value=[Todo(text="Buy milk")])
     send_fn = AsyncMock()
@@ -120,7 +124,7 @@ async def test_on_tokens_below_threshold_does_not_trigger_extraction():
         token_threshold=3,
     )
 
-    loop.on_tokens(2)
+    loop.on_transcript_changed()
     await asyncio.sleep(0)
 
     extract_fn.assert_not_awaited()
@@ -156,7 +160,7 @@ async def test_dirty_flag_collapses_multiple_triggers_into_one_rerun():
 
     transcript.final_parts.append(" and call mom")
     await loop.on_endpoint()
-    loop.on_tokens(3)
+    loop.on_transcript_changed()
     await loop.on_endpoint()
 
     release_first.set()
@@ -331,7 +335,7 @@ async def test_cancel_stops_in_flight_task_and_resets_state():
     await started.wait()
     task = loop._in_flight_task
 
-    loop.on_tokens(30)
+    loop.on_transcript_changed()
     loop.cancel()
 
     assert task is not None
@@ -340,7 +344,7 @@ async def test_cancel_stops_in_flight_task_and_resets_state():
 
     assert loop._in_flight_task is None
     assert loop._dirty is False
-    assert loop._tokens_since_last_extraction == 0
+    assert loop._last_successful_transcript is None
     assert loop._previous_todos == []
 
 
@@ -356,7 +360,7 @@ async def test_empty_transcript_skips_extraction():
     )
 
     await loop.on_endpoint()
-    loop.on_tokens(30)
+    loop.on_transcript_changed()
     await asyncio.sleep(0)
     await loop.on_stop()
 

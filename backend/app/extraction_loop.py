@@ -26,7 +26,6 @@ class ExtractionLoop:
         self._token_threshold = token_threshold
 
         self._previous_todos: list[Todo] = []
-        self._tokens_since_last_extraction = 0
         self._dirty = False
         self._stopping = False
         self._generation = 0
@@ -36,13 +35,11 @@ class ExtractionLoop:
     async def on_endpoint(self) -> None:
         self._trigger_background_extraction(trigger_reason="endpoint")
 
-    def on_tokens(self, count: int) -> None:
-        if count <= 0:
-            return
-
-        self._tokens_since_last_extraction += count
-        if self._tokens_since_last_extraction >= self._token_threshold:
-            self._trigger_background_extraction(trigger_reason="token_threshold")
+    def on_transcript_changed(self) -> None:
+        if self._transcript_growth_since_last_extraction() >= self._token_threshold:
+            self._trigger_background_extraction(trigger_reason="transcript_threshold")
+        elif self._in_flight_task is not None and not self._in_flight_task.done():
+            self._dirty = True
 
     async def on_stop(self) -> None:
         self._stopping = True
@@ -65,7 +62,6 @@ class ExtractionLoop:
         self._in_flight_task = None
         self._dirty = False
         self._stopping = False
-        self._tokens_since_last_extraction = 0
         self._previous_todos = []
         self._last_successful_transcript = None
 
@@ -99,6 +95,13 @@ class ExtractionLoop:
                 )
 
                 if self._stopping or generation != self._generation or not self._dirty:
+                    return
+
+                if (
+                    trigger_reason == "transcript_threshold"
+                    and self._transcript_growth_since_last_extraction()
+                    < self._token_threshold
+                ):
                     return
         except asyncio.CancelledError:
             raise
@@ -146,7 +149,6 @@ class ExtractionLoop:
                 return False
 
             self._previous_todos = list(todos)
-            self._tokens_since_last_extraction = 0
             self._last_successful_transcript = transcript_text
             return True
         except asyncio.CancelledError:
@@ -160,3 +162,9 @@ class ExtractionLoop:
 
     def _transcript_text(self) -> str:
         return self._transcript.full_text
+
+    def _transcript_growth_since_last_extraction(self) -> int:
+        baseline = 0
+        if self._last_successful_transcript is not None:
+            baseline = len(self._last_successful_transcript.split())
+        return self._transcript.full_token_count - baseline

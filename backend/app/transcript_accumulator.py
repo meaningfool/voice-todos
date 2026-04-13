@@ -12,6 +12,7 @@ class TranscriptAccumulatorResult:
     has_fin: bool
     has_endpoint: bool
     final_token_count: int
+    transcript_changed: bool
 
 
 @dataclass
@@ -58,6 +59,7 @@ class TranscriptAccumulator:
         )
 
     def apply_stt_event(self, event: SttEvent) -> TranscriptAccumulatorResult:
+        previous_full_text = self.full_text
         has_fin = event.finalization_state is BoundaryState.OBSERVED
         has_endpoint = event.endpoint_state is BoundaryState.OBSERVED
         tokens = [
@@ -93,6 +95,7 @@ class TranscriptAccumulator:
             has_fin=has_fin,
             has_endpoint=has_endpoint,
             final_token_count=final_token_count,
+            transcript_changed=self.full_text != previous_full_text,
         )
 
     @property
@@ -106,3 +109,7 @@ class TranscriptAccumulator:
     @property
     def full_text(self) -> str:
         return self.stable_text + self.provisional_text
+
+    @property
+    def full_token_count(self) -> int:
+        return len(self.full_text.split())

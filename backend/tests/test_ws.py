@@ -611,13 +611,21 @@ def test_ws_stop_requests_final_transcript_before_end_of_stream():
 
 
 class _FakeSttSession:
-    def __init__(self, events=None, *, final_transcript_text=None, capabilities=None):
+    def __init__(
+        self,
+        events=None,
+        *,
+        final_transcript_text=None,
+        capabilities=None,
+        per_event_delay: float = 0.0,
+    ):
         self._events = list(events or [])
         self.capabilities = capabilities or SttCapabilities(
             exposes_finalization_boundary=True,
             exposes_endpoint_boundary=True,
         )
         self.final_transcript_text = final_transcript_text
+        self._per_event_delay = per_event_delay
         self.send_audio = AsyncMock()
         self.request_final_transcript = AsyncMock()
         self.end_stream = AsyncMock()
@@ -626,6 +634,8 @@ class _FakeSttSession:
 
     async def _iterate(self):
         for event in self._events:
+            if self._per_event_delay > 0:
+                await asyncio.sleep(self._per_event_delay)
             yield event
 
     def __aiter__(self):
@@ -927,6 +937,187 @@ def test_mistral_transcript_state_acceptance():
         "type": "stopped",
         "transcript": "Buy milk tomorrow",
     }
+
+
+def test_threshold_trigger_acceptance():
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy ", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            ),
+            SttEvent(
+                tokens=[SttToken(text="milk ", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            ),
+            SttEvent(
+                tokens=[SttToken(text="tomorrow", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            ),
+        ],
+        final_transcript_text="Buy milk tomorrow",
+        capabilities=SttCapabilities(
+            exposes_finalization_boundary=False,
+            exposes_endpoint_boundary=False,
+        ),
+        per_event_delay=0.02,
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+
+    with (
+        patch(
+            "app.ws.get_settings",
+            return_value=_settings(
+                stt_provider="mistral",
+                mistral_api_key="mistral-test-key",
+            ),
+        ),
+        patch("app.ws.TOKEN_THRESHOLD", 3),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ),
+        patch(
+            "app.ws.extract_todos",
+            new_callable=AsyncMock,
+            return_value=[],
+        ) as mock_extract,
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            assert ws.receive_json()["type"] == "transcript"
+            assert mock_extract.await_count == 0
+
+            assert ws.receive_json()["type"] == "transcript"
+            assert mock_extract.await_count == 0
+
+            assert ws.receive_json()["type"] == "transcript"
+            assert ws.receive_json() == {"type": "todos", "items": []}
+
+            ws.send_json({"type": "stop"})
+            assert ws.receive_json() == {"type": "todos", "items": []}
+            assert ws.receive_json()["type"] == "stopped"
+
+    assert mock_extract.await_count == 1
+
+
+def test_unchanged_final_transcript_acceptance():
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy milk tomorrow", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            )
+        ],
+        final_transcript_text="Buy milk tomorrow",
+        capabilities=SttCapabilities(
+            exposes_finalization_boundary=False,
+            exposes_endpoint_boundary=False,
+        ),
+        per_event_delay=0.01,
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+
+    with (
+        patch(
+            "app.ws.get_settings",
+            return_value=_settings(
+                stt_provider="mistral",
+                mistral_api_key="mistral-test-key",
+            ),
+        ),
+        patch("app.ws.TOKEN_THRESHOLD", 3),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ),
+        patch(
+            "app.ws.extract_todos",
+            new_callable=AsyncMock,
+            return_value=[],
+        ) as mock_extract,
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            assert ws.receive_json()["type"] == "transcript"
+            assert ws.receive_json() == {"type": "todos", "items": []}
+            ws.send_json({"type": "stop"})
+
+            assert ws.receive_json() == {"type": "todos", "items": []}
+            assert ws.receive_json() == {
+                "type": "stopped",
+                "transcript": "Buy milk tomorrow",
+            }
+
+    assert mock_extract.await_count == 1
+
+
+def test_changed_final_transcript_acceptance():
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy milk", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            )
+        ],
+        final_transcript_text="Buy milk tomorrow",
+        capabilities=SttCapabilities(
+            exposes_finalization_boundary=False,
+            exposes_endpoint_boundary=False,
+        ),
+        per_event_delay=0.01,
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+
+    with (
+        patch(
+            "app.ws.get_settings",
+            return_value=_settings(
+                stt_provider="mistral",
+                mistral_api_key="mistral-test-key",
+            ),
+        ),
+        patch("app.ws.TOKEN_THRESHOLD", 2),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ),
+        patch(
+            "app.ws.extract_todos",
+            new_callable=AsyncMock,
+            return_value=[],
+        ) as mock_extract,
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            assert ws.receive_json()["type"] == "transcript"
+            assert ws.receive_json() == {"type": "todos", "items": []}
+            ws.send_json({"type": "stop"})
+
+            assert ws.receive_json() == {"type": "todos", "items": []}
+            assert ws.receive_json() == {
+                "type": "stopped",
+                "transcript": "Buy milk tomorrow",
+            }
+
+    assert mock_extract.await_count == 2
 
 
 def test_ws_stop_timeout_skips_extraction_and_surfaces_warning():
