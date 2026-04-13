@@ -41,7 +41,7 @@ async def create_stt_session(
     )
 
 
-async def _relay_soniox_to_browser(
+async def _relay_stt_to_browser(
     stt_session: SttSession,
     browser_ws: WebSocket,
     transcript: TranscriptAccumulator,
@@ -50,13 +50,13 @@ async def _relay_soniox_to_browser(
     *,
     finalized_event: asyncio.Event,
 ):
-    """Read transcript events from Soniox and forward to browser."""
-    soniox_event_count = 0
+    """Read transcript events from the configured STT provider and forward them."""
+    stt_event_count = 0
     browser_relay_count = 0
-    with logfire.span("ws.soniox_relay") as relay_span:
+    with logfire.span("ws.stt_relay") as relay_span:
         try:
             async for event in stt_session:
-                soniox_event_count += 1
+                stt_event_count += 1
 
                 if event.is_finished:
                     return
@@ -76,16 +76,16 @@ async def _relay_soniox_to_browser(
 
                 if result.has_endpoint:
                     await extraction_loop.on_endpoint()
-                elif result.final_token_count > 0:
-                    extraction_loop.on_tokens(result.final_token_count)
+                elif result.transcript_changed:
+                    extraction_loop.on_transcript_changed()
         except websockets.ConnectionClosed:
-            logger.warning("Soniox connection closed unexpectedly during relay")
+            logger.warning("STT connection closed unexpectedly during relay")
         except Exception as e:
-            logger.exception("Error relaying from Soniox")
+            logger.exception("Error relaying from STT provider")
             with contextlib.suppress(Exception):
                 await browser_ws.send_json({"type": "error", "message": str(e)})
         finally:
-            relay_span.set_attribute("soniox_event_count", soniox_event_count)
+            relay_span.set_attribute("stt_event_count", stt_event_count)
             relay_span.set_attribute("browser_relay_count", browser_relay_count)
 
 
@@ -173,9 +173,10 @@ async def websocket_endpoint(browser_ws: WebSocket):
                         if recorder:
                             recorder.stop()
 
-                        # Open Soniox connection
+                        provider_name = settings.stt_provider
+                        # Open the configured STT provider connection
                         try:
-                            ws_phase = "connecting_to_soniox"
+                            ws_phase = "connecting_to_stt"
                             if recorder:
                                 recorder.start()
                             stt_session = await create_stt_session(
@@ -192,7 +193,7 @@ async def websocket_endpoint(browser_ws: WebSocket):
                                 token_threshold=TOKEN_THRESHOLD,
                             )
                             relay_task = asyncio.create_task(
-                                _relay_soniox_to_browser(
+                                _relay_stt_to_browser(
                                     stt_session,
                                     browser_ws,
                                     transcript,
@@ -204,7 +205,9 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             ws_phase = "sending_started"
                             await browser_ws.send_json({"type": "started"})
                         except Exception as e:
-                            logger.exception("Failed to connect to Soniox")
+                            logger.exception(
+                                "Failed to connect to %s STT provider", provider_name
+                            )
                             if extraction_loop is not None:
                                 extraction_loop.cancel()
                                 extraction_loop = None
@@ -213,7 +216,9 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             await browser_ws.send_json(
                                 {
                                     "type": "error",
-                                    "message": f"Soniox connection failed: {e}",
+                                    "message": (
+                                        f"{provider_name} connection failed: {e}"
+                                    ),
                                 }
                             )
 
@@ -239,7 +244,7 @@ async def websocket_endpoint(browser_ws: WebSocket):
                                 "todos were not extracted."
                             )
                             logger.warning(
-                                "Timed out waiting for Soniox finalization to finish"
+                                "Timed out waiting for the final transcript to finish"
                             )
                             if relay_task and not relay_task.done():
                                 relay_task.cancel()
@@ -247,7 +252,14 @@ async def websocket_endpoint(browser_ws: WebSocket):
                                     await relay_task
                                 relay_task = None
 
-                        full_transcript = transcript.full_text
+                        full_transcript = (
+                            stt_session.final_transcript_text
+                            if stt_session.final_transcript_text is not None
+                            else transcript.full_text
+                        )
+                        if stt_session.final_transcript_text is not None:
+                            transcript.final_parts = [full_transcript]
+                            transcript.interim_parts.clear()
                         logger.info(
                             "Transcript (%d chars): %s",
                             len(full_transcript),

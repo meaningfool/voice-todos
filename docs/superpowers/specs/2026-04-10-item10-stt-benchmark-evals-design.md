@@ -1,4 +1,4 @@
-# Item 9 Design: STT Benchmark Evals
+# Item 10 Design: STT Benchmark Evals
 
 Scope: define the dedicated STT benchmark track for comparing dedicated
 speech-to-text providers on the same recorded audio corpus using the benchmark
@@ -11,7 +11,7 @@ compare dedicated transcription candidates on the same recorded audio without
 mixing that work into production backend code or into downstream extraction
 quality.
 
-Item 8 creates the production abstraction seam. Item 9 uses that seam to define
+Item 8 creates the production abstraction seam. Item 10 uses that seam to define
 the actual STT benchmark we want to run.
 
 ## Goals
@@ -55,7 +55,7 @@ the actual STT benchmark we want to run.
 ### 1. STT eval-owned data and orchestration live in top-level `evals/`
 
 Item 7 moved canonical eval data and orchestration out of `backend/evals/`.
-Item 9 should follow that architecture directly.
+Item 10 should follow that architecture directly.
 
 Target shape:
 
@@ -187,7 +187,7 @@ Per-case STT result records should include:
 The benchmark report's headline metric should be WER, but latency and capability
 differences should remain first-class outputs rather than hidden footnotes.
 
-### 6. Item 9 should build on Item 8, not bypass it
+### 6. Item 10 should build on Item 8, not bypass it
 
 The STT benchmark should reuse the production-adjacent provider abstraction from
 Item 8 wherever practical.
@@ -201,7 +201,7 @@ It also avoids maintaining two unrelated notions of what an STT provider is.
 
 ## Relationship To Extraction Evals
 
-- Item 9 answers which STT path gives the best transcript quality and speed
+- Item 10 answers which STT path gives the best transcript quality and speed
 - Item 6 answers which LLM best converts a finalized transcript into todos
 - end-to-end stack trials can happen later after both tracks are independently
   measured

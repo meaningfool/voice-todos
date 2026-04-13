@@ -1,8 +1,8 @@
-# Item 9: STT Benchmark Evals Implementation Plan
+# Item 10: STT Benchmark Evals Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Spec:** `docs/superpowers/specs/2026-04-10-item9-stt-benchmark-evals-design.md`
+**Spec:** `docs/superpowers/specs/2026-04-10-item10-stt-benchmark-evals-design.md`
 
 **Goal:** Add a repeatable benchmark-first STT eval harness so we can compare Soniox, Google Cloud Speech-to-Text `chirp_3`, and Voxtral on the same recorded audio fixtures using WER and speed as the main outputs.
 

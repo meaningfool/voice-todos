@@ -14,7 +14,9 @@ from app.ws import TOKEN_THRESHOLD
 
 def _settings(**overrides):
     base = {
+        "stt_provider": "soniox",
         "soniox_api_key": "soniox-test-key",
+        "mistral_api_key": None,
         "record_sessions": False,
         "soniox_stop_timeout_seconds": 30.0,
     }
@@ -113,6 +115,32 @@ def test_ws_start_surfaces_connect_errors():
             response = ws.receive_json()
             assert response["type"] == "error"
             assert "boom" in response["message"]
+
+
+def test_ws_mistral_start_surfaces_mistral_connect_error():
+    with (
+        patch(
+            "app.ws.get_settings",
+            return_value=_settings(
+                stt_provider="mistral",
+                mistral_api_key="mistral-test-key",
+            ),
+        ),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(side_effect=RuntimeError("boom")),
+            create=True,
+        ),
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            response = ws.receive_json()
+
+    assert response == {
+        "type": "error",
+        "message": "mistral connection failed: boom",
+    }
 
 
 def test_ws_stop_without_start():
@@ -234,7 +262,7 @@ def test_ws_stop_sends_todos_before_stopped():
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
         patch(
-            "app.ws._relay_soniox_to_browser",
+            "app.ws._relay_stt_to_browser",
             side_effect=relay_with_finalized_transcript,
         ),
         patch("app.ws.extract_todos", new_callable=AsyncMock, return_value=mock_todos),
@@ -293,7 +321,7 @@ def test_ws_stop_emits_stop_timing_events():
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
         patch(
-            "app.ws._relay_soniox_to_browser",
+            "app.ws._relay_stt_to_browser",
             side_effect=relay_with_finalized_transcript,
         ),
         patch("app.ws.extract_todos", new_callable=AsyncMock, return_value=[]),
@@ -370,7 +398,7 @@ def test_ws_stop_uses_finalized_transcript_for_final_pass():
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
         patch(
-            "app.ws._relay_soniox_to_browser",
+            "app.ws._relay_stt_to_browser",
             side_effect=relay_with_finalized_transcript,
         ),
         patch(
@@ -415,7 +443,7 @@ def test_ws_stop_surfaces_final_extraction_failure():
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
         patch(
-            "app.ws._relay_soniox_to_browser",
+            "app.ws._relay_stt_to_browser",
             side_effect=relay_with_finalized_transcript,
         ),
         patch(
@@ -460,7 +488,7 @@ def test_ws_stop_reuses_latest_snapshot_without_rerunning_final_extraction():
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
         patch(
-            "app.ws._relay_soniox_to_browser",
+            "app.ws._relay_stt_to_browser",
             side_effect=relay_with_finalized_transcript,
         ),
         patch(
@@ -543,7 +571,7 @@ def test_ws_stop_waits_for_fin_not_finished():
     with (
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
-        patch("app.ws._relay_soniox_to_browser", side_effect=relay_with_fin),
+        patch("app.ws._relay_stt_to_browser", side_effect=relay_with_fin),
         patch(
             "app.ws.extract_todos",
             new_callable=AsyncMock,
@@ -586,7 +614,7 @@ def test_ws_stop_requests_final_transcript_before_end_of_stream():
         patch("app.ws.get_settings", return_value=_settings()),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
         patch(
-            "app.ws._relay_soniox_to_browser",
+            "app.ws._relay_stt_to_browser",
             side_effect=relay_with_finalized_transcript,
         ),
         patch("app.ws.extract_todos", new_callable=AsyncMock, return_value=[]),
@@ -609,12 +637,21 @@ def test_ws_stop_requests_final_transcript_before_end_of_stream():
 
 
 class _FakeSttSession:
-    def __init__(self, events=None):
+    def __init__(
+        self,
+        events=None,
+        *,
+        final_transcript_text=None,
+        capabilities=None,
+        per_event_delay: float = 0.0,
+    ):
         self._events = list(events or [])
-        self.capabilities = SttCapabilities(
+        self.capabilities = capabilities or SttCapabilities(
             exposes_finalization_boundary=True,
             exposes_endpoint_boundary=True,
         )
+        self.final_transcript_text = final_transcript_text
+        self._per_event_delay = per_event_delay
         self.send_audio = AsyncMock()
         self.request_final_transcript = AsyncMock()
         self.end_stream = AsyncMock()
@@ -623,6 +660,8 @@ class _FakeSttSession:
 
     async def _iterate(self):
         for event in self._events:
+            if self._per_event_delay > 0:
+                await asyncio.sleep(self._per_event_delay)
             yield event
 
     def __aiter__(self):
@@ -701,6 +740,412 @@ def test_ws_maps_stop_actions_through_provider_session():
     fake_session.wait_for_final_transcript.assert_awaited_once()
 
 
+def test_ws_stop_uses_session_final_transcript_text_for_extraction_and_payload():
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy milk", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            )
+        ],
+        final_transcript_text="Buy milk tomorrow",
+        capabilities=SttCapabilities(
+            exposes_finalization_boundary=False,
+            exposes_endpoint_boundary=False,
+        ),
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+    extract_todos = AsyncMock(return_value=[Todo(text="Buy milk tomorrow")])
+
+    with (
+        patch("app.ws.get_settings", return_value=_settings(stt_provider="mistral")),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ),
+        patch("app.ws.extract_todos", new=extract_todos),
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            ws.send_json({"type": "stop"})
+
+            transcript_msg = ws.receive_json()
+            todos_msg = ws.receive_json()
+            stopped_msg = ws.receive_json()
+
+    assert transcript_msg == {
+        "type": "transcript",
+        "tokens": [{"text": "Buy milk", "is_final": True}],
+    }
+    extract_todos.assert_awaited_once_with("Buy milk tomorrow", previous_todos=None)
+    assert todos_msg["type"] == "todos"
+    assert stopped_msg == {
+        "type": "stopped",
+        "transcript": "Buy milk tomorrow",
+    }
+
+
+def test_ws_mistral_configured_session_streams_and_stops_with_final_done_text():
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy milk", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            )
+        ],
+        final_transcript_text="Buy milk tomorrow",
+        capabilities=SttCapabilities(
+            exposes_finalization_boundary=False,
+            exposes_endpoint_boundary=False,
+        ),
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+
+    with (
+        patch(
+            "app.ws.get_settings",
+            return_value=_settings(
+                stt_provider="mistral",
+                mistral_api_key="mistral-test-key",
+            ),
+        ),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ),
+        patch(
+            "app.ws.extract_todos",
+            new_callable=AsyncMock,
+            return_value=[],
+        ),
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            ws.send_json({"type": "stop"})
+
+            transcript_msg = ws.receive_json()
+            todos_msg = ws.receive_json()
+            stopped_msg = ws.receive_json()
+
+    assert transcript_msg == {
+        "type": "transcript",
+        "tokens": [{"text": "Buy milk", "is_final": True}],
+    }
+    assert todos_msg == {"type": "todos", "items": []}
+    assert stopped_msg == {
+        "type": "stopped",
+        "transcript": "Buy milk tomorrow",
+    }
+
+
+def test_soniox_transcript_state_acceptance():
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="buy mi", is_final=False)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.NOT_OBSERVED,
+            ),
+            SttEvent(
+                tokens=[SttToken(text="buy milk ", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.NOT_OBSERVED,
+            ),
+        ],
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+
+    with (
+        patch("app.ws.get_settings", return_value=_settings()),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ),
+        patch("app.ws.extract_todos", new_callable=AsyncMock, return_value=[]),
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            ws.send_json({"type": "stop"})
+
+            first_transcript = ws.receive_json()
+            second_transcript = ws.receive_json()
+            todos_msg = ws.receive_json()
+            stopped_msg = ws.receive_json()
+
+    assert first_transcript == {
+        "type": "transcript",
+        "tokens": [{"text": "buy mi", "is_final": False}],
+    }
+    assert second_transcript == {
+        "type": "transcript",
+        "tokens": [{"text": "buy milk ", "is_final": True}],
+    }
+    assert todos_msg == {"type": "todos", "items": []}
+    assert stopped_msg == {
+        "type": "stopped",
+        "transcript": "buy milk ",
+    }
+
+
+def test_mistral_transcript_state_acceptance():
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy milk", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            ),
+            SttEvent(
+                tokens=[SttToken(text=" tomorrow", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            ),
+        ],
+        final_transcript_text="Buy milk tomorrow",
+        capabilities=SttCapabilities(
+            exposes_finalization_boundary=False,
+            exposes_endpoint_boundary=False,
+        ),
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+
+    with (
+        patch(
+            "app.ws.get_settings",
+            return_value=_settings(
+                stt_provider="mistral",
+                mistral_api_key="mistral-test-key",
+            ),
+        ),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ),
+        patch("app.ws.extract_todos", new_callable=AsyncMock, return_value=[]),
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            ws.send_json({"type": "stop"})
+
+            first_transcript = ws.receive_json()
+            second_transcript = ws.receive_json()
+            todos_msg = ws.receive_json()
+            stopped_msg = ws.receive_json()
+
+    assert first_transcript == {
+        "type": "transcript",
+        "tokens": [{"text": "Buy milk", "is_final": True}],
+    }
+    assert second_transcript == {
+        "type": "transcript",
+        "tokens": [{"text": " tomorrow", "is_final": True}],
+    }
+    assert todos_msg == {"type": "todos", "items": []}
+    assert stopped_msg == {
+        "type": "stopped",
+        "transcript": "Buy milk tomorrow",
+    }
+
+
+def test_threshold_trigger_acceptance():
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy ", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            ),
+            SttEvent(
+                tokens=[SttToken(text="milk ", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            ),
+            SttEvent(
+                tokens=[SttToken(text="tomorrow", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            ),
+        ],
+        final_transcript_text="Buy milk tomorrow",
+        capabilities=SttCapabilities(
+            exposes_finalization_boundary=False,
+            exposes_endpoint_boundary=False,
+        ),
+        per_event_delay=0.02,
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+
+    with (
+        patch(
+            "app.ws.get_settings",
+            return_value=_settings(
+                stt_provider="mistral",
+                mistral_api_key="mistral-test-key",
+            ),
+        ),
+        patch("app.ws.TOKEN_THRESHOLD", 3),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ),
+        patch(
+            "app.ws.extract_todos",
+            new_callable=AsyncMock,
+            return_value=[],
+        ) as mock_extract,
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            assert ws.receive_json()["type"] == "transcript"
+            assert mock_extract.await_count == 0
+
+            assert ws.receive_json()["type"] == "transcript"
+            assert mock_extract.await_count == 0
+
+            assert ws.receive_json()["type"] == "transcript"
+            assert ws.receive_json() == {"type": "todos", "items": []}
+
+            ws.send_json({"type": "stop"})
+            assert ws.receive_json() == {"type": "todos", "items": []}
+            assert ws.receive_json()["type"] == "stopped"
+
+    assert mock_extract.await_count == 1
+
+
+def test_unchanged_final_transcript_acceptance():
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy milk tomorrow", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            )
+        ],
+        final_transcript_text="Buy milk tomorrow",
+        capabilities=SttCapabilities(
+            exposes_finalization_boundary=False,
+            exposes_endpoint_boundary=False,
+        ),
+        per_event_delay=0.01,
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+
+    with (
+        patch(
+            "app.ws.get_settings",
+            return_value=_settings(
+                stt_provider="mistral",
+                mistral_api_key="mistral-test-key",
+            ),
+        ),
+        patch("app.ws.TOKEN_THRESHOLD", 3),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ),
+        patch(
+            "app.ws.extract_todos",
+            new_callable=AsyncMock,
+            return_value=[],
+        ) as mock_extract,
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            assert ws.receive_json()["type"] == "transcript"
+            assert ws.receive_json() == {"type": "todos", "items": []}
+            ws.send_json({"type": "stop"})
+
+            assert ws.receive_json() == {"type": "todos", "items": []}
+            assert ws.receive_json() == {
+                "type": "stopped",
+                "transcript": "Buy milk tomorrow",
+            }
+
+    assert mock_extract.await_count == 1
+
+
+def test_changed_final_transcript_acceptance():
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy milk", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            )
+        ],
+        final_transcript_text="Buy milk tomorrow",
+        capabilities=SttCapabilities(
+            exposes_finalization_boundary=False,
+            exposes_endpoint_boundary=False,
+        ),
+        per_event_delay=0.01,
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+
+    with (
+        patch(
+            "app.ws.get_settings",
+            return_value=_settings(
+                stt_provider="mistral",
+                mistral_api_key="mistral-test-key",
+            ),
+        ),
+        patch("app.ws.TOKEN_THRESHOLD", 2),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ),
+        patch(
+            "app.ws.extract_todos",
+            new_callable=AsyncMock,
+            return_value=[],
+        ) as mock_extract,
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            assert ws.receive_json()["type"] == "transcript"
+            assert ws.receive_json() == {"type": "todos", "items": []}
+            ws.send_json({"type": "stop"})
+
+            assert ws.receive_json() == {"type": "todos", "items": []}
+            assert ws.receive_json() == {
+                "type": "stopped",
+                "transcript": "Buy milk tomorrow",
+            }
+
+    assert mock_extract.await_count == 2
+
+
 def test_ws_stop_timeout_skips_extraction_and_surfaces_warning():
     """A finalize timeout returns a warning instead of silent partial extraction."""
     relay_cancelled = asyncio.Event()
@@ -727,7 +1172,7 @@ def test_ws_stop_timeout_skips_extraction_and_surfaces_warning():
             return_value=_settings(soniox_stop_timeout_seconds=0.01),
         ),
         patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
-        patch("app.ws._relay_soniox_to_browser", side_effect=slow_relay),
+        patch("app.ws._relay_stt_to_browser", side_effect=slow_relay),
         patch("app.ws.extract_todos", new_callable=AsyncMock) as mock_extract,
     ):
         mock_connect.return_value = _mock_soniox(messages=[])

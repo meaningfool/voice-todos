@@ -86,6 +86,10 @@ class SonioxSession(SttSession):
     def capabilities(self) -> SttCapabilities:
         return SONIOX_CAPABILITIES
 
+    @property
+    def final_transcript_text(self) -> str | None:
+        return None
+
     async def send_audio(self, chunk: bytes) -> None:
         await self._ws.send(chunk)
 

@@ -14,3 +14,8 @@ Research is conversational. For each topic, we go through the questions one by o
 - **Transcript Token Lifecycle** (topic 2) — `research/item1-transcript-lifecycle.md`
 - **WebSocket Connections** (topics 3 & 4) — `research/item1-websocket-architectures.md`
 
+## Item 9: Mistral Live STT
+
+### Completed
+
+- **Realtime Streaming Strategy** — `research/item9-mistral-streaming-strategy.md`
