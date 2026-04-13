@@ -4,6 +4,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+set -a && source .env.dev 2>/dev/null && set +a
+
 BACKEND_PORT="${BACKEND_PORT:-${CONDUCTOR_PORT:-8000}}"
 FRONTEND_PORT="${FRONTEND_PORT:-$((BACKEND_PORT + 1))}"
 

@@ -7,28 +7,7 @@ from typing import Any
 
 import logfire
 
-BACKEND_ROOT = Path(__file__).resolve().parents[1]
-BACKEND_ENV_PATH = BACKEND_ROOT / ".env"
-
-
-def _read_backend_env_var(name: str) -> str | None:
-    value = os.getenv(name)
-    if value:
-        return value
-
-    if not BACKEND_ENV_PATH.exists():
-        return None
-
-    for line in BACKEND_ENV_PATH.read_text().splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#") or "=" not in stripped:
-            continue
-        key, raw_value = stripped.split("=", 1)
-        if key.strip() != name:
-            continue
-        return raw_value.strip().strip('"').strip("'")
-
-    return None
+from app.backend_env import BACKEND_ROOT, read_backend_env_var
 
 
 def _logfire_data_dir() -> Path:
@@ -52,23 +31,25 @@ def _read_logfire_credentials_field(name: str) -> Any | None:
 
 
 def has_logfire_write_credentials() -> bool:
-    if _read_backend_env_var("LOGFIRE_TOKEN"):
+    if read_backend_env_var("LOGFIRE_TOKEN"):
         return True
     return (_logfire_data_dir() / "logfire_credentials.json").exists()
 
 
 def get_logfire_read_token() -> str | None:
-    return _read_backend_env_var("LOGFIRE_READ_TOKEN")
+    return read_backend_env_var("LOGFIRE_READ_TOKEN")
 
 
 def get_logfire_project_name() -> str | None:
-    return _read_backend_env_var("LOGFIRE_PROJECT") or _read_logfire_credentials_field(
-        "project_name"
+    return (
+        read_backend_env_var("LOGFIRE_PROJECT_NAME")
+        or read_backend_env_var("LOGFIRE_PROJECT")
+        or _read_logfire_credentials_field("project_name")
     )
 
 
 def get_logfire_api_url() -> str | None:
-    return _read_backend_env_var("LOGFIRE_API_URL") or _read_logfire_credentials_field(
+    return read_backend_env_var("LOGFIRE_API_URL") or _read_logfire_credentials_field(
         "logfire_api_url"
     )
 
@@ -78,7 +59,7 @@ def configure_logfire(
     service_name: str = "voice-todos-backend",
     instrument_pydantic_ai: bool = False,
 ) -> None:
-    logfire_token = _read_backend_env_var("LOGFIRE_TOKEN")
+    logfire_token = read_backend_env_var("LOGFIRE_TOKEN")
     logfire.configure(
         service_name=service_name,
         send_to_logfire="if-token-present",

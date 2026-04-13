@@ -41,7 +41,7 @@ Use Logfire to:
 
 ## Files
 
-- `todo_extraction_v1.json`: canonical transcript-only dataset
+- `../../evals/datasets/extraction/todo_extraction_v1.json`: canonical transcript-only dataset
 - `dataset_loader.py`: dataset loader
 - `evaluators.py`: evaluator definitions
 - `experiment_configs.py`: named experiment registry
@@ -116,22 +116,26 @@ results.
 
 ## Benchmark Workflow
 
-For curated multi-run comparisons, use the benchmark manifests under
-`backend/evals/benchmarks/`.
+For curated comparisons, use the repo-root benchmark definitions under
+`evals/benchmarks/`.
 
-Start with:
+Key files:
 
-- `backend/evals/benchmarks/README.md`
-- `backend/evals/benchmarks/todo_extraction_model_smoke_v1.json`
+- `../evals/benchmarks/extraction_llm_matrix_v1.yaml`
+- `../evals/datasets/extraction/todo_extraction_v1.json`
 
-The benchmark CLI lets you:
+Primary commands:
 
-- attach existing `experiment_run_id`s
-- launch benchmark coordinates and append successful runs to the manifest
-- inspect coverage and gaps
-- generate a stable report from attached runs
+```bash
+cd backend && uv run python ../evals/cli.py benchmark list
+cd backend && uv run python ../evals/cli.py benchmark show extraction_llm_matrix_v1
+cd backend && uv run python ../evals/cli.py benchmark run extraction_llm_matrix_v1
+cd backend && uv run python ../evals/cli.py benchmark report extraction_llm_matrix_v1
+```
 
-Benchmark membership lives in the manifest, not in experiment metadata.
+The benchmark definition owns comparison intent. Tracked experiment metadata
+stays benchmark-agnostic, and benchmark state is reconstructed from execution
+history rather than attached benchmark membership.
 
 ## Network Note
 

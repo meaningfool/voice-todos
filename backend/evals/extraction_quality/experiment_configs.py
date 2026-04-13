@@ -1,37 +1,14 @@
 from __future__ import annotations
 
 import importlib
-import os
 from dataclasses import dataclass
-from pathlib import Path
 
+from app.backend_env import read_backend_env_var
 from app.extract import ExtractionConfig, get_extraction_prompt_ref
-
-_BACKEND_ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
-
-
-def _read_backend_env_var(name: str) -> str | None:
-    value = os.getenv(name)
-    if value:
-        return value
-
-    if not _BACKEND_ENV_PATH.exists():
-        return None
-
-    for line in _BACKEND_ENV_PATH.read_text().splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#") or "=" not in stripped:
-            continue
-        key, raw_value = stripped.split("=", 1)
-        if key.strip() != name:
-            continue
-        return raw_value.strip().strip('"').strip("'")
-
-    return None
 
 
 def _google_unavailable_reason() -> str | None:
-    if _read_backend_env_var("GEMINI_API_KEY"):
+    if read_backend_env_var("GEMINI_API_KEY"):
         return None
     return "missing GEMINI_API_KEY"
 
@@ -43,7 +20,7 @@ def _mistral_unavailable_reason() -> str | None:
     except Exception as exc:
         return f"mistral provider unavailable: {exc}"
 
-    if _read_backend_env_var("MISTRAL_API_KEY"):
+    if read_backend_env_var("MISTRAL_API_KEY"):
         return None
 
     return "missing MISTRAL_API_KEY"
@@ -56,7 +33,7 @@ def _deepinfra_unavailable_reason() -> str | None:
     except Exception as exc:
         return f"deepinfra provider unavailable: {exc}"
 
-    if _read_backend_env_var("DEEPINFRA_API_KEY"):
+    if read_backend_env_var("DEEPINFRA_API_KEY"):
         return None
 
     return "missing DEEPINFRA_API_KEY"
@@ -184,3 +161,50 @@ EXPERIMENTS: dict[str, ExperimentDefinition] = {
         thinking_mode="structured_output_tuned",
     ),
 }
+
+
+def experiment_definition_from_entry_config(
+    *,
+    experiment_name_hint: str,
+    provider: str,
+    model_name: str,
+    prompt_version: str,
+    model_settings: dict[str, object] | None = None,
+) -> ExperimentDefinition:
+    legacy = EXPERIMENTS.get(experiment_name_hint)
+    if legacy is not None:
+        same_config = (
+            legacy.provider == provider
+            and legacy.extraction_config.model_name == model_name
+            and legacy.extraction_config.prompt_version == prompt_version
+            and legacy.extraction_config.model_settings == (model_settings or {})
+        )
+        if same_config:
+            return legacy
+
+    resolved_model_settings = dict(model_settings or {})
+    if provider == "google-gla":
+        extraction_provider = None
+        if resolved_model_settings.get("google_thinking_config", {}).get(
+            "thinking_level"
+        ) == "minimal":
+            thinking_mode = "minimal"
+        elif resolved_model_settings:
+            thinking_mode = "custom"
+        else:
+            thinking_mode = "provider_default"
+    else:
+        extraction_provider = provider
+        thinking_mode = "provider_default" if not resolved_model_settings else "custom"
+
+    return ExperimentDefinition(
+        name=experiment_name_hint,
+        extraction_config=ExtractionConfig(
+            model_name=model_name,
+            provider=extraction_provider,
+            model_settings=resolved_model_settings,
+            prompt_version=prompt_version,
+        ),
+        provider=provider,
+        thinking_mode=thinking_mode,
+    )
