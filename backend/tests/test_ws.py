@@ -812,6 +812,123 @@ def test_ws_mistral_configured_session_streams_and_stops_with_final_done_text():
     }
 
 
+def test_soniox_transcript_state_acceptance():
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="buy mi", is_final=False)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.NOT_OBSERVED,
+            ),
+            SttEvent(
+                tokens=[SttToken(text="buy milk ", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.NOT_OBSERVED,
+            ),
+        ],
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+
+    with (
+        patch("app.ws.get_settings", return_value=_settings()),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ),
+        patch("app.ws.extract_todos", new_callable=AsyncMock, return_value=[]),
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            ws.send_json({"type": "stop"})
+
+            first_transcript = ws.receive_json()
+            second_transcript = ws.receive_json()
+            todos_msg = ws.receive_json()
+            stopped_msg = ws.receive_json()
+
+    assert first_transcript == {
+        "type": "transcript",
+        "tokens": [{"text": "buy mi", "is_final": False}],
+    }
+    assert second_transcript == {
+        "type": "transcript",
+        "tokens": [{"text": "buy milk ", "is_final": True}],
+    }
+    assert todos_msg == {"type": "todos", "items": []}
+    assert stopped_msg == {
+        "type": "stopped",
+        "transcript": "buy milk ",
+    }
+
+
+def test_mistral_transcript_state_acceptance():
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy milk", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            ),
+            SttEvent(
+                tokens=[SttToken(text=" tomorrow", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            ),
+        ],
+        final_transcript_text="Buy milk tomorrow",
+        capabilities=SttCapabilities(
+            exposes_finalization_boundary=False,
+            exposes_endpoint_boundary=False,
+        ),
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+
+    with (
+        patch(
+            "app.ws.get_settings",
+            return_value=_settings(
+                stt_provider="mistral",
+                mistral_api_key="mistral-test-key",
+            ),
+        ),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ),
+        patch("app.ws.extract_todos", new_callable=AsyncMock, return_value=[]),
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            ws.send_json({"type": "stop"})
+
+            first_transcript = ws.receive_json()
+            second_transcript = ws.receive_json()
+            todos_msg = ws.receive_json()
+            stopped_msg = ws.receive_json()
+
+    assert first_transcript == {
+        "type": "transcript",
+        "tokens": [{"text": "Buy milk", "is_final": True}],
+    }
+    assert second_transcript == {
+        "type": "transcript",
+        "tokens": [{"text": " tomorrow", "is_final": True}],
+    }
+    assert todos_msg == {"type": "todos", "items": []}
+    assert stopped_msg == {
+        "type": "stopped",
+        "transcript": "Buy milk tomorrow",
+    }
+
+
 def test_ws_stop_timeout_skips_extraction_and_surfaces_warning():
     """A finalize timeout returns a warning instead of silent partial extraction."""
     relay_cancelled = asyncio.Event()

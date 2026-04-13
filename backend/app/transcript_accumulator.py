@@ -96,8 +96,13 @@ class TranscriptAccumulator:
         )
 
     @property
+    def stable_text(self) -> str:
+        return "".join(self.final_parts)
+
+    @property
+    def provisional_text(self) -> str:
+        return "".join(self.interim_parts)
+
+    @property
     def full_text(self) -> str:
-        transcript = "".join(self.final_parts)
-        if self.interim_parts:
-            transcript += "".join(self.interim_parts)
-        return transcript
+        return self.stable_text + self.provisional_text
