@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+from app.stt_soniox import translate_soniox_event
 from app.transcript_accumulator import TranscriptAccumulator
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -37,7 +38,7 @@ def _accumulate_transcript(messages: list[dict]) -> str:
     for event in messages:
         if event.get("finished"):
             break
-        accumulator.apply_event(event)
+        accumulator.apply_stt_event(translate_soniox_event(event))
     return accumulator.full_text
 
 

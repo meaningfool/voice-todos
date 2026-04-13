@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from app.stt import BoundaryState, SttEvent, SttToken
+
 
 @dataclass(slots=True)
 class TranscriptAccumulatorResult:
@@ -22,17 +24,45 @@ class TranscriptAccumulator:
         self.interim_parts.clear()
 
     def apply_event(self, event: dict[str, Any]) -> TranscriptAccumulatorResult:
-        raw_tokens = [
-            token
-            for token in event.get("tokens", [])
-            if isinstance(token, dict) and isinstance(token.get("text"), str)
-        ]
-        has_fin = any(token["text"] == "<fin>" for token in raw_tokens)
-        has_endpoint = any(token["text"] == "<end>" for token in raw_tokens)
+        raw_tokens = []
+        has_fin = False
+        has_endpoint = False
+        for token in event.get("tokens", []):
+            if not isinstance(token, dict) or not isinstance(token.get("text"), str):
+                continue
+            text = token["text"]
+            if text == "<fin>":
+                has_fin = True
+                continue
+            if text == "<end>":
+                has_endpoint = True
+                continue
+            raw_tokens.append(
+                SttToken(text=text, is_final=bool(token.get("is_final", False)))
+            )
+        return self.apply_stt_event(
+            SttEvent(
+                tokens=raw_tokens,
+                finalization_state=(
+                    BoundaryState.OBSERVED
+                    if has_fin
+                    else BoundaryState.NOT_OBSERVED
+                ),
+                endpoint_state=(
+                    BoundaryState.OBSERVED
+                    if has_endpoint
+                    else BoundaryState.NOT_OBSERVED
+                ),
+                is_finished=bool(event.get("finished")),
+            )
+        )
+
+    def apply_stt_event(self, event: SttEvent) -> TranscriptAccumulatorResult:
+        has_fin = event.finalization_state is BoundaryState.OBSERVED
+        has_endpoint = event.endpoint_state is BoundaryState.OBSERVED
         tokens = [
-            token
-            for token in raw_tokens
-            if token["text"] not in {"<fin>", "<end>"}
+            {"text": token.text, "is_final": token.is_final}
+            for token in event.tokens
         ]
         final_token_count = sum(1 for token in tokens if token.get("is_final", False))
 

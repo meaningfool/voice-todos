@@ -1,3 +1,4 @@
+from app.stt import BoundaryState, SttEvent, SttToken
 from app.transcript_accumulator import TranscriptAccumulator
 
 
@@ -108,3 +109,20 @@ class TestApplyEvent:
 
         assert accumulator.interim_parts == []
         assert accumulator.full_text == "buy milk "
+
+    def test_apply_stt_event_accepts_normalized_provider_events(self):
+        """Normalized STT events drive the same accumulator semantics."""
+        accumulator = TranscriptAccumulator()
+
+        result = accumulator.apply_stt_event(
+            SttEvent(
+                tokens=[SttToken(text="hello ", is_final=True)],
+                finalization_state=BoundaryState.OBSERVED,
+                endpoint_state=BoundaryState.OBSERVED,
+            )
+        )
+
+        assert accumulator.full_text == "hello "
+        assert result.has_fin is True
+        assert result.has_endpoint is True
+        assert result.final_token_count == 1

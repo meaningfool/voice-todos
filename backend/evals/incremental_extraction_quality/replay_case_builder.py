@@ -7,6 +7,7 @@ from typing import Any
 
 from app.extraction_thresholds import EXTRACTION_TOKEN_THRESHOLD
 from app.models import Todo
+from app.stt_soniox import translate_soniox_event
 from app.transcript_accumulator import TranscriptAccumulator
 from evals.incremental_extraction_quality.models import ReplayCase, ReplayStep
 from evals.incremental_extraction_quality.provider_trace_adapters.soniox import (
@@ -135,7 +136,7 @@ def _derive_terminal_transcript(messages: list[dict[str, Any]]) -> str:
     for event in messages:
         if event.get("finished"):
             break
-        transcript.apply_event(event)
+        transcript.apply_stt_event(translate_soniox_event(event))
     return transcript.full_text
 
 

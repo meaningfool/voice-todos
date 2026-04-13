@@ -8,6 +8,7 @@ from starlette.testclient import TestClient
 from app.extraction_thresholds import EXTRACTION_TOKEN_THRESHOLD
 from app.main import app
 from app.models import Todo
+from app.stt import BoundaryState, SttCapabilities, SttEvent, SttToken
 from app.ws import TOKEN_THRESHOLD
 
 
@@ -564,6 +565,140 @@ def test_ws_stop_waits_for_fin_not_finished():
         assert todos_msg["type"] == "todos"
         assert todos_msg["items"][0]["text"] == "Buy groceries"
         assert stopped_msg["type"] == "stopped"
+
+
+def test_ws_stop_requests_final_transcript_before_end_of_stream():
+    """Stop preserves the current Soniox finalize-then-EOS ordering."""
+
+    async def relay_with_finalized_transcript(
+        _soniox_ws,
+        _browser_ws,
+        transcript,
+        _extraction_loop,
+        _recorder=None,
+        *,
+        finalized_event,
+    ):
+        transcript.final_parts.append("Buy groceries. ")
+        finalized_event.set()
+
+    with (
+        patch("app.ws.get_settings", return_value=_settings()),
+        patch("app.ws.websockets.connect", new_callable=AsyncMock) as mock_connect,
+        patch(
+            "app.ws._relay_soniox_to_browser",
+            side_effect=relay_with_finalized_transcript,
+        ),
+        patch("app.ws.extract_todos", new_callable=AsyncMock, return_value=[]),
+    ):
+        mock_soniox = _mock_soniox(messages=[])
+        mock_connect.return_value = mock_soniox
+
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            ws.send_json({"type": "stop"})
+            assert ws.receive_json() == {"type": "todos", "items": []}
+            assert ws.receive_json()["type"] == "stopped"
+
+        sends = mock_soniox.send.await_args_list
+        assert sends[-2].args == (json.dumps({"type": "finalize"}),)
+        assert sends[-1].args == (b"",)
+
+
+class _FakeSttSession:
+    def __init__(self, events=None):
+        self._events = list(events or [])
+        self.capabilities = SttCapabilities(
+            exposes_finalization_boundary=True,
+            exposes_endpoint_boundary=True,
+        )
+        self.send_audio = AsyncMock()
+        self.request_final_transcript = AsyncMock()
+        self.end_stream = AsyncMock()
+        self.wait_for_final_transcript = AsyncMock()
+        self.close = AsyncMock()
+
+    async def _iterate(self):
+        for event in self._events:
+            yield event
+
+    def __aiter__(self):
+        return self._iterate()
+
+
+def test_ws_uses_configured_stt_provider_factory():
+    """Start should open the configured STT provider through the factory seam."""
+    fake_session = _FakeSttSession()
+
+    with (
+        patch("app.ws.get_settings", return_value=_settings()),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ) as mock_create_stt_session,
+        patch(
+            "app.ws.websockets.connect",
+            new_callable=AsyncMock,
+            side_effect=AssertionError("websocket transport should be hidden"),
+        ),
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+        mock_create_stt_session.assert_awaited_once()
+
+
+def test_ws_maps_stop_actions_through_provider_session():
+    """Stop should use the app-level STT session actions, not Soniox transport calls."""
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy groceries. ", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.NOT_OBSERVED,
+            )
+        ]
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+
+    with (
+        patch("app.ws.get_settings", return_value=_settings()),
+        patch(
+            "app.ws.create_stt_session",
+            new=AsyncMock(return_value=fake_session),
+            create=True,
+        ),
+        patch(
+            "app.ws.websockets.connect",
+            new_callable=AsyncMock,
+            side_effect=AssertionError("websocket transport should be hidden"),
+        ),
+        patch(
+            "app.ws.extract_todos",
+            new_callable=AsyncMock,
+            return_value=[Todo(text="Buy groceries")],
+        ),
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            ws.send_json({"type": "stop"})
+
+            assert ws.receive_json()["type"] == "transcript"
+            assert ws.receive_json()["type"] == "todos"
+            assert ws.receive_json()["type"] == "stopped"
+
+    fake_session.request_final_transcript.assert_awaited_once()
+    fake_session.end_stream.assert_awaited_once()
+    fake_session.wait_for_final_transcript.assert_awaited_once()
 
 
 def test_ws_stop_timeout_skips_extraction_and_surfaces_warning():

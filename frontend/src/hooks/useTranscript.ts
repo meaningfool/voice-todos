@@ -125,8 +125,12 @@ export function useTranscript() {
       wsRef.current = ws;
 
       await new Promise<void>((resolve, reject) => {
-        ws.onopen = () => resolve();
-        ws.onerror = () => reject(new Error("WebSocket connection failed"));
+        ws.onopen = () => {
+          resolve();
+        };
+        ws.onerror = () => {
+          reject(new Error("WebSocket connection failed"));
+        };
       });
 
       ws.onmessage = (event) => {
