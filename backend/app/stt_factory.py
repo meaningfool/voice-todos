@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from app.stt import SttSession
+from app.stt_mistral import connect_mistral
 from app.stt_soniox import connect_soniox
 
 
@@ -19,7 +20,7 @@ async def create_stt_session(
         if not api_key:
             raise ValueError("Mistral API key is required")
         if connect_mistral_fn is None:
-            raise ValueError("Mistral connector is not configured")
+            connect_mistral_fn = connect_mistral
         return await connect_mistral_fn(api_key)
 
     if provider != "soniox":

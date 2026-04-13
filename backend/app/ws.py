@@ -247,7 +247,14 @@ async def websocket_endpoint(browser_ws: WebSocket):
                                     await relay_task
                                 relay_task = None
 
-                        full_transcript = transcript.full_text
+                        full_transcript = (
+                            stt_session.final_transcript_text
+                            if stt_session.final_transcript_text is not None
+                            else transcript.full_text
+                        )
+                        if stt_session.final_transcript_text is not None:
+                            transcript.final_parts = [full_transcript]
+                            transcript.interim_parts.clear()
                         logger.info(
                             "Transcript (%d chars): %s",
                             len(full_transcript),

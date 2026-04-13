@@ -58,3 +58,23 @@ async def test_create_stt_session_rejects_mistral_without_api_key():
 
     with pytest.raises(ValueError, match="Mistral API key is required"):
         await create_stt_session(settings, connect_mistral_fn=AsyncMock())
+
+
+@pytest.mark.asyncio
+async def test_create_stt_session_constructs_real_mistral_session_when_configured(
+    monkeypatch,
+):
+    settings = SimpleNamespace(
+        stt_provider="mistral",
+        mistral_api_key="mistral-test-key",
+        soniox_api_key="unused",
+    )
+    fake_session = object()
+    connect_mistral = AsyncMock(return_value=fake_session)
+
+    monkeypatch.setattr("app.stt_factory.connect_mistral", connect_mistral)
+
+    session = await create_stt_session(settings)
+
+    assert session is fake_session
+    connect_mistral.assert_awaited_once_with("mistral-test-key")
