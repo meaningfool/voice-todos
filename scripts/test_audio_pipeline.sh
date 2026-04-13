@@ -73,25 +73,24 @@ echo "  Injected"
 
 # 5. Click Start
 echo "Clicking Start..."
-agent-browser snapshot -i > /dev/null 2>&1
-agent-browser click @e2 > /dev/null 2>&1
+agent-browser eval "document.querySelector('[data-status] button')?.click(); 'clicked'" > /dev/null 2>&1
 
 # Wait for recording state
 echo "  Waiting for recording state..."
 for i in $(seq 1 10); do
   sleep 1
-  BUTTON=$(agent-browser snapshot -i 2>&1 | grep -o 'button "[^"]*"' | head -1)
-  if [[ "$BUTTON" == *"Stop"* ]]; then
+  STATE=$(agent-browser eval "document.querySelector('[data-status]')?.dataset.status ?? 'missing'" 2>&1 | tr -d '"')
+  if [[ "$STATE" == "recording" ]]; then
     echo "  Recording started"
     break
   fi
-  if [[ "$BUTTON" == *"Start"* ]]; then
-    echo "FAIL: Connection failed — button went back to Start"
+  if [[ "$STATE" == "idle" ]]; then
+    echo "FAIL: Connection failed — status returned to idle"
     agent-browser close > /dev/null 2>&1
     exit 1
   fi
   if [ "$i" -eq 10 ]; then
-    echo "FAIL: Timed out waiting for Stop button, got: $BUTTON"
+    echo "FAIL: Timed out waiting for recording state, got: $STATE"
     agent-browser close > /dev/null 2>&1
     exit 1
   fi
@@ -103,21 +102,20 @@ sleep "$RECORD_SECONDS"
 
 # 7. Click Stop
 echo "Clicking Stop..."
-agent-browser snapshot -i > /dev/null 2>&1
-agent-browser click @e2 > /dev/null 2>&1
+agent-browser eval "document.querySelector('[data-status] button')?.click(); 'clicked'" > /dev/null 2>&1
 echo "  Stop clicked"
 
 # 8. Wait for idle
 echo "Waiting for extraction to complete..."
 for i in $(seq 1 30); do
   sleep 1
-  SNAPSHOT=$(agent-browser snapshot -i 2>&1)
-  if echo "$SNAPSHOT" | grep -q '"Start"'; then
+  STATE=$(agent-browser eval "document.querySelector('[data-status]')?.dataset.status ?? 'missing'" 2>&1 | tr -d '"')
+  if [[ "$STATE" == "idle" ]]; then
     echo "  Back to idle after ${i}s"
     break
   fi
   if [ "$i" -eq 30 ]; then
-    echo "FAIL: Timed out waiting for idle state"
+    echo "FAIL: Timed out waiting for idle state, got: $STATE"
     agent-browser close > /dev/null 2>&1
     exit 1
   fi

@@ -58,3 +58,30 @@ def test_settings_loads_gemini_key(monkeypatch, tmp_path):
 
     s = Settings(_env_file=str(env_file))
     assert s.gemini_api_key == "gemini-test-key"
+
+
+def test_settings_ignores_unrelated_env_file_keys(monkeypatch, tmp_path):
+    """Settings should ignore extra keys that share the developer .env file."""
+    monkeypatch.delenv("SONIOX_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("RECORD_SESSIONS", raising=False)
+    monkeypatch.delenv("SONIOX_STOP_TIMEOUT_SECONDS", raising=False)
+
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "SONIOX_API_KEY=test-key-123",
+                "GEMINI_API_KEY=gemini-key-456",
+                "DEEPINFRA_API_KEY=ignored",
+                "LOGFIRE_READ_TOKEN=ignored",
+                "MISTRAL_API_KEY=ignored",
+            ]
+        )
+    )
+
+    from app.config import Settings
+
+    s = Settings(_env_file=str(env_file))
+    assert s.soniox_api_key == "test-key-123"
+    assert s.gemini_api_key == "gemini-key-456"
