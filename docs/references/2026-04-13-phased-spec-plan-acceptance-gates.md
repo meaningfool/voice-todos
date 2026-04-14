@@ -1,14 +1,24 @@
-# Phased Specs And Plans: Acceptance Gates
+# Building Phased Specs And Plans With Acceptance Criteria
 
-This note defines how phased specs and phased plans must be written in this
-repo.
+This note defines how phased specs and phased plans should be written in this
+repo, and how acceptance criteria, acceptance tests, and verification tests
+relate to phase completion.
 
 ## Core Principle
 
 A phase is defined by a behavioral change, not by an implementation chunk.
 
 Each phase must introduce one coherent behavioral delta that can be judged on
-its own. A phase is complete only when its acceptance gates pass.
+its own.
+
+The judgment that a phase is complete, also known as its definition of done,
+happens through acceptance criteria.
+
+Acceptance criteria are hard for that phase:
+
+- the next phase must not begin until the current phase's acceptance criteria
+  are implemented and verified
+- acceptance criteria define when the phase is actually done
 
 ## Definitions
 
@@ -18,19 +28,36 @@ its own. A phase is complete only when its acceptance gates pass.
 
 `Behavioral delta`
 - The externally observable behavior introduced by the phase.
-- This must be phrased in system/product terms, not code-structure terms.
+- This must be phrased in system or product terms, not code-structure terms.
 
-`Acceptance gate`
-- A durable, scenario-based test that proves the behavioral delta introduced by
-  the phase works in a realistic flow.
-- Acceptance gates define completion.
-- If an acceptance gate is red, the phase is not complete.
+`Acceptance criteria`
+- The human-readable conditions that define when a phase's behavioral delta is
+  done.
+- A phase may have multiple acceptance criteria.
+- More than about three acceptance criteria is usually a signal that the phase
+  is too large or mixes multiple behavioral changes.
+
+`Acceptance test`
+- The concrete automated proof that an acceptance criterion is met.
+- An acceptance test captures part of the current behavioral contract of the
+  app.
+- In phased work, acceptance tests are the tests that prove the current phase
+  is complete.
+- The spec and plan are the source of truth for which tests count as
+  acceptance tests for a given change.
+- The usual mapping is one acceptance criterion to one acceptance test,
+  although a single criterion may sometimes need two or three tests to prove it
+  well.
+- A single acceptance test should generally not be used as the proof for
+  multiple acceptance criteria. If that starts happening, the criteria or the
+  test boundary should be reconsidered.
 
 `Verification test`
-- Any unit, integration, replay, or helper test that supports implementation
-  confidence.
-- Verification tests are useful and often necessary, but they do not define
-  phase completion.
+- Any unit, integration, replay, seam, helper, or regression test that
+  improves implementation confidence.
+- Verification tests are often necessary, but they do not by themselves define
+  done unless the spec or plan explicitly names them as acceptance tests for
+  that behavior.
 
 ## Requirements For Specs
 
@@ -45,85 +72,215 @@ For each phase, a spec must explicitly define:
 3. `Non-goals`
 - What this phase does not attempt to change.
 
-4. `Acceptance gates`
-- The minimal durable scenarios that prove the behavioral delta of the phase.
-- These are hard gates.
+4. `Acceptance criteria`
+- The human-readable conditions that define done for this phase.
+- These should be phrased in behavior terms, not implementation steps.
+- A phase may have multiple criteria, but the list should stay small enough
+  that a human can quickly judge what success means.
 
-5. `Supporting verification`
-- Useful lower-level tests that help implementation but do not define
-  completion.
-
-6. `Phase boundary rule`
-- The next phase must not begin until all current-phase acceptance gates pass.
+5. `Acceptance tests`
+- The tests intended to prove the acceptance criteria.
+- The spec should identify the expected test ownership and location as
+  concretely as possible.
+- The spec should make it clear which acceptance criteria those tests are meant
+  to prove.
+- The mapping should usually be one criterion to one test, with exceptions
+  called out explicitly when a criterion needs multiple tests.
+- When known, name the suite, file path, and test name or command that will
+  prove the behavior.
+- If exact identifiers are not final yet, the spec must still identify the
+  expected harness and subsystem clearly enough that the plan can pin them
+  down.
 
 ## Requirements For Plans
 
 For each phase, a plan must include:
 
 1. Tasks that implement only that phase's behavioral delta.
-2. Supporting verification tasks.
-3. Exact commands or procedures for the phase acceptance gates.
-4. An explicit checkpoint stating that the next phase must not begin until all
-   current-phase acceptance gates pass.
+2. Supporting verification tasks and tests that help development confidence but
+   are not the phase's definition of done.
+3. Exact commands or procedures for the acceptance tests that prove the phase.
+4. An explicit checkpoint stating that the next phase must not begin until the
+   current phase's acceptance criteria are implemented and verified.
 
-Plans must not blur implementation tasks, verification work, and acceptance
-completion.
+Plans must not blur implementation tasks, supporting verification work, and
+acceptance completion.
 
-## Acceptance Gate Requirements
+## Acceptance Criteria And Acceptance Tests
 
-A good acceptance gate must be:
+Acceptance criteria and acceptance tests serve different purposes and should be
+written differently.
+
+Acceptance criteria define the human judgment of done.
+
+Acceptance tests provide the concrete automated proof for that judgment.
+
+Acceptance criteria and acceptance tests should remain traceable to each other.
+
+The default shape is:
+
+- one acceptance criterion
+- one acceptance test that proves it
+
+Sometimes a criterion needs more than one acceptance test. That is acceptable
+when the behavior cannot be proved credibly by a single test.
+
+A single acceptance test should generally not be stretched across multiple
+acceptance criteria. If one test appears to satisfy several criteria, that is
+usually a sign that the criteria are too broad or that the proof should be
+split into clearer tests.
+
+### Good Acceptance Criteria
+
+Good acceptance criteria are:
 
 `Phase-specific`
-- It proves the behavior introduced in that phase, not unrelated behavior.
+- They describe the behavioral delta introduced by the phase, not unrelated
+  behavior.
+
+`Human-readable`
+- They are easy for a reviewer to read and use as an alignment tool.
 
 `Externally meaningful`
-- It validates observable outputs, protocol behavior, state transitions, or
-  live execution behavior.
+- They describe observable outputs, user-visible behavior, protocol behavior,
+  or state transitions.
 
 `Minimal`
-- Only enough scenarios to prove the phase's behavioral delta.
+- They are only numerous enough to define the phase's contract.
+
+### Good Acceptance Tests
+
+Good acceptance tests are:
+
+`Behavior-oriented`
+- They prove the intended behavior, not the implementation structure.
+
+`Smallest realistic proof`
+- They are the smallest tests that still prove the behavior credibly.
 
 `Durable`
-- It remains in the test suite after the phase is complete.
+- They remain useful as part of the regression surface after the phase lands.
 
 `Runnable`
-- It has a concrete scenario, concrete inputs, and concrete expected outcomes.
+- They have concrete inputs, concrete execution steps, and concrete expected
+  outcomes.
 
-`Hard-gated`
-- If it fails, the phase is incomplete.
+`Non-duplicative`
+- They should not create an "acceptance copy" of a test if an existing test
+  already provides the smallest realistic proof of the behavior.
 
-## What Acceptance Gates Are Not
+## Acceptance Is A Role, Not A Layer
 
-Acceptance gates are not:
+Acceptance is orthogonal to the test pyramid.
 
-- unit tests of helper functions
-- purely structural tests
+An acceptance test may live at different sizes or layers depending on what is
+required to prove the behavior:
+
+- a backend unit test
+- a backend integration test
+- a CLI-driven integration test
+- a browser-driven end-to-end test
+- a frontend test
+- a non-pytest automated live validation named explicitly in the spec or plan
+
+The test should live where it naturally belongs technically.
+
+Do not move a test into a special folder just because it is used as an
+acceptance test.
+
+If a backend integration test is the right proof, it should stay under the
+backend suite. If a browser flow is the right proof, it should live with the
+browser-facing harness. If a non-pytest automated validation is the right
+proof, it should live under a test-owned location such as `tests/live/`, not in
+`scripts/`.
+
+Acceptance status does not determine placement. Technical ownership and the
+best execution harness determine placement.
+
+## Maintaining Acceptance Coverage
+
+Acceptance tests are regular tests that, for a given behavior change, are
+identified as the behavioral contract that defines done.
+
+When intended behavior changes, the spec and plan should explicitly decide
+whether acceptance coverage for that behavior area needs to:
+
+- `update` an existing acceptance test
+- `replace` an existing acceptance test
+- `add` a new acceptance test
+- `split` an existing acceptance test into a smaller set of clearer behavioral
+  proofs
+- `remove` an obsolete acceptance test
+
+That decision should be made by stable behavior area, not by item number or
+phase number.
+
+Once a test is part of the acceptance coverage for a behavior area, later work
+should continue passing it unless the behavioral contract has intentionally
+changed and the spec or plan explicitly updates, replaces, or removes that
+coverage.
+
+The goal is a small, durable acceptance surface that reflects the current
+behavioral contract without growing by default for every change request.
+
+Avoid combinatorial explosion by choosing the smallest durable proof surface
+that still captures the real contract:
+
+- keep an existing broad acceptance test when it already proves the behavioral
+  contract that matters
+- prefer narrower acceptance or verification coverage for new seams,
+  integrations, or adapters when the broad behavior is already covered
+- split an acceptance test when one broad proof is no longer the clearest or
+  most maintainable way to represent the behavior
+- use one-off supporting verification when needed to validate a specific
+  combination without permanently expanding the acceptance surface
+
+Supporting verification should complement acceptance coverage, not mirror it.
+
+## What Acceptance Criteria And Acceptance Tests Are Not
+
+Acceptance criteria and acceptance tests are not:
+
+- implementation task lists
+- helper-level checks that do not prove user-visible or externally meaningful
+  behavior
+- purely structural assertions
 - implementation-detail assertions
-- broad regression checks unless the phase's behavioral delta is itself broad
+- broad regression sweeps unless the phase's behavioral delta is itself broad
 
-Those are verification tests, not acceptance gates.
+Those belong in implementation planning or supporting verification, not in the
+definition of done.
 
-## How Acceptance Gates Evolve
+## Naming Rules
 
-Acceptance gates are permanent regression assets.
+Do not name acceptance tests after temporary planning artifacts such as:
 
-Default rule:
-- earlier phase acceptance gates remain in the test suite
-- later phases must continue passing them
+- item numbers
+- phase numbers
+- one-off rollout labels
 
-Allowed exception:
-- if intended behavior changes, the spec must explicitly state that an earlier
-  acceptance gate is being replaced or revised
+Name them after the behavior or component they cover.
 
-Acceptance gates must not be throwaway scaffolding.
+Good examples:
 
-## Hard Rule
+- `test_first_run_creates_benchmark_lock`
+- `test_run_stops_when_hosted_dataset_has_drifted`
+- `test_run_requires_explicit_stale_handling`
 
-A phased spec or phased plan is incomplete if it does not state:
+Bad examples:
 
-- the behavioral delta of each phase
-- the acceptance gates for each phase
-- that the next phase cannot begin until the current phase's acceptance gates
-  pass
+- `test_item75_phase2`
+- `validate_item75_phase3`
 
-This rule is mandatory.
+## Review Rule For New Specs And Plans
+
+When writing or reviewing a spec or plan, check that it answers all of these:
+
+1. What is the behavioral delta of this phase or change?
+2. What are the acceptance criteria for that behavioral delta?
+3. Which tests prove those criteria?
+4. Where do those tests naturally belong?
+5. Is each acceptance test being updated, replaced, added, or removed?
+6. What supporting verification is needed beyond the acceptance tests?
+
+If those questions are not answered, the spec or plan is incomplete.
