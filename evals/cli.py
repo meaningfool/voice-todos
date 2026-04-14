@@ -18,9 +18,12 @@ from evals.storage import list_benchmark_ids, load_benchmark_by_id
 
 
 def run_benchmark(**kwargs):
-    from evals.run import run_benchmark as _run_benchmark
+    from evals.run import BenchmarkStaleError, run_benchmark as _run_benchmark
 
-    return asyncio.run(_run_benchmark(**kwargs))
+    try:
+        return asyncio.run(_run_benchmark(**kwargs))
+    except BenchmarkStaleError as exc:
+        return exc
 
 
 def report_benchmark(**kwargs):
@@ -41,6 +44,8 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("benchmark_id")
     run.add_argument("--all", action="store_true")
     run.add_argument("--dataset-path")
+    run.add_argument("--allow-stale", action="store_true")
+    run.add_argument("--rebase", action="store_true")
     run.add_argument("--allow-untracked", action="store_true")
     report = benchmark_sub.add_parser("report")
     report.add_argument("benchmark_id")
@@ -70,7 +75,12 @@ def main(argv: list[str] | None = None) -> int:
             all_entries=args.all,
             dataset_path=Path(args.dataset_path) if args.dataset_path else None,
             allow_untracked=args.allow_untracked,
+            allow_stale=args.allow_stale,
+            rebase=args.rebase,
         )
+        if isinstance(result, Exception):
+            print(str(result))
+            return 1
         if not result.executed_entry_ids:
             print("No entries executed.")
             return 0

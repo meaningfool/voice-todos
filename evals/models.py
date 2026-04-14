@@ -16,6 +16,16 @@ class DatasetDefinition(BaseModel):
     rows: list[DatasetRow]
 
 
+class BenchmarkLockMetadata(BaseModel):
+    benchmark_id: str
+    hosted_dataset: str
+    hosted_dataset_name: str | None = None
+    fetched_at: str
+    dataset_hash: str
+    hash_algorithm: str = "sha256"
+    case_count: int
+
+
 class BenchmarkEntry(BaseModel):
     id: str
     label: str
@@ -24,13 +34,18 @@ class BenchmarkEntry(BaseModel):
 
 class BenchmarkDefinition(BaseModel):
     benchmark_id: str
-    dataset: str
+    hosted_dataset: str
+    dataset_family: str
     focus: str
     headline_metric: str
     repeat: int
     task_retries: int
     max_concurrency: int
     entries: list[BenchmarkEntry]
+
+
+class LockedDatasetDefinition(DatasetDefinition):
+    benchmark_lock: BenchmarkLockMetadata = Field(alias="_benchmark_lock")
 
 
 class ResolvedEntryConfig(BaseModel):
@@ -80,7 +95,12 @@ class BenchmarkEntryState(BaseModel):
 
 class BenchmarkReport(BaseModel):
     benchmark_id: str
+    hosted_dataset: str
     focus: str
     headline_metric: str
+    active_lock_path: str | None = None
+    locked_dataset_hash: str | None = None
+    current_hosted_dataset_hash: str | None = None
+    stale: bool = False
     entries: list[BenchmarkEntryState] = Field(default_factory=list)
     missing_entry_ids: list[str] = Field(default_factory=list)

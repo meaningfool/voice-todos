@@ -10,6 +10,7 @@ def test_extraction_benchmark_definition_parses_required_fields():
     )
 
     assert benchmark.benchmark_id == "extraction_llm_matrix_v1"
+    assert benchmark.dataset_family == "extraction"
     assert benchmark.focus == "model"
     assert benchmark.headline_metric == "todo_count_match"
     assert benchmark.repeat >= 1

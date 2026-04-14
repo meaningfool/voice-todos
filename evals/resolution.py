@@ -8,11 +8,16 @@ from evals.common.experiment_metadata import config_fingerprint
 from evals.extraction_quality.experiment_configs import (
     experiment_definition_from_entry_config,
 )
+from evals.hosted_datasets import export_hosted_dataset
 from evals.models import (
     BenchmarkDefinition,
     BenchmarkEntry,
     EntryQuerySelector,
     ResolvedEntryConfig,
+)
+from evals.storage import (
+    load_benchmark_lock,
+    lock_from_exported_dataset,
 )
 
 
@@ -21,7 +26,7 @@ def resolve_entry_config(
     benchmark: BenchmarkDefinition,
     entry: BenchmarkEntry,
 ) -> ResolvedEntryConfig:
-    dataset_family = "replay" if "/replay/" in benchmark.dataset else "extraction"
+    dataset_family = benchmark.dataset_family
 
     return ResolvedEntryConfig(
         suite=(
@@ -43,7 +48,7 @@ def build_entry_query_selector(
     entry: BenchmarkEntry,
 ) -> EntryQuerySelector:
     resolved = resolve_entry_config(benchmark=benchmark, entry=entry)
-    dataset_path = Path(__file__).resolve().parents[1] / benchmark.dataset
+    dataset_bytes = _selector_dataset_bytes(benchmark)
     evaluator_path = _evaluator_path_for_suite(resolved.suite)
     experiment = experiment_definition_from_entry_config(
         experiment_name_hint=entry.id,
@@ -58,7 +63,7 @@ def build_entry_query_selector(
         entry_id=entry.id,
         label=entry.label,
         suite=resolved.suite,
-        dataset_sha=_sha256_bytes(dataset_path.read_bytes()),
+        dataset_sha=_sha256_bytes(dataset_bytes),
         evaluator_contract_sha=_sha256_bytes(evaluator_path.read_bytes()),
         model_name=resolved.model_name,
         prompt_sha=prompt_sha,
@@ -87,3 +92,17 @@ def _evaluator_path_for_suite(suite: str) -> Path:
 
 def _sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
+
+
+def _selector_dataset_bytes(benchmark: BenchmarkDefinition) -> bytes:
+    lock = load_benchmark_lock(benchmark.benchmark_id)
+    if lock is not None:
+        return lock.model_dump_json(by_alias=True, indent=2).encode()
+
+    exported = export_hosted_dataset(benchmark.hosted_dataset)
+    temporary_lock = lock_from_exported_dataset(
+        benchmark=benchmark,
+        exported=exported,
+        fetched_at="selector-preview",
+    )
+    return temporary_lock.model_dump_json(by_alias=True, indent=2).encode()

@@ -30,7 +30,8 @@ if [ -n "$ROOT_PATH" ]; then
 
   if [ ! -e "$ROOT_PATH/backend/.env" ]; then
     echo "Warning: shared backend/.env not found at $ROOT_PATH/backend/.env"
-    echo "Create it from backend/.env.example and add SONIOX_API_KEY / GEMINI_API_KEY."
+    echo "Create the shared backend/.env and add the required provider and Logfire credentials."
+    echo "See docs/references/2026-04-13-credential-storage-and-logfire-access.md."
   fi
 
   if [ ! -e "$ROOT_PATH/.codex/superpowers" ]; then

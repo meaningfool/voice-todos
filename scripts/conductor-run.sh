@@ -14,6 +14,7 @@ export FRONTEND_PORT
 
 if [ ! -f "backend/.env" ]; then
   echo "Warning: backend/.env is missing. The app will start, but live transcription will fail without API keys."
+  echo "See docs/references/2026-04-13-credential-storage-and-logfire-access.md."
 fi
 
 echo "Starting backend on http://localhost:$BACKEND_PORT"
