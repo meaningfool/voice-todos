@@ -58,10 +58,11 @@ def translate_mistral_event(raw_event: Mapping[str, Any] | Any) -> SttEvent:
 
 
 class MistralSession(SttSession):
-    def __init__(self, connection) -> None:
+    def __init__(self, connection, *, raw_event_callback=None) -> None:
         self._connection = connection
         self._final_transcript_event = asyncio.Event()
         self._final_transcript_text: str | None = None
+        self._raw_event_callback = raw_event_callback
 
     @property
     def capabilities(self) -> SttCapabilities:
@@ -89,6 +90,10 @@ class MistralSession(SttSession):
     async def _iter_events(self) -> AsyncIterator[SttEvent]:
         async for raw_event in self._connection.events():
             payload = _serialize_realtime_event(raw_event)
+            if self._raw_event_callback is not None:
+                self._raw_event_callback(
+                    payload if isinstance(raw_event, Mapping) else payload.copy()
+                )
             if payload.get("type") == "transcription.done":
                 text = payload.get("text")
                 self._final_transcript_text = text if isinstance(text, str) else None
@@ -105,6 +110,7 @@ async def connect_mistral(
     client_factory=Mistral,
     model: str = MISTRAL_MODEL,
     target_streaming_delay_ms: int | None = None,
+    raw_event_callback=None,
 ) -> MistralSession:
     client = client_factory(api_key=api_key)
     connection = await client.audio.realtime.connect(
@@ -112,4 +118,4 @@ async def connect_mistral(
         audio_format=models.AudioFormat(encoding="pcm_s16le", sample_rate=16000),
         target_streaming_delay_ms=target_streaming_delay_ms,
     )
-    return MistralSession(connection)
+    return MistralSession(connection, raw_event_callback=raw_event_callback)

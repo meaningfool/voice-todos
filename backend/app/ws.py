@@ -178,7 +178,7 @@ async def websocket_endpoint(browser_ws: WebSocket):
                         try:
                             ws_phase = "connecting_to_stt"
                             if recorder:
-                                recorder.start()
+                                recorder.start(provider_name=provider_name)
                             stt_session = await create_stt_session(
                                 settings,
                                 recorder=recorder,

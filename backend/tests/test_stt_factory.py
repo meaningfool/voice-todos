@@ -27,6 +27,26 @@ async def test_create_stt_session_routes_default_provider_to_soniox():
 
 
 @pytest.mark.asyncio
+async def test_create_stt_session_routes_soniox_messages_to_provider_recorder():
+    settings = SimpleNamespace(
+        soniox_api_key="soniox-test-key",
+    )
+    recorder = SimpleNamespace(write_provider_message=object())
+    connect_soniox = AsyncMock(return_value=object())
+
+    await create_stt_session(
+        settings,
+        recorder=recorder,
+        connect_soniox_fn=connect_soniox,
+    )
+
+    connect_soniox.assert_awaited_once_with(
+        "soniox-test-key",
+        raw_message_callback=recorder.write_provider_message,
+    )
+
+
+@pytest.mark.asyncio
 async def test_create_stt_session_routes_mistral_provider_to_mistral_connector():
     settings = SimpleNamespace(
         stt_provider="mistral",
@@ -44,8 +64,33 @@ async def test_create_stt_session_routes_mistral_provider_to_mistral_connector()
     )
 
     assert session is fake_session
-    connect_mistral.assert_awaited_once_with("mistral-test-key")
+    connect_mistral.assert_awaited_once_with(
+        "mistral-test-key",
+        raw_event_callback=None,
+    )
     connect_soniox.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_create_stt_session_routes_mistral_events_to_provider_recorder():
+    settings = SimpleNamespace(
+        stt_provider="mistral",
+        mistral_api_key="mistral-test-key",
+        soniox_api_key="unused",
+    )
+    recorder = SimpleNamespace(write_provider_message=object())
+    connect_mistral = AsyncMock(return_value=object())
+
+    await create_stt_session(
+        settings,
+        recorder=recorder,
+        connect_mistral_fn=connect_mistral,
+    )
+
+    connect_mistral.assert_awaited_once_with(
+        "mistral-test-key",
+        raw_event_callback=recorder.write_provider_message,
+    )
 
 
 @pytest.mark.asyncio
@@ -77,4 +122,7 @@ async def test_create_stt_session_constructs_real_mistral_session_when_configure
     session = await create_stt_session(settings)
 
     assert session is fake_session
-    connect_mistral.assert_awaited_once_with("mistral-test-key")
+    connect_mistral.assert_awaited_once_with(
+        "mistral-test-key",
+        raw_event_callback=None,
+    )

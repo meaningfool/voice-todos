@@ -27,6 +27,8 @@ if [ -n "$ROOT_PATH" ]; then
   link_shared_path "$ROOT_PATH/backend/.env" "backend/.env"
   link_shared_path "$ROOT_PATH/backend/.logfire" "backend/.logfire"
   link_shared_path "$ROOT_PATH/.codex/superpowers" ".codex/superpowers"
+  mkdir -p "$ROOT_PATH/sessions/recent" "sessions"
+  link_shared_path "$ROOT_PATH/sessions/recent" "sessions/recent"
 
   if [ ! -e "$ROOT_PATH/backend/.env" ]; then
     echo "Warning: shared backend/.env not found at $ROOT_PATH/backend/.env"

@@ -21,14 +21,20 @@ async def create_stt_session(
             raise ValueError("Mistral API key is required")
         if connect_mistral_fn is None:
             connect_mistral_fn = connect_mistral
-        return await connect_mistral_fn(api_key)
+        raw_event_callback = None
+        if recorder is not None:
+            raw_event_callback = recorder.write_provider_message
+        return await connect_mistral_fn(
+            api_key,
+            raw_event_callback=raw_event_callback,
+        )
 
     if provider != "soniox":
         raise ValueError(f"Unsupported STT provider: {provider}")
 
     raw_message_callback = None
     if recorder is not None:
-        raw_message_callback = recorder.write_soniox_message
+        raw_message_callback = recorder.write_provider_message
 
     return await connect_soniox_fn(
         settings.soniox_api_key,
