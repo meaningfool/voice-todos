@@ -20,6 +20,8 @@ frontend/dist/
 
 # Session recordings (recent are ephemeral; golden/ is committed)
 sessions/recent/
+!sessions/golden/
+!sessions/golden/**
 
 # Superpowers
 .superpowers/

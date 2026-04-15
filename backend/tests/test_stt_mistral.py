@@ -83,6 +83,27 @@ def test_mistral_session_exposes_final_transcript_accessor():
     assert session.final_transcript_text is None
 
 
+@pytest.mark.asyncio
+async def test_mistral_session_records_raw_events_through_callback():
+    recorded = []
+    connection = _FakeRealtimeConnection(
+        [
+            {"type": "session.created"},
+            {"type": "transcription.text.delta", "text": "Buy milk"},
+            {"type": "transcription.done", "text": "Buy milk tomorrow"},
+        ]
+    )
+    session = MistralSession(connection, raw_event_callback=recorded.append)
+
+    [event async for event in session]
+
+    assert recorded == [
+        {"type": "session.created"},
+        {"type": "transcription.text.delta", "text": "Buy milk"},
+        {"type": "transcription.done", "text": "Buy milk tomorrow"},
+    ]
+
+
 class _FakeRealtimeConnection:
     def __init__(self, events):
         self._events = list(events)

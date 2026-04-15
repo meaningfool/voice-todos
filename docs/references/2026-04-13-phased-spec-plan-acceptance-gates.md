@@ -148,6 +148,62 @@ Good acceptance criteria are:
 `Minimal`
 - They are only numerous enough to define the phase's contract.
 
+### Acceptance Criteria Traits
+
+Bad traits:
+
+- says what the system `accepts`, `maps`, `preserves`, or `is`, instead of
+  saying what happens
+- talks about hidden machinery instead of the thing the actor does or gets
+- describes a judgment in someone's head instead of a system output
+  - examples: `can understand`, `legible`, `readable`
+- uses vague scope words that are not defined in the sentence
+  - examples: `minimal`, `shared benchmark system`
+- uses passive phrasing that hides who is acting
+  - examples: `a benchmark can be declared`, `a recording can be added`
+- states what is no longer true instead of stating the new behavior positively
+  - example: `no longer assumes`
+- makes the criterion about a detail the actor does not care about directly
+  - examples: `lock artifact`, `target_streaming_delay_ms`
+
+Good traits:
+
+- starts from a clear actor and a clear action
+- names the concrete thing that comes out of the system
+  - examples: `get a report`, `writes audio.pcm`, `is visible from another worktree`
+- says what happens in plain words without requiring knowledge of the internals
+- states the new behavior positively
+- keeps the main criterion about the behavior, not about the plumbing
+- uses details only when they define the scope in a meaningful way
+- works as a short answer to: `What is newly possible after this phase?`
+- is easy to imagine proving with one test
+
+### Don't / Do
+
+- Don't: `The shared benchmark system accepts that STT benchmark as a valid benchmark definition.`
+- Do: `A developer can define a benchmark on the STT dataset.`
+
+- Don't: `Each Voxtral profile maps to an explicit target_streaming_delay_ms value.`
+- Do: `A developer can define a benchmark with the intended Voxtral delay profiles.`
+
+- Don't: `A developer can understand the Soniox-versus-Voxtral tradeoff from that comparison.`
+- Do: `Running the STT benchmark produces a report.`
+
+- Don't: `The comparison makes transcript quality and latency legible enough to judge the tradeoff.`
+- Do: `The report shows transcript quality and latency for each benchmark entry.`
+
+- Don't: `Recorded session layout no longer assumes Soniox is the only provider that matters for STT curation.`
+- Do: `Starting a recorded STT session writes a trace file named after the active provider.`
+
+- Don't: `A curated recording can be added to the STT dataset with its reviewed reference transcript.`
+- Do: `A developer can add a new STT case from an existing recording.`
+
+- Don't: `A benchmark can be declared on that STT dataset with Soniox and one named Voxtral profile.`
+- Do: `A developer can define a benchmark on the STT dataset.`
+
+- Don't: `A developer can prepare that benchmark for execution and get one lock artifact that still refers to the same curated STT cases.`
+- Do: `A developer can run the benchmark on the curated STT cases.`
+
 ### Good Acceptance Tests
 
 Good acceptance tests are:
