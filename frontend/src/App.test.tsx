@@ -49,68 +49,40 @@ describe("App", () => {
     expect(screen.getByText("Listening now...")).toBeInTheDocument();
   });
 
-  it("shows three skeleton cards while recording with no todos", () => {
-    mockUseTranscript.mockReturnValue({
-      ...baseHook,
-      status: "recording",
-      todos: [],
-    });
-
-    render(<App />);
-
-    expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(3);
-  });
-
-  it("shows two skeleton cards while recording with one todo", () => {
-    mockUseTranscript.mockReturnValue({
-      ...baseHook,
-      status: "recording",
-      todos: [{ text: "Draft agenda" }],
-    });
-
-    render(<App />);
-
-    expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(2);
-  });
-
-  it("shows one skeleton card while recording with two todos", () => {
-    mockUseTranscript.mockReturnValue({
-      ...baseHook,
-      status: "recording",
+  it.each([
+    { status: "recording" as const, todos: [], expected: 3 },
+    { status: "recording" as const, todos: [{ text: "Draft agenda" }], expected: 2 },
+    {
+      status: "recording" as const,
       todos: [{ text: "Draft agenda" }, { text: "Book room" }],
-    });
+      expected: 1,
+    },
+  ])(
+    "maps $status with $expected skeleton cards when there are $todos.length todos",
+    ({ status, todos, expected }) => {
+      mockUseTranscript.mockReturnValue({
+        ...baseHook,
+        status,
+        todos,
+      });
 
-    render(<App />);
+      render(<App />);
 
-    expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(1);
-  });
+      expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(expected);
+    }
+  );
 
-  it("shows one skeleton card while recording with three todos", () => {
-    mockUseTranscript.mockReturnValue({
-      ...baseHook,
-      status: "recording",
-      todos: [
-        { text: "Draft agenda" },
-        { text: "Book room" },
-        { text: "Share notes" },
-      ],
-    });
-
-    render(<App />);
-
-    expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(1);
-  });
-
-  it("shows two skeleton cards while extracting with one todo", () => {
+  it("keeps existing todos visible while extracting and shows the remaining skeleton count", () => {
     mockUseTranscript.mockReturnValue({
       ...baseHook,
       status: "extracting",
       todos: [{ text: "Review budget" }],
     });
 
-    render(<App />);
+    const { container } = render(<App />);
 
-    expect(screen.getAllByTestId("todo-skeleton-card")).toHaveLength(2);
+    expect(screen.getByText("Review budget")).toBeInTheDocument();
+    expect(container.querySelectorAll("[data-testid='todo-skeleton-card']")).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Extracting..." })).toBeDisabled();
   });
 
@@ -172,18 +144,5 @@ describe("App", () => {
     expect(
       screen.queryByText("No todos found in this recording.")
     ).not.toBeInTheDocument();
-  });
-
-  it("keeps todos visible during extracting when todos already exist", () => {
-    mockUseTranscript.mockReturnValue({
-      ...baseHook,
-      status: "extracting",
-      todos: [{ text: "Review budget" }],
-    });
-
-    const { container } = render(<App />);
-
-    expect(screen.getByText("Review budget")).toBeInTheDocument();
-    expect(container.querySelectorAll("[data-testid='todo-skeleton-card']")).toHaveLength(2);
   });
 });

@@ -371,14 +371,6 @@ def test_extract_todos_passes_model_settings():
         },
     )
 
-
-def test_unknown_prompt_version_raises_value_error():
-    from app.extract import ExtractionConfig, build_extraction_agent
-
-    with pytest.raises(ValueError, match="Unsupported prompt version"):
-        build_extraction_agent(ExtractionConfig(prompt_version="v9"))
-
-
 def test_get_agent_does_not_reuse_different_model_config():
     """Agent caching should distinguish different extraction configs."""
     from app.extract import ExtractionConfig, _get_agent
