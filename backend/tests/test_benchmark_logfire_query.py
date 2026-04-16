@@ -1,3 +1,5 @@
+"""Benchmark Logfire query contract tests."""
+
 from evals.logfire_query import normalize_benchmark_rows
 
 

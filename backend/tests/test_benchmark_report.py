@@ -1,3 +1,5 @@
+"""Benchmark report contract tests."""
+
 from evals.report import build_benchmark_report, render_terminal_report
 from evals.resolution import build_entry_query_selector
 from evals.storage import load_benchmark_by_id
@@ -48,7 +50,7 @@ def _history_row(selector, *, run_id: str, started_at: str, failure_count: int =
     }
 
 
-def test_report_marks_missing_entries_instead_of_omitting_them():
+def test_benchmark_report_marks_missing_entries_instead_of_omitting_them():
     report = build_benchmark_report(
         benchmark_id="extraction_llm_matrix_v1",
         query_client=FakeBenchmarkQueryClient(rows=[]),
@@ -57,7 +59,7 @@ def test_report_marks_missing_entries_instead_of_omitting_them():
     assert "deepinfra_qwen35_9b_default" in report.missing_entry_ids
 
 
-def test_report_uses_latest_compatible_result_per_entry():
+def test_benchmark_report_uses_latest_compatible_result_per_entry():
     benchmark = load_benchmark_by_id("extraction_llm_matrix_v1")
     entry = next(
         candidate
@@ -90,7 +92,7 @@ def test_report_uses_latest_compatible_result_per_entry():
     assert entry_state.selected_run_id == "run-newer-compatible"
 
 
-def test_terminal_report_contains_failures_and_slowest_cases_sections():
+def test_terminal_benchmark_report_includes_failures_and_slowest_cases_sections():
     benchmark = load_benchmark_by_id("extraction_llm_matrix_v1")
     entry = next(
         candidate
