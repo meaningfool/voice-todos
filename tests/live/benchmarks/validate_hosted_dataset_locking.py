@@ -5,12 +5,12 @@ import sys
 import uuid
 from pathlib import Path
 
-from benchmark_locking_live_validation_lib import (
+from benchmark_live_validation_lib import (
     available_entry_definition,
     cleanup_dataset,
     create_temp_hosted_dataset,
     load_lock_payload,
-    run_benchmark_cli,
+    run_benchmark_run_cli,
     write_temp_benchmark,
 )
 
@@ -41,10 +41,10 @@ def main() -> int:
 
     try:
         os.environ["EVALS_BENCHMARKS_DIR"] = str(benchmark_path.parent)
-        result = run_benchmark_cli(benchmark_id=benchmark_id)
+        result = run_benchmark_run_cli(benchmark_id=benchmark_id)
         if result.returncode != 0:
             print(
-                "FAIL: phase 1 run failed\n"
+                "FAIL: benchmark run failed\n"
                 f"stdout:\n{result.stdout}\n"
                 f"stderr:\n{result.stderr}"
             )

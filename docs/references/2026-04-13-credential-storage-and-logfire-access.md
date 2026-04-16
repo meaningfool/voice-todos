@@ -14,7 +14,7 @@ sessions behave consistently without relying on ad-hoc shell exports.
   - also shared across Conductor worktrees via `scripts/conductor-setup.sh`
 - `.env.dev`
   - repo-local non-secret toggles only
-  - examples: `ITEM7_ENABLE_LIVE_SMOKE=1`
+  - examples: `BENCHMARK_ENABLE_LIVE_SMOKE=1`
 - shell `export ...`
   - temporary override only
   - never the intended persistent setup
@@ -43,7 +43,7 @@ Keep these in `backend/.logfire/logfire_credentials.json`:
 
 Keep these in `.env.dev`:
 
-- `ITEM7_ENABLE_LIVE_SMOKE`
+- `BENCHMARK_ENABLE_LIVE_SMOKE`
 - similar local opt-in flags
 
 ## Logfire Credential Roles

@@ -1,10 +1,18 @@
+"""Benchmark CLI contract tests."""
+
+from pathlib import Path
+import subprocess
+import sys
 from types import SimpleNamespace
 
 from evals.cli import main
 from evals.run import BenchmarkStaleError
 
 
-def test_benchmark_list_prints_known_ids(capsys):
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_benchmark_list_command_prints_known_ids(capsys):
     exit_code = main(["benchmark", "list"])
     captured = capsys.readouterr()
 
@@ -13,7 +21,21 @@ def test_benchmark_list_prints_known_ids(capsys):
     assert "replay_llm_matrix_v1" in captured.out
 
 
-def test_benchmark_show_prints_entry_labels_and_config(capsys):
+def test_benchmark_list_script_entrypoint_prints_known_ids():
+    result = subprocess.run(
+        [sys.executable, "../evals/cli.py", "benchmark", "list"],
+        cwd=BACKEND_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "extraction_llm_matrix_v1" in result.stdout
+    assert "replay_llm_matrix_v1" in result.stdout
+
+
+def test_benchmark_show_command_prints_entry_labels_and_config(capsys):
     exit_code = main(["benchmark", "show", "extraction_llm_matrix_v1"])
     captured = capsys.readouterr()
 
@@ -35,7 +57,7 @@ def test_benchmark_run_defaults_to_missing_entries(monkeypatch):
     assert planned[0]["all_entries"] is False
 
 
-def test_benchmark_run_passes_stale_flags(monkeypatch):
+def test_benchmark_run_passes_stale_control_flags(monkeypatch):
     planned = []
     monkeypatch.setattr(
         "evals.cli.run_benchmark",
@@ -57,7 +79,7 @@ def test_benchmark_run_passes_stale_flags(monkeypatch):
     assert planned[0]["rebase"] is True
 
 
-def test_benchmark_run_returns_one_on_stale_error(monkeypatch, capsys):
+def test_benchmark_run_returns_one_with_stale_error_output(monkeypatch, capsys):
     monkeypatch.setattr(
         "evals.cli.run_benchmark",
         lambda **kwargs: BenchmarkStaleError(

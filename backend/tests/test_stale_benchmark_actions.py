@@ -10,11 +10,11 @@ from evals.storage import benchmark_lock_path
 
 
 def _write_benchmark(tmp_path: Path) -> None:
-    (tmp_path / "phase3_rebase.yaml").write_text(
+    (tmp_path / "stale_actions.yaml").write_text(
         "\n".join(
             [
-                "benchmark_id: phase3_rebase",
-                "hosted_dataset: ds_phase3",
+                "benchmark_id: stale_actions",
+                "hosted_dataset: ds_stale_actions",
                 "dataset_family: extraction",
                 "focus: model",
                 "headline_metric: todo_count_match",
@@ -61,8 +61,8 @@ def _write_lock(lock_path: Path, *, dataset_hash: str) -> None:
                     }
                 ],
                 "_benchmark_lock": {
-                    "benchmark_id": "phase3_rebase",
-                    "hosted_dataset": "ds_phase3",
+                    "benchmark_id": "stale_actions",
+                    "hosted_dataset": "ds_stale_actions",
                     "hosted_dataset_name": "todo_extraction_v1",
                     "fetched_at": "2026-04-13T16:50:00Z",
                     "dataset_hash": dataset_hash,
@@ -105,7 +105,7 @@ async def test_allow_stale_runs_against_existing_lock(
         benchmark_run, "load_current_benchmark_state", lambda benchmark: benchmark_run.CurrentBenchmarkState()
     )
 
-    lock_path = benchmark_lock_path("phase3_rebase")
+    lock_path = benchmark_lock_path("stale_actions")
     _write_lock(lock_path, dataset_hash="old-hash")
     monkeypatch.setattr(
         benchmark_run, "export_hosted_dataset", lambda dataset_id: _exported_payload(transcript="Changed transcript")
@@ -120,7 +120,7 @@ async def test_allow_stale_runs_against_existing_lock(
     monkeypatch.setattr(benchmark_run, "launch_extraction_entry", fake_launch_extraction_entry)
 
     result = await benchmark_run.run_benchmark(
-        benchmark_id="phase3_rebase",
+        benchmark_id="stale_actions",
         all_entries=False,
         dataset_path=None,
         allow_untracked=True,
@@ -144,7 +144,7 @@ async def test_rebase_rewrites_lock_and_executes_all_entries(
         lambda benchmark: benchmark_run.CurrentBenchmarkState(current_entry_ids={"gemini3_flash_default"}),
     )
 
-    lock_path = benchmark_lock_path("phase3_rebase")
+    lock_path = benchmark_lock_path("stale_actions")
     _write_lock(lock_path, dataset_hash="old-hash")
     monkeypatch.setattr(
         benchmark_run, "export_hosted_dataset", lambda dataset_id: _exported_payload(transcript="Changed transcript")
@@ -165,7 +165,7 @@ async def test_rebase_rewrites_lock_and_executes_all_entries(
     monkeypatch.setattr(benchmark_run, "launch_replay_entry", fake_launch_replay_entry)
 
     result = await benchmark_run.run_benchmark(
-        benchmark_id="phase3_rebase",
+        benchmark_id="stale_actions",
         all_entries=False,
         dataset_path=None,
         allow_untracked=True,

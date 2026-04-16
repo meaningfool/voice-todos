@@ -65,9 +65,6 @@ Sends recorded `audio.pcm` through the real backend WebSocket → real Soniox �
 cd backend && uv run python ../scripts/replay_audio.py [path/to/audio.pcm]
 ```
 
-### Audio pipeline test (`scripts/test_audio_pipeline.sh`)
-Uses `agent-browser --engine chrome` with an injected OscillatorNode to verify all audio bytes flow through the real browser pipeline to the backend. Compares browser-side byte counter vs backend's `audio.pcm` size.
-
 ### Dev server script (`scripts/dev.sh`)
 Starts/stops both servers on fixed ports (backend :8000, frontend :5173 with strictPort).
 
@@ -92,4 +89,7 @@ Installed globally with Chrome engine. Can open the app, inspect elements, click
 - `frontend/src/App.tsx` — wires TodoList/TodoSkeleton
 - `scripts/dev.sh` — start/stop dev servers
 - `scripts/replay_audio.py` — audio replay to Soniox
-- `scripts/test_audio_pipeline.sh` — browser pipeline byte test
+
+The browser byte-counting audio-pipeline check was retired after it disproved the
+original flush-delay hypothesis and no longer represented a durable maintained
+test contract.

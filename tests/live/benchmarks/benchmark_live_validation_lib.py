@@ -64,10 +64,10 @@ def available_entry_definition() -> dict:
 def create_temp_hosted_dataset(*, transcript: str) -> tuple[object, str, str]:
     client = build_logfire_api_client()
     suffix = uuid.uuid4().hex[:8]
-    dataset_name = f"benchmark_locking_validation_{suffix}"
+    dataset_name = f"benchmark_live_validation_{suffix}"
     dataset = client.create_dataset(
         dataset_name,
-        description=f"Temporary benchmark-locking validation dataset {suffix}",
+        description=f"Temporary benchmark live validation dataset {suffix}",
     )
     dataset_id = dataset["id"]
     client.add_cases(
@@ -81,7 +81,7 @@ def create_temp_hosted_dataset(*, transcript: str) -> tuple[object, str, str]:
                     "previous_todos": None,
                 },
                 "expected_output": {"todos": [{"text": "Call Mom"}]},
-                "metadata": {"source_fixture": "benchmark-locking-live-validation"},
+                "metadata": {"source_fixture": "benchmark-live-validation"},
             }
         ],
         on_conflict="update",
@@ -101,7 +101,7 @@ def mutate_temp_hosted_dataset(*, client, dataset_id: str, transcript: str) -> N
                     "previous_todos": None,
                 },
                 "expected_output": {"todos": [{"text": "Call Mom"}]},
-                "metadata": {"source_fixture": "benchmark-locking-live-validation"},
+                "metadata": {"source_fixture": "benchmark-live-validation"},
             }
         ],
         on_conflict="update",
@@ -114,7 +114,7 @@ def write_temp_benchmark(
     hosted_dataset: str,
     entry: dict,
 ) -> tuple[tempfile.TemporaryDirectory[str], Path]:
-    tempdir = tempfile.TemporaryDirectory(prefix="benchmark-locking-")
+    tempdir = tempfile.TemporaryDirectory(prefix="benchmark-live-")
     benchmark_dir = Path(tempdir.name)
     payload = {
         "benchmark_id": benchmark_id,
@@ -132,18 +132,25 @@ def write_temp_benchmark(
     return tempdir, benchmark_path
 
 
-def run_benchmark_cli(*, benchmark_id: str, args: list[str] | None = None) -> subprocess.CompletedProcess[str]:
-    env = os.environ.copy()
-    command = [sys.executable, "../evals/cli.py", "benchmark", "run", benchmark_id]
-    if args:
-        command.extend(args)
-    return subprocess.run(
-        command,
-        cwd=BACKEND_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-        env=env,
+def run_benchmark_run_cli(
+    *, benchmark_id: str, args: list[str] | None = None
+) -> subprocess.CompletedProcess[str]:
+    return _run_benchmark_cli(command="run", benchmark_id=benchmark_id, args=args)
+
+
+def run_benchmark_report_cli(
+    *,
+    benchmark_id: str,
+    json_output: bool = False,
+    args: list[str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    command_args = list(args or [])
+    if json_output:
+        command_args.append("--json")
+    return _run_benchmark_cli(
+        command="report",
+        benchmark_id=benchmark_id,
+        args=command_args,
     )
 
 
@@ -164,3 +171,23 @@ def cleanup_dataset(client, dataset_id: str, benchmark_id: str, tempdir: tempfil
 
 def load_lock_payload(benchmark_id: str) -> dict:
     return json.loads(benchmark_lock_path(benchmark_id).read_text())
+
+
+def _run_benchmark_cli(
+    *,
+    command: str,
+    benchmark_id: str,
+    args: list[str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    env = os.environ.copy()
+    cli_command = [sys.executable, "../evals/cli.py", "benchmark", command, benchmark_id]
+    if args:
+        cli_command.extend(args)
+    return subprocess.run(
+        cli_command,
+        cwd=BACKEND_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+    )

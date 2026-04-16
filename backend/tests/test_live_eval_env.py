@@ -40,11 +40,11 @@ def test_benchmark_run_skip_reason_requires_explicit_opt_in(monkeypatch, tmp_pat
     monkeypatch.setattr(backend_env, "BACKEND_ENV_PATH", env_file)
     monkeypatch.setattr(repo_env, "REPO_ENV_DEV_PATH", tmp_path / ".env.dev")
     monkeypatch.setenv("LOGFIRE_CREDENTIALS_DIR", str(credentials_dir))
-    monkeypatch.delenv("ITEM7_ENABLE_LIVE_SMOKE", raising=False)
+    monkeypatch.delenv("BENCHMARK_ENABLE_LIVE_SMOKE", raising=False)
 
     assert (
         live_eval_env.benchmark_run_skip_reason()
-        == "requires ITEM7_ENABLE_LIVE_SMOKE=1"
+        == "requires BENCHMARK_ENABLE_LIVE_SMOKE=1"
     )
 
 
@@ -68,7 +68,7 @@ def test_benchmark_run_skip_reason_accepts_shared_env_and_logfire_credentials(
 
     monkeypatch.setattr(backend_env, "BACKEND_ENV_PATH", env_file)
     monkeypatch.setenv("LOGFIRE_CREDENTIALS_DIR", str(credentials_dir))
-    monkeypatch.setenv("ITEM7_ENABLE_LIVE_SMOKE", "1")
+    monkeypatch.setenv("BENCHMARK_ENABLE_LIVE_SMOKE", "1")
 
     assert live_eval_env.benchmark_run_skip_reason() is None
 
@@ -89,17 +89,19 @@ def test_benchmark_run_skip_reason_falls_back_to_repo_env_dev(monkeypatch, tmp_p
         )
     )
     env_dev = tmp_path / ".env.dev"
-    env_dev.write_text("export ITEM7_ENABLE_LIVE_SMOKE=1\n")
+    env_dev.write_text("export BENCHMARK_ENABLE_LIVE_SMOKE=1\n")
 
     monkeypatch.setattr(backend_env, "BACKEND_ENV_PATH", env_file)
     monkeypatch.setattr(repo_env, "REPO_ENV_DEV_PATH", env_dev)
     monkeypatch.setenv("LOGFIRE_CREDENTIALS_DIR", str(credentials_dir))
-    monkeypatch.delenv("ITEM7_ENABLE_LIVE_SMOKE", raising=False)
+    monkeypatch.delenv("BENCHMARK_ENABLE_LIVE_SMOKE", raising=False)
 
     assert live_eval_env.benchmark_run_skip_reason() is None
 
 
-def test_exported_live_smoke_flag_overrides_repo_env_dev(monkeypatch, tmp_path):
+def test_exported_benchmark_live_smoke_flag_overrides_repo_env_dev(
+    monkeypatch, tmp_path
+):
     env_file = tmp_path / ".env"
     env_file.write_text(
         "LOGFIRE_READ_TOKEN=logfire-read-token\nGEMINI_API_KEY=gemini-key\n"
@@ -115,16 +117,16 @@ def test_exported_live_smoke_flag_overrides_repo_env_dev(monkeypatch, tmp_path):
         )
     )
     env_dev = tmp_path / ".env.dev"
-    env_dev.write_text("export ITEM7_ENABLE_LIVE_SMOKE=1\n")
+    env_dev.write_text("export BENCHMARK_ENABLE_LIVE_SMOKE=1\n")
 
     monkeypatch.setattr(backend_env, "BACKEND_ENV_PATH", env_file)
     monkeypatch.setattr(repo_env, "REPO_ENV_DEV_PATH", env_dev)
     monkeypatch.setenv("LOGFIRE_CREDENTIALS_DIR", str(credentials_dir))
-    monkeypatch.setenv("ITEM7_ENABLE_LIVE_SMOKE", "0")
+    monkeypatch.setenv("BENCHMARK_ENABLE_LIVE_SMOKE", "0")
 
     assert (
         live_eval_env.benchmark_run_skip_reason()
-        == "requires ITEM7_ENABLE_LIVE_SMOKE=1"
+        == "requires BENCHMARK_ENABLE_LIVE_SMOKE=1"
     )
 
 
@@ -145,7 +147,7 @@ def test_hosted_dataset_locking_validation_warning_requires_tracked_run_prereqs(
 
     monkeypatch.setattr(backend_env, "BACKEND_ENV_PATH", env_file)
     monkeypatch.setenv("LOGFIRE_CREDENTIALS_DIR", str(credentials_dir))
-    monkeypatch.setenv("ITEM7_ENABLE_LIVE_SMOKE", "1")
+    monkeypatch.setenv("BENCHMARK_ENABLE_LIVE_SMOKE", "1")
 
     assert (
         live_eval_env.hosted_dataset_locking_validation_warning()
@@ -175,6 +177,36 @@ def test_stale_benchmark_detection_validation_warning_requires_dataset_token(
     )
 
 
+def test_benchmark_run_report_smoke_validation_warning_requires_dataset_token(
+    monkeypatch, tmp_path
+):
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "LOGFIRE_READ_TOKEN=logfire-read-token\n"
+        "GEMINI_API_KEY=gemini-key\n"
+    )
+    credentials_dir = tmp_path / ".logfire"
+    credentials_dir.mkdir()
+    (credentials_dir / "logfire_credentials.json").write_text(
+        json.dumps(
+            {
+                "project_name": "meaningfool/voice-todos",
+                "token": "logfire-write-token",
+            }
+        )
+    )
+
+    monkeypatch.setattr(backend_env, "BACKEND_ENV_PATH", env_file)
+    monkeypatch.setenv("LOGFIRE_CREDENTIALS_DIR", str(credentials_dir))
+    monkeypatch.setenv("BENCHMARK_ENABLE_LIVE_SMOKE", "1")
+    monkeypatch.delenv("LOGFIRE_DATASETS_TOKEN", raising=False)
+
+    assert (
+        live_eval_env.benchmark_run_report_smoke_validation_warning()
+        == "requires LOGFIRE_DATASETS_TOKEN via env or backend/.env"
+    )
+
+
 def test_stale_benchmark_actions_validation_warning_accepts_full_shared_setup(
     monkeypatch, tmp_path
 ):
@@ -197,6 +229,33 @@ def test_stale_benchmark_actions_validation_warning_accepts_full_shared_setup(
 
     monkeypatch.setattr(backend_env, "BACKEND_ENV_PATH", env_file)
     monkeypatch.setenv("LOGFIRE_CREDENTIALS_DIR", str(credentials_dir))
-    monkeypatch.setenv("ITEM7_ENABLE_LIVE_SMOKE", "1")
+    monkeypatch.setenv("BENCHMARK_ENABLE_LIVE_SMOKE", "1")
 
     assert live_eval_env.stale_benchmark_actions_validation_warning() is None
+
+
+def test_benchmark_run_report_smoke_validation_warning_accepts_full_shared_setup(
+    monkeypatch, tmp_path
+):
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "LOGFIRE_READ_TOKEN=logfire-read-token\n"
+        "LOGFIRE_DATASETS_TOKEN=datasets-token\n"
+        "GEMINI_API_KEY=gemini-key\n"
+    )
+    credentials_dir = tmp_path / ".logfire"
+    credentials_dir.mkdir()
+    (credentials_dir / "logfire_credentials.json").write_text(
+        json.dumps(
+            {
+                "project_name": "meaningfool/voice-todos",
+                "token": "logfire-write-token",
+            }
+        )
+    )
+
+    monkeypatch.setattr(backend_env, "BACKEND_ENV_PATH", env_file)
+    monkeypatch.setenv("LOGFIRE_CREDENTIALS_DIR", str(credentials_dir))
+    monkeypatch.setenv("BENCHMARK_ENABLE_LIVE_SMOKE", "1")
+
+    assert live_eval_env.benchmark_run_report_smoke_validation_warning() is None

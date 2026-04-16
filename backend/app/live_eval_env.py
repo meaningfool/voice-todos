@@ -12,6 +12,8 @@ from app.logfire_setup import (
 )
 from app.repo_env import repo_env_flag_enabled
 
+BENCHMARK_LIVE_SMOKE_FLAG = "BENCHMARK_ENABLE_LIVE_SMOKE"
+
 
 def benchmark_report_skip_reason() -> str | None:
     if not get_logfire_read_token():
@@ -25,8 +27,8 @@ def benchmark_report_skip_reason() -> str | None:
 
 
 def benchmark_run_skip_reason() -> str | None:
-    if not repo_env_flag_enabled("ITEM7_ENABLE_LIVE_SMOKE"):
-        return "requires ITEM7_ENABLE_LIVE_SMOKE=1"
+    if not repo_env_flag_enabled(BENCHMARK_LIVE_SMOKE_FLAG):
+        return f"requires {BENCHMARK_LIVE_SMOKE_FLAG}=1"
 
     report_reason = benchmark_report_skip_reason()
     if report_reason is not None:
@@ -74,6 +76,10 @@ def hosted_dataset_locking_validation_warning() -> str | None:
             "backend/.logfire/logfire_credentials.json"
         )
     return tracked_reason or hosted_dataset_crud_skip_reason()
+
+
+def benchmark_run_report_smoke_validation_warning() -> str | None:
+    return benchmark_run_skip_reason() or hosted_dataset_crud_skip_reason()
 
 
 def stale_benchmark_detection_validation_warning() -> str | None:

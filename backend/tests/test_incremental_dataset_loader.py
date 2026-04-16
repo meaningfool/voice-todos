@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime
 
 from app.models import Todo
@@ -65,4 +66,13 @@ def test_load_incremental_replay_dataset_returns_expected_cases():
             due_date=datetime(2026, 3, 24, tzinfo=UTC).date(),
             assign_to="Priya",
         )
+    ]
+
+
+def test_load_incremental_replay_dataset_preserves_stable_row_ids():
+    dataset = load_incremental_replay_dataset()
+    payload = json.loads(DATASET_PATH.read_text())
+
+    assert [case.name for case in dataset.cases] == [
+        raw_case["name"] for raw_case in payload["cases"]
     ]
