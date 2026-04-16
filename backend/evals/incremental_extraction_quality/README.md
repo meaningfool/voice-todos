@@ -42,11 +42,13 @@ Use Logfire to:
 
 ## Files
 
-- `../../evals/datasets/replay/todo_extraction_replay_v1.json`: canonical replay dataset
 - `dataset_loader.py`: replay dataset loader
 - `evaluators.py`: replay evaluator definitions
 - `experiment_configs.py`: shared experiment registry
 - `run.py`: CLI runner
+
+When no explicit `--dataset-path` is provided, the runner resolves its default
+dataset from the benchmark lock for `todo_replay_bench_v1`.
 
 For live smoke validation, use:
 
@@ -126,16 +128,16 @@ benchmark-first CLI as transcript extraction.
 
 Key files:
 
-- `../evals/benchmarks/replay_llm_matrix_v1.yaml`
-- `../evals/datasets/replay/todo_extraction_replay_v1.json`
+- `../evals/benchmarks/todo_replay_bench_v1.yaml`
+- `../evals/locks/todo_replay_bench_v1.json`
 
 Primary commands:
 
 ```bash
 cd backend && uv run python ../evals/cli.py benchmark list
-cd backend && uv run python ../evals/cli.py benchmark show replay_llm_matrix_v1
-cd backend && uv run python ../evals/cli.py benchmark run replay_llm_matrix_v1
-cd backend && uv run python ../evals/cli.py benchmark report replay_llm_matrix_v1
+cd backend && uv run python ../evals/cli.py benchmark show todo_replay_bench_v1
+cd backend && uv run python ../evals/cli.py benchmark run todo_replay_bench_v1
+cd backend && uv run python ../evals/cli.py benchmark report todo_replay_bench_v1
 ```
 
 Tracked replay runs stay benchmark-agnostic. Benchmark state is reconstructed by

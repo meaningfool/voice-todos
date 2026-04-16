@@ -20,14 +20,12 @@ from pydantic_evals import Dataset
 from app.extract import extract_todos
 from app.logfire_setup import configure_logfire, has_logfire_write_credentials
 from app.models import Todo
+from evals.benchmark_ids import TODO_EXTRACTION_BENCHMARK_ID
 from evals.common.experiment_metadata import (
     build_batch_id,
     build_experiment_metadata,
 )
 from evals.common.retry_policy import build_retry_task_config
-from evals.extraction_quality import (
-    dataset_loader as extraction_dataset_loader,
-)
 from evals.extraction_quality import (
     evaluators as extraction_evaluators,
 )
@@ -39,6 +37,7 @@ from evals.extraction_quality.experiment_configs import (
     experiment_definition_from_entry_config,
     read_backend_env_var,
 )
+from evals.run import BenchmarkStaleError, ensure_benchmark_dataset_path
 
 
 @dataclass
@@ -168,6 +167,20 @@ def _build_task(experiment: ExperimentDefinition):
     return run_case
 
 
+def _resolve_dataset_path(dataset_path: Path | None) -> Path:
+    if dataset_path is not None:
+        return dataset_path
+
+    try:
+        return ensure_benchmark_dataset_path(TODO_EXTRACTION_BENCHMARK_ID)
+    except BenchmarkStaleError as exc:
+        raise ValueError(
+            "Default extraction dataset lock is stale. Re-run "
+            f"`cd backend && uv run python ../evals/cli.py benchmark run {TODO_EXTRACTION_BENCHMARK_ID} --rebase` "
+            "or pass --dataset-path."
+        ) from exc
+
+
 async def launch_experiments(args: argparse.Namespace) -> LaunchResult:
     selected_experiments = _selected_experiments(
         all_experiments=args.all,
@@ -202,8 +215,8 @@ async def launch_experiments_for_definitions(
         service_name="voice-todos-backend",
         instrument_pydantic_ai=True,
     )
-    resolved_dataset_path = dataset_path or extraction_dataset_loader.DATASET_PATH
-    dataset = _build_eval_dataset(path=dataset_path)
+    resolved_dataset_path = _resolve_dataset_path(dataset_path)
+    dataset = _build_eval_dataset(path=resolved_dataset_path)
 
     runnable_experiments: list[ExperimentDefinition] = []
     for experiment in experiments:

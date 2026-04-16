@@ -1,0 +1,468 @@
+{
+  "name": "todo_extraction_replay",
+  "version": "v1",
+  "rows": [
+    {
+      "id": "past-then-live",
+      "input": {
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "replay_steps": [
+          {
+            "step_index": 1,
+            "transcript": "I already emailed the landlord about the leak, and now I just need to, um,"
+          },
+          {
+            "step_index": 2,
+            "transcript": "I already emailed the landlord about the leak, and now I just need to, um, call the plumber tomorrow,"
+          },
+          {
+            "step_index": 3,
+            "transcript": "I already emailed the landlord about the leak, and now I just need to, um, call the plumber tomorrow, because it's still dripping under the sink."
+          }
+        ]
+      },
+      "expected_output": [
+        {
+          "text": "Call the plumber tomorrow"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "core",
+          "past_vs_new",
+          "mixed_signal"
+        ],
+        "tier": "core",
+        "rationale": "Past action should stay non-actionable while the later live task is retained.",
+        "source_fixture": "past-then-live",
+        "expected_final_todo_count": 1
+      }
+    },
+    {
+      "id": "testing-then-agenda",
+      "input": {
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "replay_steps": [
+          {
+            "step_index": 1,
+            "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble,"
+          },
+          {
+            "step_index": 2,
+            "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that,"
+          },
+          {
+            "step_index": 3,
+            "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too,"
+          },
+          {
+            "step_index": 4,
+            "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too, but anyway I do need to rewrite the agenda for tomorrow,"
+          },
+          {
+            "step_index": 5,
+            "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too, but anyway I do need to rewrite the agenda for tomorrow, that's the one real thing I actually have to do."
+          }
+        ]
+      },
+      "expected_output": [
+        {
+          "text": "Rewrite the agenda for tomorrow"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "stretch",
+          "negative_to_positive",
+          "mixed_signal",
+          "dense_structure"
+        ],
+        "tier": "stretch",
+        "rationale": "Long replay session stays negative until the last real task emerges.",
+        "source_fixture": "testing-then-agenda",
+        "expected_final_todo_count": 1
+      }
+    },
+    {
+      "id": "supplier-memo-recap",
+      "input": {
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "replay_steps": [
+          {
+            "step_index": 1,
+            "transcript": "I need JC to call the supplier and make sure the catering is arranged, um,"
+          },
+          {
+            "step_index": 2,
+            "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday,"
+          },
+          {
+            "step_index": 3,
+            "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now,"
+          },
+          {
+            "step_index": 4,
+            "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan,"
+          },
+          {
+            "step_index": 5,
+            "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC"
+          },
+          {
+            "step_index": 6,
+            "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC to call the supplier, and I need to finish the memo by Friday."
+          }
+        ]
+      },
+      "expected_output": [
+        {
+          "text": "Have JC call the supplier"
+        },
+        {
+          "text": "Finish the memo by Friday"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "stretch",
+          "duplicate_recovery_risk",
+          "mixed_signal",
+          "delegation"
+        ],
+        "tier": "stretch",
+        "rationale": "Recap-driven repetition should not inflate the final count.",
+        "source_fixture": "supplier-memo-recap",
+        "expected_final_todo_count": 2
+      }
+    },
+    {
+      "id": "cancel-one-keep-one",
+      "input": {
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "replay_steps": [
+          {
+            "step_index": 1,
+            "transcript": "Call Anna tomorrow, and send the invoice to Lena, um,"
+          },
+          {
+            "step_index": 2,
+            "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight,"
+          },
+          {
+            "step_index": 3,
+            "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet,"
+          },
+          {
+            "step_index": 4,
+            "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna,"
+          },
+          {
+            "step_index": 5,
+            "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna, but do send the invoice to Lena tonight."
+          }
+        ]
+      },
+      "expected_output": [
+        {
+          "text": "Send the invoice to Lena tonight"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "stretch",
+          "cancel",
+          "remove_recovery_risk",
+          "correction",
+          "mixed_signal"
+        ],
+        "tier": "stretch",
+        "rationale": "One task is canceled while the other must persist through the replay sequence.",
+        "source_fixture": "cancel-one-keep-one",
+        "expected_final_todo_count": 1
+      }
+    },
+    {
+      "id": "call-marc-duplicate-ramble",
+      "input": {
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "replay_steps": [
+          {
+            "step_index": 1,
+            "transcript": "I need to call Marc about the quote tomorrow, um,"
+          },
+          {
+            "step_index": 2,
+            "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head,"
+          },
+          {
+            "step_index": 3,
+            "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other,"
+          },
+          {
+            "step_index": 4,
+            "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other, so I keep feeling like I'm forgetting something, and yeah, don't let me forget to call Marc,"
+          },
+          {
+            "step_index": 5,
+            "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other, so I keep feeling like I'm forgetting something, and yeah, don't let me forget to call Marc, that's the main follow-up."
+          }
+        ]
+      },
+      "expected_output": [
+        {
+          "text": "Call Marc about the quote tomorrow"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "stretch",
+          "duplicate_recovery_risk",
+          "mixed_signal"
+        ],
+        "tier": "stretch",
+        "rationale": "The same task comes back later in the ramble and should stay deduped.",
+        "source_fixture": "call-marc-duplicate-ramble",
+        "expected_final_todo_count": 1
+      }
+    },
+    {
+      "id": "invoice-cancel",
+      "input": {
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "replay_steps": [
+          {
+            "step_index": 1,
+            "transcript": "I should send Lena the invoice tonight, um, before I forget,"
+          },
+          {
+            "step_index": 2,
+            "transcript": "I should send Lena the invoice tonight, um, before I forget, although actually no,"
+          },
+          {
+            "step_index": 3,
+            "transcript": "I should send Lena the invoice tonight, um, before I forget, although actually no, don't send it yet because the numbers are still wrong."
+          }
+        ]
+      },
+      "expected_output": [],
+      "metadata": {
+        "tags": [
+          "core",
+          "cancel",
+          "remove_recovery_risk"
+        ],
+        "tier": "core",
+        "rationale": "Simple replay cancellation should land back at zero.",
+        "source_fixture": "invoice-cancel",
+        "expected_final_todo_count": 0
+      }
+    },
+    {
+      "id": "goat-to-oat-correction",
+      "input": {
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "replay_steps": [
+          {
+            "step_index": 1,
+            "transcript": "I need to pick up goat milk for Sarah tonight, um,"
+          },
+          {
+            "step_index": 2,
+            "transcript": "I need to pick up goat milk for Sarah tonight, um, no, sorry, not goat milk,"
+          },
+          {
+            "step_index": 3,
+            "transcript": "I need to pick up goat milk for Sarah tonight, um, no, sorry, not goat milk, oat milk, because she's vegan."
+          }
+        ]
+      },
+      "expected_output": [
+        {
+          "text": "Pick up oat milk for Sarah"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "core",
+          "correction",
+          "duplicate_recovery_risk"
+        ],
+        "tier": "core",
+        "rationale": "Explicit self-correction should update one task, not preserve both versions.",
+        "source_fixture": "goat-to-oat-correction",
+        "expected_final_todo_count": 1
+      }
+    },
+    {
+      "id": "god-milk-asr-context",
+      "input": {
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "replay_steps": [
+          {
+            "step_index": 1,
+            "transcript": "I need to pick up god milk for Sarah tonight, um,"
+          },
+          {
+            "step_index": 2,
+            "transcript": "I need to pick up god milk for Sarah tonight, um, because regular milk makes her sick,"
+          },
+          {
+            "step_index": 3,
+            "transcript": "I need to pick up god milk for Sarah tonight, um, because regular milk makes her sick, and the oat one from the organic store is the one she can have."
+          }
+        ]
+      },
+      "expected_output": [
+        {
+          "text": "Pick up oat milk for Sarah"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "core",
+          "ambiguous_noisy_partial",
+          "asr_noise",
+          "duplicate_recovery_risk"
+        ],
+        "tier": "core",
+        "rationale": "ASR-like ambiguity should resolve to one task once later context arrives.",
+        "source_fixture": "god-milk-asr-context",
+        "expected_final_todo_count": 1
+      }
+    },
+    {
+      "id": "email-lunch-dentist-incomplete",
+      "input": {
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "replay_steps": [
+          {
+            "step_index": 1,
+            "transcript": "Okay, I need to email Sarah about lunch, and then I need to, um,"
+          },
+          {
+            "step_index": 2,
+            "transcript": "Okay, I need to email Sarah about lunch, and then I need to, um, book the dentist sometime tomorrow, but not first thing,"
+          },
+          {
+            "step_index": 3,
+            "transcript": "Okay, I need to email Sarah about lunch, and then I need to, um, book the dentist sometime tomorrow, but not first thing, that's the other thing I keep forgetting."
+          }
+        ]
+      },
+      "expected_output": [
+        {
+          "text": "Email Sarah about lunch"
+        },
+        {
+          "text": "Book the dentist"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "core",
+          "misleading_partial",
+          "incomplete_partial",
+          "duplicate_recovery_risk"
+        ],
+        "tier": "core",
+        "rationale": "Dangling partial clause can create a bad extra task before the full second task appears.",
+        "source_fixture": "email-lunch-dentist-incomplete",
+        "expected_final_todo_count": 2
+      }
+    },
+    {
+      "id": "buy-bread-merge",
+      "input": {
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "replay_steps": [
+          {
+            "step_index": 1,
+            "transcript": "I need to buy milk, and I need to buy, um,"
+          },
+          {
+            "step_index": 2,
+            "transcript": "I need to buy milk, and I need to buy, um, bread for tomorrow, but actually that's"
+          },
+          {
+            "step_index": 3,
+            "transcript": "I need to buy milk, and I need to buy, um, bread for tomorrow, but actually that's one grocery run, not two separate things."
+          }
+        ]
+      },
+      "expected_output": [
+        {
+          "text": "Do one grocery run for milk and bread"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "core",
+          "merge_recovery_risk",
+          "correction"
+        ],
+        "tier": "core",
+        "rationale": "Replay should recover from an apparent split and end at one task.",
+        "source_fixture": "buy-bread-merge",
+        "expected_final_todo_count": 1
+      }
+    },
+    {
+      "id": "god-milk-plus-second-task",
+      "input": {
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "replay_steps": [
+          {
+            "step_index": 1,
+            "transcript": "I need to pick up god milk for Sarah tonight, um,"
+          },
+          {
+            "step_index": 2,
+            "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick,"
+          },
+          {
+            "step_index": 3,
+            "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote,"
+          },
+          {
+            "step_index": 4,
+            "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote, and yeah, the oat one from the organic store,"
+          },
+          {
+            "step_index": 5,
+            "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote, and yeah, the oat one from the organic store, that's what I meant."
+          }
+        ]
+      },
+      "expected_output": [
+        {
+          "text": "Pick up oat milk for Sarah"
+        },
+        {
+          "text": "Text Marc about the quote"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "stretch",
+          "ambiguous_noisy_partial",
+          "asr_noise",
+          "late_emergence",
+          "duplicate_recovery_risk"
+        ],
+        "tier": "stretch",
+        "rationale": "One noisy ambiguous task resolves while a second task arrives later.",
+        "source_fixture": "god-milk-plus-second-task",
+        "expected_final_todo_count": 2
+      }
+    }
+  ],
+  "_benchmark_lock": {
+    "benchmark_id": "todo_replay_bench_v1",
+    "hosted_dataset": "67e47498-3e57-4be1-ad3d-39a4ec598570",
+    "hosted_dataset_name": "todo_extraction_replay_v1",
+    "fetched_at": "2026-04-15T15:39:35.675725Z",
+    "dataset_hash": "6fcea668e0608bd487823a0c6582e26a11f3837d94651e92af2efa5d1fa07c73",
+    "hash_algorithm": "sha256",
+    "case_count": 11
+  }
+}

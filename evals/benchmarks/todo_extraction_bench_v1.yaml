@@ -1,4 +1,4 @@
-benchmark_id: extraction_llm_matrix_v1
+benchmark_id: todo_extraction_bench_v1
 hosted_dataset: fdf39527-c44e-4368-a6d1-ffd17f41c6df
 dataset_family: extraction
 focus: model

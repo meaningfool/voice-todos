@@ -1,0 +1,2022 @@
+{
+  "benchmark_id": "todo_replay_bench_v1",
+  "hosted_dataset": "67e47498-3e57-4be1-ad3d-39a4ec598570",
+  "focus": "model",
+  "headline_metric": "final_todo_count_match",
+  "display_headline_metric": "passed / total",
+  "active_lock_path": "/Users/josselinperrus/conductor/workspaces/voice-todos/damascus/evals/locks/todo_replay_bench_v1.json",
+  "locked_dataset_hash": "6fcea668e0608bd487823a0c6582e26a11f3837d94651e92af2efa5d1fa07c73",
+  "current_hosted_dataset_hash": "6fcea668e0608bd487823a0c6582e26a11f3837d94651e92af2efa5d1fa07c73",
+  "stale": false,
+  "entries": [
+    {
+      "entry_id": "gemini3_flash_default",
+      "label": "Gemini 3 Flash / default",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-39-36Z-7e5083e8--gemini3_flash_default",
+      "selected_timestamp": "2026-04-15T15:39:36.254740Z",
+      "headline_metric_value": 1.0,
+      "total_case_count": 11,
+      "passed_case_count": 11,
+      "incorrect_case_count": 0,
+      "incomplete_case_count": 0,
+      "completed_case_count": 11,
+      "failure_count": 0,
+      "average_case_duration_s": 13.86394190909091,
+      "max_case_duration_s": 26.962189,
+      "cost_usd": 0.007960727272727274,
+      "config": {
+        "provider": "google-gla",
+        "model": "gemini-3-flash-preview",
+        "prompt_version": "v1",
+        "model_settings": {}
+      },
+      "failures": [],
+      "incorrect_cases": [],
+      "incomplete_cases": [],
+      "slowest_cases": [
+        {
+          "case_id": "cancel-one-keep-one",
+          "duration_s": 26.962189
+        },
+        {
+          "case_id": "god-milk-plus-second-task",
+          "duration_s": 20.231517
+        },
+        {
+          "case_id": "call-marc-duplicate-ramble",
+          "duration_s": 18.234432
+        }
+      ]
+    },
+    {
+      "entry_id": "gemini3_flash_minimal_thinking",
+      "label": "Gemini 3 Flash / minimal thinking",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-42-09Z-956ceef8--gemini3_flash_minimal_thinking",
+      "selected_timestamp": "2026-04-15T15:42:09.020504Z",
+      "headline_metric_value": 1.0,
+      "total_case_count": 11,
+      "passed_case_count": 11,
+      "incorrect_case_count": 0,
+      "incomplete_case_count": 0,
+      "completed_case_count": 11,
+      "failure_count": 0,
+      "average_case_duration_s": 4.0682920909090905,
+      "max_case_duration_s": 6.625346,
+      "cost_usd": 0.0019523636363636368,
+      "config": {
+        "provider": "google-gla",
+        "model": "gemini-3-flash-preview",
+        "prompt_version": "v1",
+        "model_settings": {
+          "google_thinking_config": {
+            "thinking_level": "minimal"
+          }
+        }
+      },
+      "failures": [],
+      "incorrect_cases": [],
+      "incomplete_cases": [],
+      "slowest_cases": [
+        {
+          "case_id": "supplier-memo-recap",
+          "duration_s": 6.625346
+        },
+        {
+          "case_id": "cancel-one-keep-one",
+          "duration_s": 5.770053
+        },
+        {
+          "case_id": "god-milk-plus-second-task",
+          "duration_s": 5.288445
+        }
+      ]
+    },
+    {
+      "entry_id": "gemini31_flash_lite_default",
+      "label": "Gemini 3.1 Flash-Lite / default",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-42-54Z-b534a345--gemini31_flash_lite_default",
+      "selected_timestamp": "2026-04-15T15:42:54.067605Z",
+      "headline_metric_value": 0.9090909090909091,
+      "total_case_count": 11,
+      "passed_case_count": 10,
+      "incorrect_case_count": 1,
+      "incomplete_case_count": 0,
+      "completed_case_count": 11,
+      "failure_count": 0,
+      "average_case_duration_s": 6.306965272727272,
+      "max_case_duration_s": 9.969884,
+      "cost_usd": 0.000951590909090909,
+      "config": {
+        "provider": "google-gla",
+        "model": "gemini-3.1-flash-lite-preview",
+        "prompt_version": "v1",
+        "model_settings": {}
+      },
+      "failures": [],
+      "incorrect_cases": [
+        {
+          "case_id": "email-lunch-dentist-incomplete",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "Okay, I need to email Sarah about lunch, and then I need to, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "Okay, I need to email Sarah about lunch, and then I need to, um, book the dentist sometime tomorrow, but not first thing,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "Okay, I need to email Sarah about lunch, and then I need to, um, book the dentist sometime tomorrow, but not first thing, that's the other thing I keep forgetting."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Email Sarah about lunch",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "actual_output": {
+            "final_todos": [
+              {
+                "text": "Email Sarah about lunch",
+                "priority": null,
+                "category": null,
+                "due_date": null,
+                "notification": null,
+                "assign_to": null
+              },
+              {
+                "text": "Book the dentist",
+                "priority": null,
+                "category": null,
+                "due_date": null,
+                "notification": null,
+                "assign_to": null
+              },
+              {
+                "text": "Book the dentist",
+                "priority": null,
+                "category": null,
+                "due_date": "2026-03-25",
+                "notification": null,
+                "assign_to": null
+              }
+            ],
+            "step_results": [
+              {
+                "step_index": 1,
+                "transcript": "Okay, I need to email Sarah about lunch, and then I need to, um,",
+                "todos": [
+                  {
+                    "text": "Email Sarah about lunch",
+                    "priority": null,
+                    "category": null,
+                    "due_date": null,
+                    "notification": null,
+                    "assign_to": null
+                  }
+                ]
+              },
+              {
+                "step_index": 2,
+                "transcript": "Okay, I need to email Sarah about lunch, and then I need to, um, book the dentist sometime tomorrow, but not first thing,",
+                "todos": [
+                  {
+                    "text": "Email Sarah about lunch",
+                    "priority": null,
+                    "category": null,
+                    "due_date": null,
+                    "notification": null,
+                    "assign_to": null
+                  },
+                  {
+                    "text": "Book the dentist",
+                    "priority": null,
+                    "category": null,
+                    "due_date": "2026-03-25",
+                    "notification": null,
+                    "assign_to": null
+                  }
+                ]
+              },
+              {
+                "step_index": 3,
+                "transcript": "Okay, I need to email Sarah about lunch, and then I need to, um, book the dentist sometime tomorrow, but not first thing, that's the other thing I keep forgetting.",
+                "todos": [
+                  {
+                    "text": "Email Sarah about lunch",
+                    "priority": null,
+                    "category": null,
+                    "due_date": null,
+                    "notification": null,
+                    "assign_to": null
+                  },
+                  {
+                    "text": "Book the dentist",
+                    "priority": null,
+                    "category": null,
+                    "due_date": null,
+                    "notification": null,
+                    "assign_to": null
+                  },
+                  {
+                    "text": "Book the dentist",
+                    "priority": null,
+                    "category": null,
+                    "due_date": "2026-03-25",
+                    "notification": null,
+                    "assign_to": null
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "incomplete_cases": [],
+      "slowest_cases": [
+        {
+          "case_id": "supplier-memo-recap",
+          "duration_s": 9.969884
+        },
+        {
+          "case_id": "cancel-one-keep-one",
+          "duration_s": 9.884674
+        },
+        {
+          "case_id": "call-marc-duplicate-ramble",
+          "duration_s": 9.147762
+        }
+      ]
+    },
+    {
+      "entry_id": "gemini31_flash_lite_minimal_thinking",
+      "label": "Gemini 3.1 Flash-Lite / minimal thinking",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-44-03Z-636a29f8--gemini31_flash_lite_minimal_thinking",
+      "selected_timestamp": "2026-04-15T15:44:03.668400Z",
+      "headline_metric_value": 0.8181818181818182,
+      "total_case_count": 11,
+      "passed_case_count": 9,
+      "incorrect_case_count": 0,
+      "incomplete_case_count": 2,
+      "completed_case_count": 9,
+      "failure_count": 2,
+      "average_case_duration_s": 5.119115777777777,
+      "max_case_duration_s": 9.399785,
+      "cost_usd": 0.0008460833333333333,
+      "config": {
+        "provider": "google-gla",
+        "model": "gemini-3.1-flash-lite-preview",
+        "prompt_version": "v1",
+        "model_settings": {
+          "google_thinking_config": {
+            "thinking_level": "minimal"
+          }
+        }
+      },
+      "failures": [
+        {
+          "case_id": "cancel-one-keep-one",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna, but do send the invoice to Lena tonight."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Lena tonight",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "status_code: 503, model_name: gemini-3.1-flash-lite-preview, body: {'error': {'code': 503, 'message': 'The service is currently unavailable.', 'status': 'UNAVAILABLE'}}",
+          "exception_type": "pydantic_ai.exceptions.ModelHTTPError",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "supplier-memo-recap",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC"
+              },
+              {
+                "step_index": 6,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC to call the supplier, and I need to finish the memo by Friday."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Have JC call the supplier",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Finish the memo by Friday",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        }
+      ],
+      "incorrect_cases": [],
+      "incomplete_cases": [
+        {
+          "case_id": "cancel-one-keep-one",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna, but do send the invoice to Lena tonight."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Lena tonight",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "status_code: 503, model_name: gemini-3.1-flash-lite-preview, body: {'error': {'code': 503, 'message': 'The service is currently unavailable.', 'status': 'UNAVAILABLE'}}",
+          "exception_type": "pydantic_ai.exceptions.ModelHTTPError",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "supplier-memo-recap",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC"
+              },
+              {
+                "step_index": 6,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC to call the supplier, and I need to finish the memo by Friday."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Have JC call the supplier",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Finish the memo by Friday",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        }
+      ],
+      "slowest_cases": [
+        {
+          "case_id": "call-marc-duplicate-ramble",
+          "duration_s": 9.399785
+        },
+        {
+          "case_id": "god-milk-plus-second-task",
+          "duration_s": 7.868906
+        },
+        {
+          "case_id": "testing-then-agenda",
+          "duration_s": 7.637021
+        }
+      ]
+    },
+    {
+      "entry_id": "mistral_small_4_default",
+      "label": "Mistral Small 4 / default",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-45-20Z-fea3ef11--mistral_small_4_default",
+      "selected_timestamp": "2026-04-15T15:45:20.809641Z",
+      "headline_metric_value": 0.9090909090909091,
+      "total_case_count": 11,
+      "passed_case_count": 10,
+      "incorrect_case_count": 1,
+      "incomplete_case_count": 0,
+      "completed_case_count": 11,
+      "failure_count": 0,
+      "average_case_duration_s": 2.361278090909091,
+      "max_case_duration_s": 3.714942,
+      "cost_usd": null,
+      "config": {
+        "provider": "mistral",
+        "model": "mistral-small-2603",
+        "prompt_version": "v1",
+        "model_settings": {}
+      },
+      "failures": [],
+      "incorrect_cases": [
+        {
+          "case_id": "invoice-cancel",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I should send Lena the invoice tonight, um, before I forget,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I should send Lena the invoice tonight, um, before I forget, although actually no,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I should send Lena the invoice tonight, um, before I forget, although actually no, don't send it yet because the numbers are still wrong."
+              }
+            ]
+          },
+          "expected_output": [],
+          "actual_output": {
+            "final_todos": [
+              {
+                "text": "Send the invoice to Lena after correcting the numbers",
+                "priority": "medium",
+                "category": "finance",
+                "due_date": "2026-03-24",
+                "notification": null,
+                "assign_to": null
+              }
+            ],
+            "step_results": [
+              {
+                "step_index": 1,
+                "transcript": "I should send Lena the invoice tonight, um, before I forget,",
+                "todos": [
+                  {
+                    "text": "Send the invoice to Lena",
+                    "priority": "medium",
+                    "category": null,
+                    "due_date": "2026-03-24",
+                    "notification": null,
+                    "assign_to": null
+                  }
+                ]
+              },
+              {
+                "step_index": 2,
+                "transcript": "I should send Lena the invoice tonight, um, before I forget, although actually no,",
+                "todos": [
+                  {
+                    "text": "Send the invoice to Lena",
+                    "priority": "medium",
+                    "category": null,
+                    "due_date": "2026-03-24",
+                    "notification": null,
+                    "assign_to": null
+                  }
+                ]
+              },
+              {
+                "step_index": 3,
+                "transcript": "I should send Lena the invoice tonight, um, before I forget, although actually no, don't send it yet because the numbers are still wrong.",
+                "todos": [
+                  {
+                    "text": "Send the invoice to Lena after correcting the numbers",
+                    "priority": "medium",
+                    "category": "finance",
+                    "due_date": "2026-03-24",
+                    "notification": null,
+                    "assign_to": null
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "incomplete_cases": [],
+      "slowest_cases": [
+        {
+          "case_id": "supplier-memo-recap",
+          "duration_s": 3.714942
+        },
+        {
+          "case_id": "cancel-one-keep-one",
+          "duration_s": 3.227486
+        },
+        {
+          "case_id": "god-milk-plus-second-task",
+          "duration_s": 2.984296
+        }
+      ]
+    },
+    {
+      "entry_id": "deepinfra_qwen35_9b_default",
+      "label": "Qwen 3.5 9B / default",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-45-47Z-a0f51d13--deepinfra_qwen35_9b_default",
+      "selected_timestamp": "2026-04-15T15:45:47.375852Z",
+      "headline_metric_value": 0.36363636363636365,
+      "total_case_count": 11,
+      "passed_case_count": 4,
+      "incorrect_case_count": 0,
+      "incomplete_case_count": 7,
+      "completed_case_count": 4,
+      "failure_count": 7,
+      "average_case_duration_s": 13.71174625,
+      "max_case_duration_s": 17.204811,
+      "cost_usd": null,
+      "config": {
+        "provider": "deepinfra",
+        "model": "Qwen/Qwen3.5-9B",
+        "prompt_version": "v1",
+        "model_settings": {}
+      },
+      "failures": [
+        {
+          "case_id": "god-milk-plus-second-task",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to pick up god milk for Sarah tonight, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote, and yeah, the oat one from the organic store,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote, and yeah, the oat one from the organic store, that's what I meant."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Pick up oat milk for Sarah",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Text Marc about the quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "god-milk-asr-context",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to pick up god milk for Sarah tonight, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, because regular milk makes her sick,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, because regular milk makes her sick, and the oat one from the organic store is the one she can have."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Pick up oat milk for Sarah",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "goat-to-oat-correction",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to pick up goat milk for Sarah tonight, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to pick up goat milk for Sarah tonight, um, no, sorry, not goat milk,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to pick up goat milk for Sarah tonight, um, no, sorry, not goat milk, oat milk, because she's vegan."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Pick up oat milk for Sarah",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "call-marc-duplicate-ramble",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to call Marc about the quote tomorrow, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other, so I keep feeling like I'm forgetting something, and yeah, don't let me forget to call Marc,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other, so I keep feeling like I'm forgetting something, and yeah, don't let me forget to call Marc, that's the main follow-up."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Call Marc about the quote tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "cancel-one-keep-one",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna, but do send the invoice to Lena tonight."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Lena tonight",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "supplier-memo-recap",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC"
+              },
+              {
+                "step_index": 6,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC to call the supplier, and I need to finish the memo by Friday."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Have JC call the supplier",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Finish the memo by Friday",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "testing-then-agenda",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too, but anyway I do need to rewrite the agenda for tomorrow,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too, but anyway I do need to rewrite the agenda for tomorrow, that's the one real thing I actually have to do."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Rewrite the agenda for tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        }
+      ],
+      "incorrect_cases": [],
+      "incomplete_cases": [
+        {
+          "case_id": "god-milk-plus-second-task",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to pick up god milk for Sarah tonight, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote, and yeah, the oat one from the organic store,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote, and yeah, the oat one from the organic store, that's what I meant."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Pick up oat milk for Sarah",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Text Marc about the quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "god-milk-asr-context",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to pick up god milk for Sarah tonight, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, because regular milk makes her sick,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, because regular milk makes her sick, and the oat one from the organic store is the one she can have."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Pick up oat milk for Sarah",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "goat-to-oat-correction",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to pick up goat milk for Sarah tonight, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to pick up goat milk for Sarah tonight, um, no, sorry, not goat milk,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to pick up goat milk for Sarah tonight, um, no, sorry, not goat milk, oat milk, because she's vegan."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Pick up oat milk for Sarah",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "call-marc-duplicate-ramble",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to call Marc about the quote tomorrow, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other, so I keep feeling like I'm forgetting something, and yeah, don't let me forget to call Marc,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other, so I keep feeling like I'm forgetting something, and yeah, don't let me forget to call Marc, that's the main follow-up."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Call Marc about the quote tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "cancel-one-keep-one",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna, but do send the invoice to Lena tonight."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Lena tonight",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "supplier-memo-recap",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC"
+              },
+              {
+                "step_index": 6,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC to call the supplier, and I need to finish the memo by Friday."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Have JC call the supplier",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Finish the memo by Friday",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "testing-then-agenda",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too, but anyway I do need to rewrite the agenda for tomorrow,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too, but anyway I do need to rewrite the agenda for tomorrow, that's the one real thing I actually have to do."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Rewrite the agenda for tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        }
+      ],
+      "slowest_cases": [
+        {
+          "case_id": "email-lunch-dentist-incomplete",
+          "duration_s": 17.204811
+        },
+        {
+          "case_id": "invoice-cancel",
+          "duration_s": 14.364248
+        },
+        {
+          "case_id": "past-then-live",
+          "duration_s": 12.470631
+        }
+      ]
+    },
+    {
+      "entry_id": "deepinfra_qwen35_4b_structured_tuned",
+      "label": "Qwen 3.5 4B / structured tuned",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-47-52Z-16dbe200--deepinfra_qwen35_4b_structured_tuned",
+      "selected_timestamp": "2026-04-15T15:47:52.674547Z",
+      "headline_metric_value": 0.18181818181818182,
+      "total_case_count": 11,
+      "passed_case_count": 2,
+      "incorrect_case_count": 0,
+      "incomplete_case_count": 9,
+      "completed_case_count": 2,
+      "failure_count": 9,
+      "average_case_duration_s": 10.0482665,
+      "max_case_duration_s": 11.773978,
+      "cost_usd": null,
+      "config": {
+        "provider": "deepinfra",
+        "model": "Qwen/Qwen3.5-4B",
+        "prompt_version": "v1",
+        "model_settings": {
+          "temperature": 0,
+          "max_tokens": 1024
+        }
+      },
+      "failures": [
+        {
+          "case_id": "god-milk-plus-second-task",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to pick up god milk for Sarah tonight, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote, and yeah, the oat one from the organic store,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote, and yeah, the oat one from the organic store, that's what I meant."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Pick up oat milk for Sarah",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Text Marc about the quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (1024) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "buy-bread-merge",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to buy milk, and I need to buy, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to buy milk, and I need to buy, um, bread for tomorrow, but actually that's"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to buy milk, and I need to buy, um, bread for tomorrow, but actually that's one grocery run, not two separate things."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery run for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "goat-to-oat-correction",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to pick up goat milk for Sarah tonight, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to pick up goat milk for Sarah tonight, um, no, sorry, not goat milk,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to pick up goat milk for Sarah tonight, um, no, sorry, not goat milk, oat milk, because she's vegan."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Pick up oat milk for Sarah",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "invoice-cancel",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I should send Lena the invoice tonight, um, before I forget,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I should send Lena the invoice tonight, um, before I forget, although actually no,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I should send Lena the invoice tonight, um, before I forget, although actually no, don't send it yet because the numbers are still wrong."
+              }
+            ]
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "call-marc-duplicate-ramble",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to call Marc about the quote tomorrow, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other, so I keep feeling like I'm forgetting something, and yeah, don't let me forget to call Marc,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other, so I keep feeling like I'm forgetting something, and yeah, don't let me forget to call Marc, that's the main follow-up."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Call Marc about the quote tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "cancel-one-keep-one",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna, but do send the invoice to Lena tonight."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Lena tonight",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "supplier-memo-recap",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC"
+              },
+              {
+                "step_index": 6,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC to call the supplier, and I need to finish the memo by Friday."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Have JC call the supplier",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Finish the memo by Friday",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "testing-then-agenda",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too, but anyway I do need to rewrite the agenda for tomorrow,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too, but anyway I do need to rewrite the agenda for tomorrow, that's the one real thing I actually have to do."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Rewrite the agenda for tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "past-then-live",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I already emailed the landlord about the leak, and now I just need to, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I already emailed the landlord about the leak, and now I just need to, um, call the plumber tomorrow,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I already emailed the landlord about the leak, and now I just need to, um, call the plumber tomorrow, because it's still dripping under the sink."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Call the plumber tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        }
+      ],
+      "incorrect_cases": [],
+      "incomplete_cases": [
+        {
+          "case_id": "god-milk-plus-second-task",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to pick up god milk for Sarah tonight, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote, and yeah, the oat one from the organic store,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need to pick up god milk for Sarah tonight, um, the kind she drinks instead of regular milk, because regular milk makes her sick, and after that I need to text Marc about the quote, and yeah, the oat one from the organic store, that's what I meant."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Pick up oat milk for Sarah",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Text Marc about the quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (1024) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "buy-bread-merge",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to buy milk, and I need to buy, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to buy milk, and I need to buy, um, bread for tomorrow, but actually that's"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to buy milk, and I need to buy, um, bread for tomorrow, but actually that's one grocery run, not two separate things."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery run for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "goat-to-oat-correction",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to pick up goat milk for Sarah tonight, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to pick up goat milk for Sarah tonight, um, no, sorry, not goat milk,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to pick up goat milk for Sarah tonight, um, no, sorry, not goat milk, oat milk, because she's vegan."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Pick up oat milk for Sarah",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "invoice-cancel",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I should send Lena the invoice tonight, um, before I forget,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I should send Lena the invoice tonight, um, before I forget, although actually no,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I should send Lena the invoice tonight, um, before I forget, although actually no, don't send it yet because the numbers are still wrong."
+              }
+            ]
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "call-marc-duplicate-ramble",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need to call Marc about the quote tomorrow, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other, so I keep feeling like I'm forgetting something, and yeah, don't let me forget to call Marc,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need to call Marc about the quote tomorrow, um, and I was also going over the notes from that meeting in my head, because honestly that whole meeting was confusing and people kept talking over each other, so I keep feeling like I'm forgetting something, and yeah, don't let me forget to call Marc, that's the main follow-up."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Call Marc about the quote tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "cancel-one-keep-one",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "Call Anna tomorrow, and send the invoice to Lena, um, the invoice definitely has to go out tonight, but on Anna I'm not totally sure yet, actually never mind on Anna, but do send the invoice to Lena tonight."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Lena tonight",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "supplier-memo-recap",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC"
+              },
+              {
+                "step_index": 6,
+                "transcript": "I need JC to call the supplier and make sure the catering is arranged, um, and I need to finish the memo by Friday, and I'm mostly just thinking out loud because there are too many moving pieces right now, and people keep changing the plan, but anyway, let me recap, I need JC to call the supplier, and I need to finish the memo by Friday."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Have JC call the supplier",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Finish the memo by Friday",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "testing-then-agenda",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too,"
+              },
+              {
+                "step_index": 4,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too, but anyway I do need to rewrite the agenda for tomorrow,"
+              },
+              {
+                "step_index": 5,
+                "transcript": "Okay, I'm mostly testing this thing again, because I want to see if it catches the whole transcript when I kind of ramble, and talk about reminders and tasks and all that, which is what I was doing earlier too, but anyway I do need to rewrite the agenda for tomorrow, that's the one real thing I actually have to do."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Rewrite the agenda for tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "past-then-live",
+          "inputs": {
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "replay_steps": [
+              {
+                "step_index": 1,
+                "transcript": "I already emailed the landlord about the leak, and now I just need to, um,"
+              },
+              {
+                "step_index": 2,
+                "transcript": "I already emailed the landlord about the leak, and now I just need to, um, call the plumber tomorrow,"
+              },
+              {
+                "step_index": 3,
+                "transcript": "I already emailed the landlord about the leak, and now I just need to, um, call the plumber tomorrow, because it's still dripping under the sink."
+              }
+            ]
+          },
+          "expected_output": [
+            {
+              "text": "Call the plumber tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        }
+      ],
+      "slowest_cases": [
+        {
+          "case_id": "email-lunch-dentist-incomplete",
+          "duration_s": 11.773978
+        },
+        {
+          "case_id": "god-milk-asr-context",
+          "duration_s": 8.322555
+        }
+      ]
+    }
+  ],
+  "missing_entry_ids": []
+}

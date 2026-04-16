@@ -1,0 +1,20 @@
+{
+  "name": "todo_extraction_lock_smoke",
+  "version": "v1",
+  "rows": [
+    {
+      "id": "buy-milk-locked",
+      "input": {
+        "transcript": "Buy milk on the way home.",
+        "reference_dt": "2026-04-08T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        { "text": "Buy milk on the way home" }
+      ],
+      "metadata": {
+        "source_fixture": "smoke-buy-milk-locked"
+      }
+    }
+  ]
+}

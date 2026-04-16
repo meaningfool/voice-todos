@@ -17,8 +17,8 @@ def test_benchmark_list_command_prints_known_ids(capsys):
     captured = capsys.readouterr()
 
     assert exit_code == 0
-    assert "extraction_llm_matrix_v1" in captured.out
-    assert "replay_llm_matrix_v1" in captured.out
+    assert "todo_extraction_bench_v1" in captured.out
+    assert "todo_replay_bench_v1" in captured.out
 
 
 def test_benchmark_list_script_entrypoint_prints_known_ids():
@@ -31,12 +31,12 @@ def test_benchmark_list_script_entrypoint_prints_known_ids():
     )
 
     assert result.returncode == 0
-    assert "extraction_llm_matrix_v1" in result.stdout
-    assert "replay_llm_matrix_v1" in result.stdout
+    assert "todo_extraction_bench_v1" in result.stdout
+    assert "todo_replay_bench_v1" in result.stdout
 
 
-def test_benchmark_show_command_prints_entry_labels_and_config(capsys):
-    exit_code = main(["benchmark", "show", "extraction_llm_matrix_v1"])
+def test_benchmark_show_prints_entry_labels_and_config(capsys):
+    exit_code = main(["benchmark", "show", "todo_extraction_bench_v1"])
     captured = capsys.readouterr()
 
     assert exit_code == 0
@@ -52,7 +52,7 @@ def test_benchmark_run_defaults_to_missing_entries(monkeypatch):
         or SimpleNamespace(executed_entry_ids=["mistral_small_4_default"]),
     )
 
-    main(["benchmark", "run", "extraction_llm_matrix_v1"])
+    main(["benchmark", "run", "todo_extraction_bench_v1"])
 
     assert planned[0]["all_entries"] is False
 
@@ -69,7 +69,7 @@ def test_benchmark_run_passes_stale_control_flags(monkeypatch):
         [
             "benchmark",
             "run",
-            "extraction_llm_matrix_v1",
+            "todo_extraction_bench_v1",
             "--allow-stale",
             "--rebase",
         ]
@@ -83,13 +83,43 @@ def test_benchmark_run_returns_one_with_stale_error_output(monkeypatch, capsys):
     monkeypatch.setattr(
         "evals.cli.run_benchmark",
         lambda **kwargs: BenchmarkStaleError(
-            benchmark_id="extraction_llm_matrix_v1",
-            lock_path="../evals/locks/extraction_llm_matrix_v1.json",
+            benchmark_id="todo_extraction_bench_v1",
+            lock_path="../evals/locks/todo_extraction_bench_v1.json",
         ),
     )
 
-    exit_code = main(["benchmark", "run", "extraction_llm_matrix_v1"])
+    exit_code = main(["benchmark", "run", "todo_extraction_bench_v1"])
     captured = capsys.readouterr()
 
     assert exit_code == 1
     assert "stale" in captured.out.lower()
+
+
+def test_benchmark_report_html_prints_generated_path(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "evals.cli.report_benchmark_html",
+        lambda **kwargs: "/tmp/todo_extraction_bench_v1.html",
+        raising=False,
+    )
+
+    exit_code = main(["benchmark", "report", "todo_extraction_bench_v1", "--html"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "/tmp/todo_extraction_bench_v1.html" in captured.out
+
+
+def test_benchmark_report_open_generates_and_opens_html(monkeypatch, capsys):
+    opened = []
+    monkeypatch.setattr(
+        "evals.cli.open_benchmark_report_html",
+        lambda **kwargs: opened.append(kwargs) or "/tmp/todo_extraction_bench_v1.html",
+        raising=False,
+    )
+
+    exit_code = main(["benchmark", "report", "todo_extraction_bench_v1", "--open"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert opened == [{"benchmark_id": "todo_extraction_bench_v1"}]
+    assert "/tmp/todo_extraction_bench_v1.html" in captured.out

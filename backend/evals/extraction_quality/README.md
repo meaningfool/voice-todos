@@ -41,11 +41,13 @@ Use Logfire to:
 
 ## Files
 
-- `../../evals/datasets/extraction/todo_extraction_v1.json`: canonical transcript-only dataset
 - `dataset_loader.py`: dataset loader
 - `evaluators.py`: evaluator definitions
 - `experiment_configs.py`: named experiment registry
 - `run.py`: CLI runner
+
+When no explicit `--dataset-path` is provided, the runner resolves its default
+dataset from the benchmark lock for `todo_extraction_bench_v1`.
 
 For live smoke validation, use:
 
@@ -59,7 +61,7 @@ not already in the environment.
 Tracked runs require Logfire write credentials. The runner checks the standard
 Logfire credential locations described in `backend/app/logfire_setup.py`.
 
-Hosted dataset bootstrap and later hosted dataset updates require a
+Benchmark lock creation and refresh from hosted datasets require a
 dataset-scoped `LOGFIRE_DATASETS_TOKEN` in the shared `backend/.env`.
 
 The credential storage model for Conductor worktrees is documented in:
@@ -128,16 +130,16 @@ For curated comparisons, use the repo-root benchmark definitions under
 
 Key files:
 
-- `../evals/benchmarks/extraction_llm_matrix_v1.yaml`
-- `../evals/datasets/extraction/todo_extraction_v1.json`
+- `../evals/benchmarks/todo_extraction_bench_v1.yaml`
+- `../evals/locks/todo_extraction_bench_v1.json`
 
 Primary commands:
 
 ```bash
 cd backend && uv run python ../evals/cli.py benchmark list
-cd backend && uv run python ../evals/cli.py benchmark show extraction_llm_matrix_v1
-cd backend && uv run python ../evals/cli.py benchmark run extraction_llm_matrix_v1
-cd backend && uv run python ../evals/cli.py benchmark report extraction_llm_matrix_v1
+cd backend && uv run python ../evals/cli.py benchmark show todo_extraction_bench_v1
+cd backend && uv run python ../evals/cli.py benchmark run todo_extraction_bench_v1
+cd backend && uv run python ../evals/cli.py benchmark report todo_extraction_bench_v1
 ```
 
 The benchmark definition owns comparison intent. Tracked experiment metadata

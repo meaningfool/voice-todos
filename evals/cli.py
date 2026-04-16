@@ -32,6 +32,18 @@ def report_benchmark(**kwargs):
     return _report_benchmark(**kwargs)
 
 
+def report_benchmark_html(**kwargs):
+    from evals.report_html import ensure_benchmark_report_html as _report_benchmark_html
+
+    return _report_benchmark_html(**kwargs)
+
+
+def open_benchmark_report_html(**kwargs):
+    from evals.report_html import open_benchmark_report_html as _open_benchmark_report_html
+
+    return _open_benchmark_report_html(**kwargs)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Benchmark-first eval workflows.")
     root = parser.add_subparsers(dest="resource", required=True)
@@ -49,7 +61,10 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--allow-untracked", action="store_true")
     report = benchmark_sub.add_parser("report")
     report.add_argument("benchmark_id")
-    report.add_argument("--json", action="store_true")
+    report_mode = report.add_mutually_exclusive_group()
+    report_mode.add_argument("--json", action="store_true")
+    report_mode.add_argument("--html", action="store_true")
+    report_mode.add_argument("--open", action="store_true")
     return parser
 
 
@@ -95,7 +110,15 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "report":
-        result = report_benchmark(benchmark_id=args.benchmark_id, json_output=args.json)
+        if args.open:
+            result = open_benchmark_report_html(benchmark_id=args.benchmark_id)
+        elif args.html:
+            result = report_benchmark_html(benchmark_id=args.benchmark_id)
+        else:
+            result = report_benchmark(
+                benchmark_id=args.benchmark_id,
+                json_output=args.json,
+            )
         if result is not None:
             print(result)
         return 0

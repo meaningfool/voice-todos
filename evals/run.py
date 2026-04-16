@@ -174,6 +174,19 @@ def inspect_benchmark_lock_state(benchmark) -> BenchmarkLockState:
     )
 
 
+def ensure_benchmark_dataset_path(benchmark_id: str) -> Path:
+    benchmark = load_benchmark_by_id(benchmark_id)
+    lock_state = inspect_benchmark_lock_state(benchmark)
+    if not lock_state.active_lock_exists:
+        return _write_lock_from_export(benchmark, lock_state.exported_payload)
+    if lock_state.stale:
+        raise BenchmarkStaleError(
+            benchmark_id=benchmark.benchmark_id,
+            lock_path=lock_state.lock_path,
+        )
+    return lock_state.lock_path
+
+
 def _write_lock_from_export(benchmark, exported: dict | None) -> Path:
     if exported is None:
         exported = export_hosted_dataset(benchmark.hosted_dataset)

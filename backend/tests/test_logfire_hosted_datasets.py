@@ -16,16 +16,16 @@ from evals.storage import (
 
 
 def test_benchmark_definition_uses_hosted_dataset_identity():
-    benchmark = load_benchmark_by_id("extraction_llm_matrix_v1")
+    benchmark = load_benchmark_by_id("todo_extraction_bench_v1")
 
     assert isinstance(benchmark.hosted_dataset, str)
     assert benchmark.hosted_dataset
 
 
 def test_lock_path_is_under_evals_locks():
-    path = benchmark_lock_path("extraction_llm_matrix_v1")
+    path = benchmark_lock_path("todo_extraction_bench_v1")
 
-    assert path.name == "extraction_llm_matrix_v1.json"
+    assert path.name == "todo_extraction_bench_v1.json"
     assert path.parent.name == "locks"
 
 
@@ -90,7 +90,7 @@ def test_write_and_load_benchmark_lock_round_trip(tmp_path, monkeypatch):
         version="v1",
         rows=[{"id": "a", "input": {"x": 1}, "expected_output": []}],
         _benchmark_lock=BenchmarkLockMetadata(
-            benchmark_id="extraction_llm_matrix_v1",
+            benchmark_id="todo_extraction_bench_v1",
             hosted_dataset="ds_todo_extraction_placeholder",
             hosted_dataset_name="todo_extraction",
             fetched_at="2026-04-13T00:00:00+00:00",
@@ -100,9 +100,9 @@ def test_write_and_load_benchmark_lock_round_trip(tmp_path, monkeypatch):
     )
 
     written = write_benchmark_lock(lock)
-    loaded = load_benchmark_lock("extraction_llm_matrix_v1")
+    loaded = load_benchmark_lock("todo_extraction_bench_v1")
 
-    assert written.name == "extraction_llm_matrix_v1.json"
+    assert written.name == "todo_extraction_bench_v1.json"
     assert written.parent.name == "locks"
     assert loaded is not None
     assert loaded.benchmark_lock.dataset_hash == "abc123"

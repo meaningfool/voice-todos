@@ -83,6 +83,10 @@ class BenchmarkEntryState(BaseModel):
     selected_run_id: str | None = None
     selected_timestamp: str | None = None
     headline_metric_value: float | None = None
+    total_case_count: int
+    passed_case_count: int
+    incorrect_case_count: int
+    incomplete_case_count: int
     completed_case_count: int = 0
     failure_count: int = 0
     average_case_duration_s: float | None = None
@@ -90,6 +94,8 @@ class BenchmarkEntryState(BaseModel):
     cost_usd: float | None = None
     config: dict = Field(default_factory=dict)
     failures: list[dict] = Field(default_factory=list)
+    incorrect_cases: list[dict] = Field(default_factory=list)
+    incomplete_cases: list[dict] = Field(default_factory=list)
     slowest_cases: list[dict] = Field(default_factory=list)
 
 
@@ -98,6 +104,7 @@ class BenchmarkReport(BaseModel):
     hosted_dataset: str
     focus: str
     headline_metric: str
+    display_headline_metric: str
     active_lock_path: str | None = None
     locked_dataset_hash: str | None = None
     current_hosted_dataset_hash: str | None = None

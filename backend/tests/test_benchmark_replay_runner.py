@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 from types import SimpleNamespace
 
 from evals.resolution import resolve_entry_config
@@ -7,7 +8,7 @@ from evals.storage import load_benchmark_by_id
 
 
 def test_replay_benchmark_entry_resolves_incremental_replay_contract():
-    benchmark = load_benchmark_by_id("replay_llm_matrix_v1")
+    benchmark = load_benchmark_by_id("todo_replay_bench_v1")
     entry = benchmark.entries[0]
     resolved = resolve_entry_config(benchmark=benchmark, entry=entry)
 
@@ -30,9 +31,9 @@ def test_default_run_skips_already_populated_entries(monkeypatch):
 
     asyncio.run(
         run_benchmark(
-            benchmark_id="replay_llm_matrix_v1",
+            benchmark_id="todo_replay_bench_v1",
             all_entries=False,
-            dataset_path=None,
+            dataset_path=Path("dataset.json"),
             allow_untracked=True,
         )
     )
@@ -57,9 +58,9 @@ def test_all_flag_forces_full_replay_rerun(monkeypatch):
 
     asyncio.run(
         run_benchmark(
-            benchmark_id="replay_llm_matrix_v1",
+            benchmark_id="todo_replay_bench_v1",
             all_entries=True,
-            dataset_path=None,
+            dataset_path=Path("dataset.json"),
             allow_untracked=True,
         )
     )

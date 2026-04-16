@@ -19,10 +19,10 @@ from evals.incremental_extraction_quality.replay_case_builder import (
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 DATASET_PATH = (
-    Path(__file__).parents[1]
+    Path(__file__).parent
+    / "fixtures"
     / "evals"
-    / "incremental_extraction_quality"
-    / "todo_extraction_replay_v1.json"
+    / "todo_extraction_replay_seed_expected.json"
 )
 
 
