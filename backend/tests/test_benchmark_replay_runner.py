@@ -6,7 +6,7 @@ from evals.run import run_benchmark
 from evals.storage import load_benchmark_by_id
 
 
-def test_replay_entry_uses_incremental_suite():
+def test_replay_benchmark_entry_resolves_incremental_replay_contract():
     benchmark = load_benchmark_by_id("replay_llm_matrix_v1")
     entry = benchmark.entries[0]
     resolved = resolve_entry_config(benchmark=benchmark, entry=entry)

@@ -5,23 +5,20 @@ from evals.resolution import resolve_entry_config
 from evals.run import run_benchmark
 from evals.storage import load_benchmark_by_id
 
-from evals.extraction_quality.experiment_configs import EXPERIMENTS
 
-
-def test_extraction_entry_resolves_to_legacy_equivalent():
+def test_extraction_benchmark_entry_resolves_current_runner_contract():
     benchmark = load_benchmark_by_id("extraction_llm_matrix_v1")
     entry = next(
-        entry
-        for entry in benchmark.entries
-        if entry.id == "gemini3_flash_default"
+        candidate
+        for candidate in benchmark.entries
+        if candidate.id == "gemini3_flash_default"
     )
     resolved = resolve_entry_config(benchmark=benchmark, entry=entry)
-    legacy = EXPERIMENTS["gemini3_flash_default"]
 
     assert resolved.suite == "extraction_quality"
-    assert resolved.provider == legacy.provider
-    assert resolved.model_name == legacy.extraction_config.model_name
-    assert resolved.prompt_version == legacy.extraction_config.prompt_version
+    assert resolved.provider == "google-gla"
+    assert resolved.model_name == "gemini-3-flash-preview"
+    assert resolved.prompt_version == "v1"
 
 
 def test_extraction_runner_passes_entry_context_without_benchmark_leakage(

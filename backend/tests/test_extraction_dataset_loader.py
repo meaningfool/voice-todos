@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime
 
 from app.models import Todo
@@ -46,3 +47,12 @@ def test_load_extraction_quality_dataset_normalizes_case_inputs_and_todos():
     )
     assert all(isinstance(todo, Todo) for todo in continuous_case.expected_output)
     assert continuous_case.expected_output[0].due_date.isoformat() == "2026-03-25"
+
+
+def test_load_extraction_quality_dataset_preserves_stable_row_ids():
+    dataset = load_extraction_quality_dataset()
+    payload = json.loads(DATASET_PATH.read_text())
+
+    assert [case.name for case in dataset.cases] == [
+        raw_case["name"] for raw_case in payload["cases"]
+    ]
