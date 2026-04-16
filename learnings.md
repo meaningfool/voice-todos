@@ -5,6 +5,8 @@
 **Symptom:** Last 1-2 words of speech disappear from the transcript when the user clicks Stop.
 
 **Wrong hypothesis (session 1):** Audio bytes are being dropped between the browser AudioWorklet and the WebSocket. Built a byte-counting test with agent-browser — proved 0 bytes lost. Audio pipeline is fine.
+That byte-counting script was retired afterward because it only disproved a
+one-time investigation hypothesis and is not part of the durable test surface.
 
 **Wrong hypothesis (session 1):** Soniox streams tokens as interim then final; when the stream ends, tail tokens exist only as interim. Fix: append last interim text to finals. This helped partially but didn't solve the root cause.
 
