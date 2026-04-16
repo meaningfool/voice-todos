@@ -7,7 +7,7 @@ from evals.storage import load_benchmark_by_id
 
 
 def test_extraction_benchmark_entry_resolves_current_runner_contract():
-    benchmark = load_benchmark_by_id("extraction_llm_matrix_v1")
+    benchmark = load_benchmark_by_id("todo_extraction_bench_v1")
     entry = next(
         candidate
         for candidate in benchmark.entries
@@ -38,7 +38,7 @@ def test_extraction_runner_passes_entry_context_without_benchmark_leakage(
 
     result = asyncio.run(
         run_benchmark(
-            benchmark_id="extraction_llm_matrix_v1",
+            benchmark_id="todo_extraction_bench_v1",
             all_entries=True,
             dataset_path=tmp_path / "dataset.json",
             allow_untracked=True,

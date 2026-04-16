@@ -1,0 +1,1244 @@
+{
+  "benchmark_id": "todo_extraction_bench_v1",
+  "hosted_dataset": "fdf39527-c44e-4368-a6d1-ffd17f41c6df",
+  "focus": "model",
+  "headline_metric": "todo_count_match",
+  "display_headline_metric": "passed / total",
+  "active_lock_path": "/Users/josselinperrus/conductor/workspaces/voice-todos/damascus/evals/locks/todo_extraction_bench_v1.json",
+  "locked_dataset_hash": "930324ca745c631beac0fd2add2078bffed0124f4ee4db32f3e4c2609fe06843",
+  "current_hosted_dataset_hash": "930324ca745c631beac0fd2add2078bffed0124f4ee4db32f3e4c2609fe06843",
+  "stale": false,
+  "entries": [
+    {
+      "entry_id": "gemini3_flash_default",
+      "label": "Gemini 3 Flash / default",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-32-29Z-a1ea7483--gemini3_flash_default",
+      "selected_timestamp": "2026-04-15T15:32:29.627487Z",
+      "headline_metric_value": 0.9615384615384616,
+      "total_case_count": 26,
+      "passed_case_count": 25,
+      "incorrect_case_count": 1,
+      "incomplete_case_count": 0,
+      "completed_case_count": 26,
+      "failure_count": 0,
+      "average_case_duration_s": 2.639638076923077,
+      "max_case_duration_s": 6.192263,
+      "cost_usd": 0.0014647115384615384,
+      "config": {
+        "provider": "google-gla",
+        "model": "gemini-3-flash-preview",
+        "prompt_version": "v1",
+        "model_settings": {}
+      },
+      "failures": [],
+      "incorrect_cases": [
+        {
+          "case_id": "question-not-commitment",
+          "inputs": {
+            "transcript": "I was wondering, should I call David tomorrow, or is that unnecessary?",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "actual_output": [
+            {
+              "text": "Call David",
+              "priority": null,
+              "category": "Communication",
+              "due_date": "2026-03-25",
+              "notification": null,
+              "assign_to": null
+            }
+          ]
+        }
+      ],
+      "incomplete_cases": [],
+      "slowest_cases": [
+        {
+          "case_id": "question-not-commitment",
+          "duration_s": 6.192263
+        },
+        {
+          "case_id": "dense-run-on-four",
+          "duration_s": 4.962494
+        },
+        {
+          "case_id": "two-simple-tasks",
+          "duration_s": 4.337767
+        }
+      ]
+    },
+    {
+      "entry_id": "gemini3_flash_minimal_thinking",
+      "label": "Gemini 3 Flash / minimal thinking",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-33-38Z-86a6ca19--gemini3_flash_minimal_thinking",
+      "selected_timestamp": "2026-04-15T15:33:38.662532Z",
+      "headline_metric_value": 1.0,
+      "total_case_count": 26,
+      "passed_case_count": 26,
+      "incorrect_case_count": 0,
+      "incomplete_case_count": 0,
+      "completed_case_count": 26,
+      "failure_count": 0,
+      "average_case_duration_s": 0.9407008076923078,
+      "max_case_duration_s": 1.425646,
+      "cost_usd": 0.00045417307692307706,
+      "config": {
+        "provider": "google-gla",
+        "model": "gemini-3-flash-preview",
+        "prompt_version": "v1",
+        "model_settings": {
+          "google_thinking_config": {
+            "thinking_level": "minimal"
+          }
+        }
+      },
+      "failures": [],
+      "incorrect_cases": [],
+      "incomplete_cases": [],
+      "slowest_cases": [
+        {
+          "case_id": "dense-run-on-four",
+          "duration_s": 1.425646
+        },
+        {
+          "case_id": "long-mixed-signal-three",
+          "duration_s": 1.309963
+        },
+        {
+          "case_id": "noisy-two-tasks",
+          "duration_s": 1.176403
+        }
+      ]
+    },
+    {
+      "entry_id": "gemini31_flash_lite_default",
+      "label": "Gemini 3.1 Flash-Lite / default",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-34-03Z-b877b07f--gemini31_flash_lite_default",
+      "selected_timestamp": "2026-04-15T15:34:03.416337Z",
+      "headline_metric_value": 0.9615384615384616,
+      "total_case_count": 26,
+      "passed_case_count": 25,
+      "incorrect_case_count": 1,
+      "incomplete_case_count": 0,
+      "completed_case_count": 26,
+      "failure_count": 0,
+      "average_case_duration_s": 1.6137185,
+      "max_case_duration_s": 3.889031,
+      "cost_usd": 0.00021785576923076923,
+      "config": {
+        "provider": "google-gla",
+        "model": "gemini-3.1-flash-lite-preview",
+        "prompt_version": "v1",
+        "model_settings": {}
+      },
+      "failures": [],
+      "incorrect_cases": [
+        {
+          "case_id": "question-not-commitment",
+          "inputs": {
+            "transcript": "I was wondering, should I call David tomorrow, or is that unnecessary?",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "actual_output": [
+            {
+              "text": "Call David",
+              "priority": null,
+              "category": null,
+              "due_date": "2026-03-25",
+              "notification": null,
+              "assign_to": null
+            }
+          ]
+        }
+      ],
+      "incomplete_cases": [],
+      "slowest_cases": [
+        {
+          "case_id": "correction-changes-action",
+          "duration_s": 3.889031
+        },
+        {
+          "case_id": "parent-action-with-details",
+          "duration_s": 3.549639
+        },
+        {
+          "case_id": "three-simple-tasks",
+          "duration_s": 2.249436
+        }
+      ]
+    },
+    {
+      "entry_id": "gemini31_flash_lite_minimal_thinking",
+      "label": "Gemini 3.1 Flash-Lite / minimal thinking",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-34-45Z-da3607d8--gemini31_flash_lite_minimal_thinking",
+      "selected_timestamp": "2026-04-15T15:34:45.735254Z",
+      "headline_metric_value": 0.9615384615384616,
+      "total_case_count": 26,
+      "passed_case_count": 25,
+      "incorrect_case_count": 1,
+      "incomplete_case_count": 0,
+      "completed_case_count": 26,
+      "failure_count": 0,
+      "average_case_duration_s": 2.1162391153846154,
+      "max_case_duration_s": 6.992021,
+      "cost_usd": 0.00021727884615384616,
+      "config": {
+        "provider": "google-gla",
+        "model": "gemini-3.1-flash-lite-preview",
+        "prompt_version": "v1",
+        "model_settings": {
+          "google_thinking_config": {
+            "thinking_level": "minimal"
+          }
+        }
+      },
+      "failures": [],
+      "incorrect_cases": [
+        {
+          "case_id": "question-not-commitment",
+          "inputs": {
+            "transcript": "I was wondering, should I call David tomorrow, or is that unnecessary?",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "actual_output": [
+            {
+              "text": "Call David",
+              "priority": null,
+              "category": null,
+              "due_date": "2026-03-25",
+              "notification": null,
+              "assign_to": null
+            }
+          ]
+        }
+      ],
+      "incomplete_cases": [],
+      "slowest_cases": [
+        {
+          "case_id": "merge-and-keep-separate",
+          "duration_s": 6.992021
+        },
+        {
+          "case_id": "dense-negative-task-words",
+          "duration_s": 4.405086
+        },
+        {
+          "case_id": "send-contract-clear",
+          "duration_s": 3.36593
+        }
+      ]
+    },
+    {
+      "entry_id": "mistral_small_4_default",
+      "label": "Mistral Small 4 / default",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-35-43Z-16dccb1f--mistral_small_4_default",
+      "selected_timestamp": "2026-04-15T15:35:43.587032Z",
+      "headline_metric_value": 0.9615384615384616,
+      "total_case_count": 26,
+      "passed_case_count": 25,
+      "incorrect_case_count": 0,
+      "incomplete_case_count": 1,
+      "completed_case_count": 25,
+      "failure_count": 1,
+      "average_case_duration_s": 0.83194792,
+      "max_case_duration_s": 2.358329,
+      "cost_usd": null,
+      "config": {
+        "provider": "mistral",
+        "model": "mistral-small-2603",
+        "prompt_version": "v1",
+        "model_settings": {}
+      },
+      "failures": [
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "status_code: 503, model_name: mistral-small-2603, body: {\"object\":\"error\",\"message\":\"Internal server error\",\"type\":\"unreachable_backend\",\"param\":null,\"code\":\"1100\",\"raw_status_code\":503}",
+          "exception_type": "pydantic_ai.exceptions.ModelHTTPError",
+          "validator_feedback": null,
+          "actual_output": null
+        }
+      ],
+      "incorrect_cases": [],
+      "incomplete_cases": [
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "status_code: 503, model_name: mistral-small-2603, body: {\"object\":\"error\",\"message\":\"Internal server error\",\"type\":\"unreachable_backend\",\"param\":null,\"code\":\"1100\",\"raw_status_code\":503}",
+          "exception_type": "pydantic_ai.exceptions.ModelHTTPError",
+          "validator_feedback": null,
+          "actual_output": null
+        }
+      ],
+      "slowest_cases": [
+        {
+          "case_id": "long-noisy-three-with-past",
+          "duration_s": 2.358329
+        },
+        {
+          "case_id": "parent-action-with-details",
+          "duration_s": 1.414899
+        },
+        {
+          "case_id": "past-plus-new",
+          "duration_s": 1.322334
+        }
+      ]
+    },
+    {
+      "entry_id": "deepinfra_qwen35_9b_default",
+      "label": "Qwen 3.5 9B / default",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-36-05Z-d3d113ec--deepinfra_qwen35_9b_default",
+      "selected_timestamp": "2026-04-15T15:36:05.492394Z",
+      "headline_metric_value": 0.5769230769230769,
+      "total_case_count": 26,
+      "passed_case_count": 15,
+      "incorrect_case_count": 2,
+      "incomplete_case_count": 9,
+      "completed_case_count": 17,
+      "failure_count": 9,
+      "average_case_duration_s": 3.4115441764705885,
+      "max_case_duration_s": 7.472406,
+      "cost_usd": null,
+      "config": {
+        "provider": "deepinfra",
+        "model": "Qwen/Qwen3.5-9B",
+        "prompt_version": "v1",
+        "model_settings": {}
+      },
+      "failures": [
+        {
+          "case_id": "merge-and-keep-separate",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery run for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Marc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "long-noisy-three-with-past",
+          "inputs": {
+            "transcript": "Uh so I already called the landlord, but I still need to book the dentist, order printer ink, and text Julia about dinner, unless I already did that, no I didn't.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Text Julia about dinner",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "dense-negative-task-words",
+          "inputs": {
+            "transcript": "We're talking about reminders, due dates, assigned tasks, and follow-ups, but this is only a demo recording of the feature.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "long-mixed-signal-three",
+          "inputs": {
+            "transcript": "The last meeting was a mess, anyway before Friday I need to finish the memo, check the catering quote, and call Mom, and the rest can wait.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Check the catering quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Mom",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "vague-self-talk-long",
+          "inputs": {
+            "transcript": "Honestly I should get my life together and be less late to everything, but anyway I'm mostly venting.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "question-not-commitment",
+          "inputs": {
+            "transcript": "I was wondering, should I call David tomorrow, or is that unnecessary?",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "correction-adds-detail-dup-risk",
+          "inputs": {
+            "transcript": "I need to buy milk from the supermarket, actually, no, buy oat milk from the organic store.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk from the organic store",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "mixed-own-and-delegated",
+          "inputs": {
+            "transcript": "I need to finish the memo, and I need JC to call the supplier.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Have JC call the supplier",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "merge-instruction-simple",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, and actually make that a single grocery errand for milk and bread.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery errand for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        }
+      ],
+      "incorrect_cases": [
+        {
+          "case_id": "cancel-one-keep-one",
+          "inputs": {
+            "transcript": "Remind me to call Anna tomorrow... actually never mind on Anna, but do send the invoice to Lena.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Lena",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "actual_output": []
+        },
+        {
+          "case_id": "call-mom-clear",
+          "inputs": {
+            "transcript": "Okay, tonight I need to call Mom about the weekend.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Mom about the weekend",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "actual_output": []
+        }
+      ],
+      "incomplete_cases": [
+        {
+          "case_id": "merge-and-keep-separate",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery run for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Marc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "long-noisy-three-with-past",
+          "inputs": {
+            "transcript": "Uh so I already called the landlord, but I still need to book the dentist, order printer ink, and text Julia about dinner, unless I already did that, no I didn't.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Text Julia about dinner",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "dense-negative-task-words",
+          "inputs": {
+            "transcript": "We're talking about reminders, due dates, assigned tasks, and follow-ups, but this is only a demo recording of the feature.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "long-mixed-signal-three",
+          "inputs": {
+            "transcript": "The last meeting was a mess, anyway before Friday I need to finish the memo, check the catering quote, and call Mom, and the rest can wait.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Check the catering quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Mom",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "vague-self-talk-long",
+          "inputs": {
+            "transcript": "Honestly I should get my life together and be less late to everything, but anyway I'm mostly venting.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "question-not-commitment",
+          "inputs": {
+            "transcript": "I was wondering, should I call David tomorrow, or is that unnecessary?",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "correction-adds-detail-dup-risk",
+          "inputs": {
+            "transcript": "I need to buy milk from the supermarket, actually, no, buy oat milk from the organic store.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk from the organic store",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "mixed-own-and-delegated",
+          "inputs": {
+            "transcript": "I need to finish the memo, and I need JC to call the supplier.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Have JC call the supplier",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "merge-instruction-simple",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, and actually make that a single grocery errand for milk and bread.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery errand for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        }
+      ],
+      "slowest_cases": [
+        {
+          "case_id": "duplicate-update-and-repeat",
+          "duration_s": 7.472406
+        },
+        {
+          "case_id": "call-mom-clear",
+          "duration_s": 6.124606
+        },
+        {
+          "case_id": "correction-changes-action",
+          "duration_s": 5.492261
+        }
+      ]
+    },
+    {
+      "entry_id": "deepinfra_qwen35_4b_structured_tuned",
+      "label": "Qwen 3.5 4B / structured tuned",
+      "status": "current",
+      "selected_run_id": "2026-04-15T15-37-43Z-378eb16e--deepinfra_qwen35_4b_structured_tuned",
+      "selected_timestamp": "2026-04-15T15:37:43.362159Z",
+      "headline_metric_value": 0.7307692307692307,
+      "total_case_count": 26,
+      "passed_case_count": 19,
+      "incorrect_case_count": 0,
+      "incomplete_case_count": 7,
+      "completed_case_count": 19,
+      "failure_count": 7,
+      "average_case_duration_s": 2.566236,
+      "max_case_duration_s": 5.241189,
+      "cost_usd": null,
+      "config": {
+        "provider": "deepinfra",
+        "model": "Qwen/Qwen3.5-4B",
+        "prompt_version": "v1",
+        "model_settings": {
+          "temperature": 0,
+          "max_tokens": 1024
+        }
+      },
+      "failures": [
+        {
+          "case_id": "merge-and-keep-separate",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery run for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Marc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "duplicate-update-and-repeat",
+          "inputs": {
+            "transcript": "I need to send the invoice to Lena, and book the train to Lyon. Later today, actually not Lena, send the invoice to Nora instead. And yeah, book the train to Lyon, don't forget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Nora",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the train to Lyon",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "vague-self-talk-long",
+          "inputs": {
+            "transcript": "Honestly I should get my life together and be less late to everything, but anyway I'm mostly venting.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "product-discussion-task-words",
+          "inputs": {
+            "transcript": "We really need the app to extract tasks better from transcripts, but I'm just describing the feature here.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "three-simple-tasks",
+          "inputs": {
+            "transcript": "I need to book the dentist, pay the electricity bill, and order printer ink.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Pay the electricity bill",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "send-contract-clear",
+          "inputs": {
+            "transcript": "Right, I still need to send Priya the signed contract.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send Priya the signed contract",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "merge-instruction-simple",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, and actually make that a single grocery errand for milk and bread.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery errand for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        }
+      ],
+      "incorrect_cases": [],
+      "incomplete_cases": [
+        {
+          "case_id": "merge-and-keep-separate",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery run for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Marc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "duplicate-update-and-repeat",
+          "inputs": {
+            "transcript": "I need to send the invoice to Lena, and book the train to Lyon. Later today, actually not Lena, send the invoice to Nora instead. And yeah, book the train to Lyon, don't forget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Nora",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the train to Lyon",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "vague-self-talk-long",
+          "inputs": {
+            "transcript": "Honestly I should get my life together and be less late to everything, but anyway I'm mostly venting.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "product-discussion-task-words",
+          "inputs": {
+            "transcript": "We really need the app to extract tasks better from transcripts, but I'm just describing the feature here.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "three-simple-tasks",
+          "inputs": {
+            "transcript": "I need to book the dentist, pay the electricity bill, and order printer ink.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Pay the electricity bill",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "send-contract-clear",
+          "inputs": {
+            "transcript": "Right, I still need to send Priya the signed contract.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send Priya the signed contract",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "merge-instruction-simple",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, and actually make that a single grocery errand for milk and bread.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery errand for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        }
+      ],
+      "slowest_cases": [
+        {
+          "case_id": "mild-misrecognition-two",
+          "duration_s": 5.241189
+        },
+        {
+          "case_id": "noisy-two-tasks",
+          "duration_s": 4.758033
+        },
+        {
+          "case_id": "mixed-own-and-delegated",
+          "duration_s": 4.124203
+        }
+      ]
+    }
+  ],
+  "missing_entry_ids": []
+}

@@ -1,0 +1,616 @@
+{
+  "name": "todo_extraction",
+  "version": "v1",
+  "rows": [
+    {
+      "id": "merge-instruction-simple",
+      "input": {
+        "transcript": "Buy milk, buy bread, and actually make that a single grocery errand for milk and bread.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Do one grocery errand for milk and bread"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "merge_instruction",
+          "over_split_risk"
+        ],
+        "rationale": "Explicit merge instruction should collapse two candidate tasks into one.",
+        "source_fixture": "merge-instruction-simple",
+        "expected_todo_count": 1
+      }
+    },
+    {
+      "id": "parent-action-with-details",
+      "input": {
+        "transcript": "Call the caterer and confirm the menu and the pickup time.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Call the caterer to confirm the menu and pickup time"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "over_split_risk"
+        ],
+        "rationale": "One parent action with multiple details.",
+        "source_fixture": "parent-action-with-details",
+        "expected_todo_count": 1
+      }
+    },
+    {
+      "id": "one-topic-two-recipients",
+      "input": {
+        "transcript": "Email Sarah and Mark about the design review.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Email Sarah and Mark about the design review"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "over_split_risk"
+        ],
+        "rationale": "One communication action to two recipients.",
+        "source_fixture": "one-topic-two-recipients",
+        "expected_todo_count": 1
+      }
+    },
+    {
+      "id": "same-verb-two-topics",
+      "input": {
+        "transcript": "Email Sarah about the budget and Mark about the venue.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Email Sarah about the budget"
+        },
+        {
+          "text": "Email Mark about the venue"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "under_split_risk"
+        ],
+        "rationale": "Shared verb masks two distinct tasks.",
+        "source_fixture": "same-verb-two-topics",
+        "expected_todo_count": 2
+      }
+    },
+    {
+      "id": "past-plus-new",
+      "input": {
+        "transcript": "I already emailed the landlord, so now I just need to call the plumber.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Call the plumber"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "past_vs_new",
+          "mixed_signal"
+        ],
+        "rationale": "Completed action plus one live follow-up.",
+        "source_fixture": "past-plus-new",
+        "expected_todo_count": 1
+      }
+    },
+    {
+      "id": "call-mom-clear",
+      "input": {
+        "transcript": "Okay, tonight I need to call Mom about the weekend.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Call Mom about the weekend"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "baseline"
+        ],
+        "rationale": "Clean single-task baseline.",
+        "source_fixture": "call-mom-clear",
+        "expected_todo_count": 1
+      }
+    },
+    {
+      "id": "send-contract-clear",
+      "input": {
+        "transcript": "Right, I still need to send Priya the signed contract.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Send Priya the signed contract"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "baseline"
+        ],
+        "rationale": "Second clean single-task baseline.",
+        "source_fixture": "send-contract-clear",
+        "expected_todo_count": 1
+      }
+    },
+    {
+      "id": "two-simple-tasks",
+      "input": {
+        "transcript": "Uh, tomorrow I need to book the dentist and send Lena the invoice.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Book the dentist"
+        },
+        {
+          "text": "Send Lena the invoice"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "baseline"
+        ],
+        "rationale": "Basic two-task split.",
+        "source_fixture": "two-simple-tasks",
+        "expected_todo_count": 2
+      }
+    },
+    {
+      "id": "three-simple-tasks",
+      "input": {
+        "transcript": "I need to book the dentist, pay the electricity bill, and order printer ink.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Book the dentist"
+        },
+        {
+          "text": "Pay the electricity bill"
+        },
+        {
+          "text": "Order printer ink"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "baseline"
+        ],
+        "rationale": "Simple three-task positive.",
+        "source_fixture": "three-simple-tasks",
+        "expected_todo_count": 3
+      }
+    },
+    {
+      "id": "mixed-own-and-delegated",
+      "input": {
+        "transcript": "I need to finish the memo, and I need JC to call the supplier.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Finish the memo"
+        },
+        {
+          "text": "Have JC call the supplier"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "delegation"
+        ],
+        "rationale": "Own task plus delegated task.",
+        "source_fixture": "mixed-own-and-delegated",
+        "expected_todo_count": 2
+      }
+    },
+    {
+      "id": "duplicate-far-apart",
+      "input": {
+        "transcript": "I need to call Marc about the quote, and also order printer ink. Anyway the meeting earlier was a bit strange. And yeah, don't let me forget to call Marc.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Call Marc about the quote"
+        },
+        {
+          "text": "Order printer ink"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "duplicate",
+          "mixed_signal"
+        ],
+        "rationale": "Duplicate mention returns later inside rambling context.",
+        "source_fixture": "duplicate-far-apart",
+        "expected_todo_count": 2
+      }
+    },
+    {
+      "id": "correction-adds-detail-dup-risk",
+      "input": {
+        "transcript": "I need to buy milk from the supermarket, actually, no, buy oat milk from the organic store.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Buy oat milk from the organic store"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "correction",
+          "duplicate",
+          "asr_noise"
+        ],
+        "rationale": "Correction should refine one task rather than create two.",
+        "source_fixture": "correction-adds-detail-dup-risk",
+        "expected_todo_count": 1
+      }
+    },
+    {
+      "id": "correction-changes-action",
+      "input": {
+        "transcript": "Call Anna tomorrow, no, text Anna instead, and book the dentist.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Text Anna tomorrow"
+        },
+        {
+          "text": "Book the dentist"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "correction"
+        ],
+        "rationale": "Action changes mid-utterance while another task remains separate.",
+        "source_fixture": "correction-changes-action",
+        "expected_todo_count": 2
+      }
+    },
+    {
+      "id": "cancel-one-keep-one",
+      "input": {
+        "transcript": "Remind me to call Anna tomorrow... actually never mind on Anna, but do send the invoice to Lena.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Send the invoice to Lena"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "cancel",
+          "correction",
+          "mixed_signal"
+        ],
+        "rationale": "Cancellation should remove one task and preserve the other.",
+        "source_fixture": "cancel-one-keep-one",
+        "expected_todo_count": 1
+      }
+    },
+    {
+      "id": "question-not-commitment",
+      "input": {
+        "transcript": "I was wondering, should I call David tomorrow, or is that unnecessary?",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [],
+      "metadata": {
+        "tags": [
+          "negative",
+          "borderline_actionability"
+        ],
+        "rationale": "Question framing should not create a todo.",
+        "source_fixture": "question-not-commitment",
+        "expected_todo_count": 0
+      }
+    },
+    {
+      "id": "product-discussion-task-words",
+      "input": {
+        "transcript": "We really need the app to extract tasks better from transcripts, but I'm just describing the feature here.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [],
+      "metadata": {
+        "tags": [
+          "negative",
+          "borderline_actionability",
+          "mixed_signal"
+        ],
+        "rationale": "Task-like product discussion without a committed action.",
+        "source_fixture": "product-discussion-task-words",
+        "expected_todo_count": 0
+      }
+    },
+    {
+      "id": "vague-self-talk-long",
+      "input": {
+        "transcript": "Honestly I should get my life together and be less late to everything, but anyway I'm mostly venting.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [],
+      "metadata": {
+        "tags": [
+          "negative",
+          "borderline_actionability",
+          "mixed_signal"
+        ],
+        "rationale": "Vague self-talk should not map to a structured todo.",
+        "source_fixture": "vague-self-talk-long",
+        "expected_todo_count": 0
+      }
+    },
+    {
+      "id": "pure-chatter-test",
+      "input": {
+        "transcript": "Okay, I'm testing this again to see whether the transcript captures everything I say.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [],
+      "metadata": {
+        "tags": [
+          "negative"
+        ],
+        "rationale": "Clear no-task chatter baseline.",
+        "source_fixture": "pure-chatter-test",
+        "expected_todo_count": 0
+      }
+    },
+    {
+      "id": "dense-run-on-four",
+      "input": {
+        "transcript": "Tomorrow email Sara about lunch book the dentist appointment update the pricing doc and remind Alex about the design review, and yeah the earlier call was chaotic.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Email Sara about lunch"
+        },
+        {
+          "text": "Book the dentist appointment"
+        },
+        {
+          "text": "Update the pricing doc"
+        },
+        {
+          "text": "Remind Alex about the design review"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "dense_structure",
+          "mixed_signal"
+        ],
+        "rationale": "Dense run-on transcript with four real tasks.",
+        "source_fixture": "dense-run-on-four",
+        "expected_todo_count": 4
+      }
+    },
+    {
+      "id": "noisy-two-tasks",
+      "input": {
+        "transcript": "Uh I need to, well, buy oat milk tonight, and, um, send the invoice to Lena.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Buy oat milk"
+        },
+        {
+          "text": "Send the invoice to Lena"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "asr_noise"
+        ],
+        "rationale": "Straightforward two-task case under disfluency.",
+        "source_fixture": "noisy-two-tasks",
+        "expected_todo_count": 2
+      }
+    },
+    {
+      "id": "mild-misrecognition-two",
+      "input": {
+        "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Buy oat milk"
+        },
+        {
+          "text": "Email Sarah the revised budget"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "asr_noise"
+        ],
+        "rationale": "Mild ASR corruption with recoverable count.",
+        "source_fixture": "mild-misrecognition-two",
+        "expected_todo_count": 2
+      }
+    },
+    {
+      "id": "long-mixed-signal-three",
+      "input": {
+        "transcript": "The last meeting was a mess, anyway before Friday I need to finish the memo, check the catering quote, and call Mom, and the rest can wait.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Finish the memo"
+        },
+        {
+          "text": "Check the catering quote"
+        },
+        {
+          "text": "Call Mom"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "dense_structure",
+          "mixed_signal"
+        ],
+        "rationale": "Longer transcript mixing commentary and three tasks.",
+        "source_fixture": "long-mixed-signal-three",
+        "expected_todo_count": 3
+      }
+    },
+    {
+      "id": "dense-negative-task-words",
+      "input": {
+        "transcript": "We're talking about reminders, due dates, assigned tasks, and follow-ups, but this is only a demo recording of the feature.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [],
+      "metadata": {
+        "tags": [
+          "negative",
+          "dense_structure",
+          "borderline_actionability"
+        ],
+        "rationale": "Dense false cues should still yield zero tasks.",
+        "source_fixture": "dense-negative-task-words",
+        "expected_todo_count": 0
+      }
+    },
+    {
+      "id": "duplicate-update-and-repeat",
+      "input": {
+        "transcript": "I need to send the invoice to Lena, and book the train to Lyon. Later today, actually not Lena, send the invoice to Nora instead. And yeah, book the train to Lyon, don't forget.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Send the invoice to Nora"
+        },
+        {
+          "text": "Book the train to Lyon"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "duplicate",
+          "correction",
+          "mixed_signal"
+        ],
+        "rationale": "Correction plus repeated mention should still settle at two tasks.",
+        "source_fixture": "duplicate-update-and-repeat",
+        "expected_todo_count": 2
+      }
+    },
+    {
+      "id": "long-noisy-three-with-past",
+      "input": {
+        "transcript": "Uh so I already called the landlord, but I still need to book the dentist, order printer ink, and text Julia about dinner, unless I already did that, no I didn't.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Book the dentist"
+        },
+        {
+          "text": "Order printer ink"
+        },
+        {
+          "text": "Text Julia about dinner"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "asr_noise",
+          "past_vs_new",
+          "mixed_signal"
+        ],
+        "rationale": "Past action, uncertainty, and three live tasks in one noisy utterance.",
+        "source_fixture": "long-noisy-three-with-past",
+        "expected_todo_count": 3
+      }
+    },
+    {
+      "id": "merge-and-keep-separate",
+      "input": {
+        "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
+        "reference_dt": "2026-03-24T09:30:00+00:00",
+        "previous_todos": null
+      },
+      "expected_output": [
+        {
+          "text": "Do one grocery run for milk and bread"
+        },
+        {
+          "text": "Call Marc"
+        }
+      ],
+      "metadata": {
+        "tags": [
+          "merge_instruction",
+          "dense_structure"
+        ],
+        "rationale": "Explicit merge plus one remaining independent task.",
+        "source_fixture": "merge-and-keep-separate",
+        "expected_todo_count": 2
+      }
+    }
+  ],
+  "_benchmark_lock": {
+    "benchmark_id": "todo_extraction_bench_v1",
+    "hosted_dataset": "fdf39527-c44e-4368-a6d1-ffd17f41c6df",
+    "hosted_dataset_name": "todo_extraction_v1",
+    "fetched_at": "2026-04-15T15:32:28.585878Z",
+    "dataset_hash": "930324ca745c631beac0fd2add2078bffed0124f4ee4db32f3e4c2609fe06843",
+    "hash_algorithm": "sha256",
+    "case_count": 26
+  }
+}

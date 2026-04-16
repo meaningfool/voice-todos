@@ -19,6 +19,7 @@ def benchmarks_dir() -> Path:
 
 
 LOCKS_DIR = Path(__file__).resolve().parent / "locks"
+REPORTS_DIR = Path(__file__).resolve().parent / "reports"
 
 
 def load_dataset_definition(path: Path) -> DatasetDefinition:
@@ -39,6 +40,14 @@ def load_benchmark_by_id(benchmark_id: str) -> BenchmarkDefinition:
 
 def benchmark_lock_path(benchmark_id: str) -> Path:
     return LOCKS_DIR / f"{benchmark_id}.json"
+
+
+def benchmark_report_path(benchmark_id: str) -> Path:
+    return REPORTS_DIR / f"{benchmark_id}.json"
+
+
+def benchmark_html_report_path(benchmark_id: str) -> Path:
+    return REPORTS_DIR / f"{benchmark_id}.html"
 
 
 def load_benchmark_lock(benchmark_id: str) -> LockedDatasetDefinition | None:

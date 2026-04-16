@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 import httpx
 
 from app.logfire_setup import (
@@ -11,6 +13,7 @@ from app.logfire_setup import (
 from evals.models import EntryQuerySelector
 
 DEFAULT_LOGFIRE_QUERY_URL = "https://logfire-api.pydantic.dev/v1/query"
+DEFAULT_CASE_SPAN_QUERY_LIMIT = 1000
 
 
 def _sql_quote(value: str) -> str:
@@ -37,6 +40,7 @@ def build_candidate_runs_query(selectors: list[EntryQuerySelector]) -> str:
     return f"""
 SELECT
   start_timestamp,
+  trace_id,
   attributes->'metadata'->>'experiment_run_id' AS experiment_run_id,
   attributes->'metadata'->>'suite' AS suite,
   attributes->'metadata'->>'dataset_sha' AS dataset_sha,
@@ -45,11 +49,63 @@ SELECT
   attributes->'metadata'->>'prompt_sha' AS prompt_sha,
   attributes->'metadata'->>'config_fingerprint' AS config_fingerprint,
   attributes->'metadata'->>'repeat' AS repeat,
-  attributes->'metadata'->>'task_retries' AS task_retries
+  attributes->'metadata'->>'task_retries' AS task_retries,
+  COALESCE(
+    attributes->'logfire.experiment.metadata'->'averages'->>'assertions',
+    attributes->>'assertion_pass_rate'
+  ) AS headline_metric_value,
+  attributes->'logfire.experiment.metadata'->>'n_cases' AS total_case_count,
+  attributes->'logfire.experiment.metadata'->'averages'->>'task_duration' AS average_case_duration_s,
+  COALESCE(
+    attributes->'logfire.experiment.metadata'->'averages'->'metrics'->>'cost',
+    attributes->'logfire.metrics'->'operation.cost'->>'total'
+  ) AS cost_usd
 FROM records
 WHERE {where_clause}
 ORDER BY start_timestamp DESC
 LIMIT 200
+""".strip()
+
+
+def build_case_spans_query(trace_ids: list[str]) -> str:
+    if not trace_ids:
+        return (
+            "SELECT trace_id, start_timestamp, level, NULL AS case_id, NULL AS task_duration "
+            "FROM records WHERE FALSE"
+        )
+
+    trace_conditions = " OR ".join(
+        f"trace_id = {_sql_quote(trace_id)}" for trace_id in trace_ids
+    )
+    return f"""
+SELECT
+  trace_id,
+  start_timestamp,
+  span_id,
+  parent_span_id,
+  span_name,
+  level,
+  message,
+  exception_message,
+  exception_type,
+  otel_status_message,
+  attributes->>'case_name' AS case_id,
+  attributes->>'task_duration' AS task_duration,
+  attributes->'assertions' AS assertions,
+  attributes->'inputs' AS inputs,
+  attributes->'expected_output' AS expected_output,
+  attributes->'output' AS output,
+  attributes->'metadata' AS metadata,
+  attributes->'pydantic_ai.all_messages' AS all_messages
+FROM records
+WHERE ({trace_conditions})
+  AND (
+    attributes->>'logfire.msg_template' = 'case: {{case_name}}'
+    OR span_name = 'execute {{task}}'
+    OR span_name = 'agent run'
+  )
+ORDER BY start_timestamp DESC
+LIMIT 10000
 """.strip()
 
 
@@ -130,6 +186,38 @@ class LogfireBenchmarkQueryClient:
         )
         response.raise_for_status()
         return normalize_benchmark_rows(response.json())
+
+    def fetch_case_spans(self, trace_ids: list[str]) -> list[dict]:
+        if not trace_ids:
+            return []
+        if not self.read_token:
+            raise RuntimeError("LOGFIRE_READ_TOKEN is required for benchmark reporting")
+
+        for attempt in range(4):
+            response = httpx.get(
+                self.query_url,
+                params={
+                    "sql": build_case_spans_query(trace_ids),
+                    "limit": DEFAULT_CASE_SPAN_QUERY_LIMIT,
+                    "row_oriented": "true",
+                    **(
+                        {"project_name": self.project_name}
+                        if self.project_name
+                        else {}
+                    ),
+                },
+                headers={
+                    "Authorization": f"Bearer {self.read_token}",
+                    "Accept": "application/json",
+                },
+                timeout=self.timeout,
+            )
+            if response.status_code == 429 and attempt < 3:
+                time.sleep(1.0 + attempt)
+                continue
+            response.raise_for_status()
+            return normalize_benchmark_rows(response.json())
+        return []
 
 
 def _default_query_url() -> str:

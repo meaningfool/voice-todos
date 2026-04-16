@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:benchmark-report": "tsc -b && vite build --config vite.benchmark-report.config.ts",
     "preview": "vite preview",
     "lint": "oxlint -c oxlintrc.json src/",
     "lint:fix": "oxlint -c oxlintrc.json --fix src/",

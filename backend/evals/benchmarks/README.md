@@ -7,12 +7,15 @@ Use the repo-root benchmark definitions and benchmark-first CLI instead:
 
 ```bash
 cd backend && uv run python ../evals/cli.py benchmark list
-cd backend && uv run python ../evals/cli.py benchmark show extraction_llm_matrix_v1
-cd backend && uv run python ../evals/cli.py benchmark run extraction_llm_matrix_v1
-cd backend && uv run python ../evals/cli.py benchmark report extraction_llm_matrix_v1
+cd backend && uv run python ../evals/cli.py benchmark show todo_extraction_bench_v1
+cd backend && uv run python ../evals/cli.py benchmark run todo_extraction_bench_v1
+cd backend && uv run python ../evals/cli.py benchmark report todo_extraction_bench_v1
+cd backend && uv run python ../evals/cli.py benchmark report todo_extraction_bench_v1 --html
+cd backend && uv run python ../evals/cli.py benchmark report todo_extraction_bench_v1 --open
 ```
 
 Canonical files now live under:
 
 - `../evals/benchmarks/`
-- `../evals/datasets/`
+- `../evals/locks/`
+- `../evals/reports/`

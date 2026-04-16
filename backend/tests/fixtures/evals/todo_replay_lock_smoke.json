@@ -1,0 +1,22 @@
+{
+  "name": "todo_replay_lock_smoke",
+  "version": "v1",
+  "rows": [
+    {
+      "id": "buy-milk-replay-locked",
+      "input": {
+        "reference_dt": "2026-04-08T09:30:00+00:00",
+        "replay_steps": [
+          { "step_index": 1, "transcript": "Buy milk." },
+          { "step_index": 2, "transcript": "Buy milk on the way home." }
+        ]
+      },
+      "expected_output": [
+        { "text": "Buy milk on the way home" }
+      ],
+      "metadata": {
+        "source_fixture": "smoke-buy-milk-replay-locked"
+      }
+    }
+  ]
+}

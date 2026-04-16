@@ -8,9 +8,11 @@ from typing import Any
 from pydantic_evals import Case, Dataset
 
 from app.models import Todo
+from evals.benchmark_ids import TODO_REPLAY_BENCHMARK_ID
 from evals.incremental_extraction_quality.models import ReplayStep
+from evals.storage import benchmark_lock_path
 
-DATASET_PATH = Path(__file__).with_name("todo_extraction_replay_v1.json")
+DATASET_PATH = benchmark_lock_path(TODO_REPLAY_BENCHMARK_ID)
 
 
 def load_incremental_replay_dataset(

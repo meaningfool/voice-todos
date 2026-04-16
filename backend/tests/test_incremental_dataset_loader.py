@@ -1,5 +1,6 @@
 import json
 from datetime import UTC, datetime
+from pathlib import Path
 
 from app.models import Todo
 from evals.incremental_extraction_quality.dataset_loader import (
@@ -8,71 +9,79 @@ from evals.incremental_extraction_quality.dataset_loader import (
 )
 from evals.incremental_extraction_quality.models import ReplayStep
 
+FIXTURES_DIR = Path(__file__).parent / "fixtures" / "evals"
+
 
 def test_load_incremental_replay_dataset_returns_expected_cases():
     dataset = load_incremental_replay_dataset()
+    payload = json.loads(DATASET_PATH.read_text())
 
     assert dataset.name == "todo_extraction_replay_v1"
-    assert DATASET_PATH.name == "todo_extraction_replay_v1.json"
+    assert DATASET_PATH.name == "todo_replay_bench_v1.json"
     assert [case.name for case in dataset.cases] == [
-        "call-mom-memo-supplier",
-        "refine-todo",
-        "while-speaking-two-todos",
-        "stop-final-sweep-single-todo",
+        raw_row["id"] for raw_row in payload["rows"]
     ]
 
-    refine_case = next(case for case in dataset.cases if case.name == "refine-todo")
-    assert refine_case.inputs["reference_dt"] == datetime(
+
+def test_load_incremental_replay_dataset_normalizes_lock_shaped_payloads():
+    dataset = load_incremental_replay_dataset(
+        FIXTURES_DIR / "todo_replay_lock_smoke.json"
+    )
+
+    assert dataset.name == "todo_replay_lock_smoke_v1"
+    assert [case.name for case in dataset.cases] == ["buy-milk-replay-locked"]
+
+    replay_case = dataset.cases[0]
+    assert replay_case.inputs["reference_dt"] == datetime(
         2026,
-        3,
-        24,
+        4,
+        8,
         9,
         30,
         tzinfo=UTC,
     )
-    assert refine_case.inputs["replay_steps"] == [
-        ReplayStep(step_index=1, transcript="I need to buy milk."),
+    assert replay_case.inputs["replay_steps"] == [
+        ReplayStep(step_index=1, transcript="Buy milk."),
         ReplayStep(
             step_index=2,
-            transcript=(
-                "I need to buy milk. Actually, mais exact oud milk "
-                "from the organic store."
-            ),
+            transcript="Buy milk on the way home.",
         ),
     ]
-    assert refine_case.expected_output == [
-        Todo(
-            text="Buy oat milk from the organic store",
-            category="Shopping",
-        )
-    ]
-    assert refine_case.metadata == {
-        "dataset": "todo_extraction_replay_v1",
+    assert replay_case.expected_output == [Todo(text="Buy milk on the way home")]
+    assert replay_case.metadata == {
+        "dataset": "todo_replay_lock_smoke_v1",
         "case_type": "incremental_replay",
-        "source_fixture": "refine-todo",
+        "source_fixture": "smoke-buy-milk-replay-locked",
     }
 
-    stop_case = next(
-        case for case in dataset.cases if case.name == "stop-final-sweep-single-todo"
+
+def test_load_incremental_replay_dataset_still_supports_legacy_case_payloads():
+    dataset = load_incremental_replay_dataset(
+        FIXTURES_DIR / "todo_extraction_replay_smoke.json"
     )
-    assert all(
-        isinstance(step, ReplayStep) for step in stop_case.inputs["replay_steps"]
+
+    assert dataset.name == "todo_extraction_replay_smoke_v1"
+    assert [case.name for case in dataset.cases] == ["buy-milk-incremental"]
+
+    replay_case = dataset.cases[0]
+    assert replay_case.inputs["reference_dt"] == datetime(
+        2026,
+        4,
+        8,
+        9,
+        30,
+        tzinfo=UTC,
     )
-    assert all(isinstance(todo, Todo) for todo in stop_case.expected_output)
-    assert stop_case.expected_output == [
-        Todo(
-            text="Send the signed contract to Priya",
-            category="Legal",
-            due_date=datetime(2026, 3, 24, tzinfo=UTC).date(),
-            assign_to="Priya",
-        )
+    assert replay_case.inputs["replay_steps"] == [
+        ReplayStep(step_index=1, transcript="Buy milk."),
+        ReplayStep(
+            step_index=2,
+            transcript="Buy milk on the way home.",
+        ),
     ]
-
-
-def test_load_incremental_replay_dataset_preserves_stable_row_ids():
-    dataset = load_incremental_replay_dataset()
-    payload = json.loads(DATASET_PATH.read_text())
-
-    assert [case.name for case in dataset.cases] == [
-        raw_case["name"] for raw_case in payload["cases"]
-    ]
+    assert replay_case.expected_output == [Todo(text="Buy milk on the way home")]
+    assert replay_case.metadata == {
+        "dataset": "todo_extraction_replay_smoke_v1",
+        "case_type": "incremental_replay",
+        "source_fixture": "smoke-buy-milk-incremental",
+    }

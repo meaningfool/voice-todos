@@ -8,8 +8,10 @@ from typing import Any
 from pydantic_evals import Case, Dataset
 
 from app.models import Todo
+from evals.benchmark_ids import TODO_EXTRACTION_BENCHMARK_ID
+from evals.storage import benchmark_lock_path
 
-DATASET_PATH = Path(__file__).with_name("todo_extraction_v1.json")
+DATASET_PATH = benchmark_lock_path(TODO_EXTRACTION_BENCHMARK_ID)
 
 
 def load_extraction_quality_dataset(
