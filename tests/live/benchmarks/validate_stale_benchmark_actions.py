@@ -12,13 +12,13 @@ for candidate in (str(REPO_ROOT), str(BACKEND_ROOT)):
         sys.path.insert(0, candidate)
 
 from app.live_eval_env import stale_benchmark_actions_validation_warning
-from benchmark_locking_live_validation_lib import (
+from benchmark_live_validation_lib import (
     available_entry_definition,
     cleanup_dataset,
     create_temp_hosted_dataset,
     load_lock_payload,
     mutate_temp_hosted_dataset,
-    run_benchmark_cli,
+    run_benchmark_run_cli,
     write_temp_benchmark,
 )
 
@@ -41,10 +41,10 @@ def main() -> int:
 
     try:
         os.environ["EVALS_BENCHMARKS_DIR"] = str(benchmark_path.parent)
-        initial = run_benchmark_cli(benchmark_id=benchmark_id)
+        initial = run_benchmark_run_cli(benchmark_id=benchmark_id)
         if initial.returncode != 0:
             print(
-                "FAIL: phase 3 initial benchmark run failed\n"
+                "FAIL: initial benchmark run failed\n"
                 f"stdout:\n{initial.stdout}\n"
                 f"stderr:\n{initial.stderr}"
             )
@@ -59,13 +59,13 @@ def main() -> int:
             transcript="Call Mom tomorrow morning.",
         )
 
-        allow_stale = run_benchmark_cli(
+        allow_stale = run_benchmark_run_cli(
             benchmark_id=benchmark_id,
             args=["--allow-stale"],
         )
         if allow_stale.returncode != 0:
             print(
-                "FAIL: phase 3 --allow-stale run failed\n"
+                "FAIL: --allow-stale benchmark run failed\n"
                 f"stdout:\n{allow_stale.stdout}\n"
                 f"stderr:\n{allow_stale.stderr}"
             )
@@ -76,13 +76,13 @@ def main() -> int:
             print("FAIL: --allow-stale unexpectedly rewrote the benchmark lock")
             return 1
 
-        rebase = run_benchmark_cli(
+        rebase = run_benchmark_run_cli(
             benchmark_id=benchmark_id,
             args=["--rebase"],
         )
         if rebase.returncode != 0:
             print(
-                "FAIL: phase 3 --rebase run failed\n"
+                "FAIL: --rebase benchmark run failed\n"
                 f"stdout:\n{rebase.stdout}\n"
                 f"stderr:\n{rebase.stderr}"
             )

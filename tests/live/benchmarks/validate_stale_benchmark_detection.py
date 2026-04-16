@@ -12,12 +12,12 @@ for candidate in (str(REPO_ROOT), str(BACKEND_ROOT)):
         sys.path.insert(0, candidate)
 
 from app.live_eval_env import stale_benchmark_detection_validation_warning
-from benchmark_locking_live_validation_lib import (
+from benchmark_live_validation_lib import (
     available_entry_definition,
     cleanup_dataset,
     create_temp_hosted_dataset,
     mutate_temp_hosted_dataset,
-    run_benchmark_cli,
+    run_benchmark_run_cli,
     write_temp_benchmark,
 )
 
@@ -40,13 +40,13 @@ def main() -> int:
 
     try:
         os.environ["EVALS_BENCHMARKS_DIR"] = str(benchmark_path.parent)
-        first = run_benchmark_cli(
+        first = run_benchmark_run_cli(
             benchmark_id=benchmark_id,
             args=["--allow-untracked"],
         )
         if first.returncode != 0:
             print(
-                "FAIL: phase 2 initial lock run failed\n"
+                "FAIL: initial benchmark run failed\n"
                 f"stdout:\n{first.stdout}\n"
                 f"stderr:\n{first.stderr}"
             )
@@ -58,14 +58,14 @@ def main() -> int:
             transcript="Call Mom tomorrow morning.",
         )
 
-        second = run_benchmark_cli(
+        second = run_benchmark_run_cli(
             benchmark_id=benchmark_id,
             args=["--allow-untracked"],
         )
         combined = (second.stdout + second.stderr).lower()
         if second.returncode == 0 or "stale" not in combined:
             print(
-                "FAIL: phase 2 did not surface a stale benchmark stop\n"
+                "FAIL: stale benchmark stop was not surfaced\n"
                 f"stdout:\n{second.stdout}\n"
                 f"stderr:\n{second.stderr}"
             )
