@@ -78,6 +78,10 @@ def hosted_dataset_locking_validation_warning() -> str | None:
     return tracked_reason or hosted_dataset_crud_skip_reason()
 
 
+def benchmark_run_report_smoke_validation_warning() -> str | None:
+    return benchmark_run_skip_reason() or hosted_dataset_crud_skip_reason()
+
+
 def stale_benchmark_detection_validation_warning() -> str | None:
     return hosted_dataset_crud_skip_reason()
 

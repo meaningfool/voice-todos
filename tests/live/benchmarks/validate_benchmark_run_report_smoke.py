@@ -21,11 +21,11 @@ for candidate in (str(REPO_ROOT), str(BACKEND_ROOT)):
     if candidate not in sys.path:
         sys.path.insert(0, candidate)
 
-from app.live_eval_env import benchmark_run_skip_reason
+from app.live_eval_env import benchmark_run_report_smoke_validation_warning
 
 
 def main() -> int:
-    warning = benchmark_run_skip_reason()
+    warning = benchmark_run_report_smoke_validation_warning()
     if warning is not None:
         print(f"WARN: {warning}")
         return 0
