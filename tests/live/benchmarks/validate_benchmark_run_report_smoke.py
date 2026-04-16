@@ -31,13 +31,14 @@ def main() -> int:
         return 0
 
     benchmark_id = f"benchmark_run_report_smoke_{uuid.uuid4().hex[:8]}"
+    entry = available_entry_definition()
     client, dataset_id, _dataset_name = create_temp_hosted_dataset(
         transcript="Call Mom tonight.",
     )
     tempdir, benchmark_path = write_temp_benchmark(
         benchmark_id=benchmark_id,
         hosted_dataset=dataset_id,
-        entry=available_entry_definition(),
+        entry=entry,
     )
 
     try:
@@ -64,27 +65,49 @@ def main() -> int:
             )
             return 1
 
-        payload = json.loads(report_result.stdout)
+        try:
+            payload = json.loads(report_result.stdout)
+        except json.JSONDecodeError as exc:
+            print(
+                "FAIL: benchmark report --json returned invalid JSON\n"
+                f"error: {exc}\n"
+                f"stdout:\n{report_result.stdout}\n"
+                f"stderr:\n{report_result.stderr}"
+            )
+            return 1
+
         if payload.get("benchmark_id") != benchmark_id:
             print("FAIL: benchmark report JSON did not include the benchmark ID")
             return 1
 
         entries = payload.get("entries")
-        if not isinstance(entries, list) or not entries:
+        if not isinstance(entries, list):
             print("FAIL: benchmark report JSON did not include entry state payload")
+            return 1
+        if len(entries) != 1:
+            print("FAIL: benchmark report JSON did not include exactly one entry state")
+            return 1
+
+        if payload.get("missing_entry_ids"):
+            print("FAIL: benchmark report still marked the temp entry as missing")
             return 1
 
         first_entry = entries[0]
         if (
             not isinstance(first_entry, dict)
-            or "entry_id" not in first_entry
-            or "status" not in first_entry
+            or first_entry.get("entry_id") != entry["id"]
         ):
             print("FAIL: benchmark report JSON entry state payload was malformed")
             return 1
+        if first_entry.get("status") != "current":
+            print("FAIL: benchmark report did not mark the temp entry as current")
+            return 1
+        if not first_entry.get("selected_run_id"):
+            print("FAIL: benchmark report did not include a selected run ID")
+            return 1
 
         print(
-            "PASS: benchmark run and report completed with entry state payload "
+            "PASS: benchmark run and report completed with current entry state "
             f"for {benchmark_id}"
         )
         return 0
