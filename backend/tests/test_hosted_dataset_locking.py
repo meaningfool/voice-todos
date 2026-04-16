@@ -11,12 +11,12 @@ from evals.storage import benchmark_lock_path
 
 
 def _write_benchmark(tmp_path: Path) -> Path:
-    benchmark_path = tmp_path / "phase1_lock.yaml"
+    benchmark_path = tmp_path / "first_run_locking.yaml"
     benchmark_path.write_text(
         "\n".join(
             [
-                "benchmark_id: phase1_lock",
-                "hosted_dataset: ds_phase1",
+                "benchmark_id: first_run_locking",
+                "hosted_dataset: ds_first_run",
                 "dataset_family: extraction",
                 "focus: model",
                 "headline_metric: todo_count_match",
@@ -79,21 +79,21 @@ async def test_run_benchmark_creates_lock_on_first_run_and_uses_it(
     monkeypatch.setattr(benchmark_run, "launch_extraction_entry", fake_launch_extraction_entry)
 
     result = await benchmark_run.run_benchmark(
-        benchmark_id="phase1_lock",
+        benchmark_id="first_run_locking",
         all_entries=False,
         dataset_path=None,
         allow_untracked=True,
     )
 
-    lock_path = benchmark_lock_path("phase1_lock")
+    lock_path = benchmark_lock_path("first_run_locking")
     assert result.executed_entry_ids == ["gemini3_flash_default"]
-    assert export_calls == ["ds_phase1"]
+    assert export_calls == ["ds_first_run"]
     assert launched == [lock_path]
     lock_payload = json.loads(lock_path.read_text())
     assert lock_payload["name"] == "todo_extraction"
     assert lock_payload["version"] == "v1"
     assert lock_payload["rows"][0]["expected_output"] == [{"text": "Call Mom"}]
-    assert lock_payload["_benchmark_lock"]["hosted_dataset"] == "ds_phase1"
+    assert lock_payload["_benchmark_lock"]["hosted_dataset"] == "ds_first_run"
 
 
 @pytest.mark.asyncio
@@ -123,7 +123,7 @@ async def test_run_benchmark_reuses_existing_lock_when_hosted_hash_matches(
         "evaluators": [],
     }
 
-    lock_path = benchmark_lock_path("phase1_lock")
+    lock_path = benchmark_lock_path("first_run_locking")
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     lock_path.write_text(
         json.dumps(
@@ -143,8 +143,8 @@ async def test_run_benchmark_reuses_existing_lock_when_hosted_hash_matches(
                     }
                 ],
                 "_benchmark_lock": {
-                    "benchmark_id": "phase1_lock",
-                    "hosted_dataset": "ds_phase1",
+                    "benchmark_id": "first_run_locking",
+                    "hosted_dataset": "ds_first_run",
                     "hosted_dataset_name": "todo_extraction_v1",
                     "fetched_at": "2026-04-13T16:50:00Z",
                     "dataset_hash": canonical_dataset_hash(exported_payload),
@@ -171,12 +171,12 @@ async def test_run_benchmark_reuses_existing_lock_when_hosted_hash_matches(
     monkeypatch.setattr(benchmark_run, "launch_extraction_entry", fake_launch_extraction_entry)
 
     result = await benchmark_run.run_benchmark(
-        benchmark_id="phase1_lock",
+        benchmark_id="first_run_locking",
         all_entries=False,
         dataset_path=None,
         allow_untracked=True,
     )
 
     assert result.executed_entry_ids == ["gemini3_flash_default"]
-    assert export_calls == ["ds_phase1"]
+    assert export_calls == ["ds_first_run"]
     assert launched == [lock_path]

@@ -10,11 +10,11 @@ from evals.storage import benchmark_lock_path
 
 
 def _write_benchmark(tmp_path: Path) -> None:
-    (tmp_path / "phase2_stale.yaml").write_text(
+    (tmp_path / "stale_detection.yaml").write_text(
         "\n".join(
             [
-                "benchmark_id: phase2_stale",
-                "hosted_dataset: ds_phase2",
+                "benchmark_id: stale_detection",
+                "hosted_dataset: ds_stale_detection",
                 "dataset_family: extraction",
                 "focus: model",
                 "headline_metric: todo_count_match",
@@ -54,8 +54,8 @@ def _write_lock(lock_path: Path, *, dataset_hash: str) -> None:
                     }
                 ],
                 "_benchmark_lock": {
-                    "benchmark_id": "phase2_stale",
-                    "hosted_dataset": "ds_phase2",
+                    "benchmark_id": "stale_detection",
+                    "hosted_dataset": "ds_stale_detection",
                     "hosted_dataset_name": "todo_extraction_v1",
                     "fetched_at": "2026-04-13T16:50:00Z",
                     "dataset_hash": dataset_hash,
@@ -96,7 +96,7 @@ async def test_stale_run_stops_by_default(tmp_path: Path, monkeypatch: pytest.Mo
         benchmark_run, "load_current_benchmark_state", lambda benchmark: benchmark_run.CurrentBenchmarkState()
     )
 
-    lock_path = benchmark_lock_path("phase2_stale")
+    lock_path = benchmark_lock_path("stale_detection")
     _write_lock(lock_path, dataset_hash="old-hash")
     monkeypatch.setattr(
         benchmark_run, "export_hosted_dataset", lambda dataset_id: _exported_payload(transcript="Call Mom tonight")
@@ -109,7 +109,7 @@ async def test_stale_run_stops_by_default(tmp_path: Path, monkeypatch: pytest.Mo
 
     with pytest.raises(benchmark_run.BenchmarkStaleError):
         await benchmark_run.run_benchmark(
-            benchmark_id="phase2_stale",
+            benchmark_id="stale_detection",
             all_entries=False,
             dataset_path=None,
             allow_untracked=True,
