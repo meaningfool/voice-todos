@@ -1,12 +1,48 @@
 ---
 name: using-meanpowers
-description: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
+description: Use when starting a conversation - provides context about the framework and the processes to apply when doing software development.
 ---
+
+# Using Meanpowers
 
 <SUBAGENT-STOP>
 If you were dispatched as a subagent to execute a specific task, skip this skill.
 </SUBAGENT-STOP>
 
+## Software development process
+
+```
+conversation or document
+  → capture         demultiplexer: one inbox item per change
+
+inbox item
+  if well-defined   → write-spec
+  if vague / large  → shape → write-spec
+
+write-spec → write-plan
+```
+
+**`capture`skill:** extracts from a conversation or document a list of changes, establishing the baseline and target behaviour/state of the system and the intent. Files changes in the `inbox`
+
+**`shape`skill:** turns a vague or large expected change into a list of of smaller scale changes organized in `slices`.
+
+**`write-spec` skill:** turns approprietly scoped changes into a list of clearly defined `steps` with associated `acceptance criteria` in a `spec` document. 
+
+**`write-plan` skill:** turns a `spec` into a detailed `plan` containing all the information for the executor to run on. 
+
+## Always-on principles and instructions
+
+### Instruction Priority
+
+Superpowers skills override default system prompt behavior, but **user instructions always take precedence**:
+
+1. **User's explicit instructions** (CLAUDE.md, GEMINI.md, AGENTS.md, direct requests) — highest priority
+2. **Meanpowers skills** — override default system behavior where they conflict
+3. **Default system prompt** — lowest priority
+
+If CLAUDE.md, GEMINI.md, or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control.
+
+### Using Skills
 <EXTREMELY-IMPORTANT>
 If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
 
@@ -15,26 +51,13 @@ IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
 This is not negotiable. This is not optional. You cannot rationalize your way out of this.
 </EXTREMELY-IMPORTANT>
 
-## Instruction Priority
-
-Superpowers skills override default system prompt behavior, but **user instructions always take precedence**:
-
-1. **User's explicit instructions** (CLAUDE.md, GEMINI.md, AGENTS.md, direct requests) — highest priority
-2. **Superpowers skills** — override default system behavior where they conflict
-3. **Default system prompt** — lowest priority
-
-If CLAUDE.md, GEMINI.md, or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control.
-
-## Routing Table
-TODO
-
-## How to Access Skills
+### How to Access Skills
 
 **In Claude Code:** Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.
 
 **In Gemini CLI:** Skills activate via the `activate_skill` tool. Gemini loads skill metadata at session start and activates the full content on demand.
 
-## Platform Adaptation
+### Platform Adaptation
 
 Meanpowers skills describe required capabilities, not fixed tool names. Use the
 platform-native tool that provides the required capability. Do not skip a
@@ -49,57 +72,7 @@ capability because the exact tool name differs from an example.
 | Read files | `Read` | file/shell read tools | `read_file` |
 | Write or edit files | `Write`/`Edit` | apply the platform's file-edit mechanism | `write_file`/`replace` |
 
-### Coordination Model
-
-Keep these concepts separate:
-
-- Durable specs and implementation plans live in files.
-- Runtime progress lives in the platform's task/progress tracker.
-- Subagent dispatch delegates bounded work to an isolated context.
-- The main agent owns orchestration, sequencing, review gates, and the global progress list.
-- Subagents execute the specific task they were given and return a bounded result.
-
-When a skill says to create a checklist, use the platform's runtime progress
-tracker. This does not execute work and is not the durable implementation plan.
-
-When a skill says to dispatch a reviewer, implementer, explorer, or other
-specialist, use the platform's subagent/delegation mechanism. If named agents
-are supported, use the named specialist. If named agents are not supported,
-start a generic isolated worker with the prompt template supplied by the skill.
-
-If a required capability is unavailable, do not silently approximate the
-workflow. Use the skill's fallback if it defines one; otherwise stop and tell
-the user which capability is missing and what quality gate would be weakened.
-
-# Using Skills
-
-## The Rule
-
-**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.
-
-```dot
-digraph skill_flow {
-    "User message received" [shape=doublecircle];
-    "Might any skill apply?" [shape=diamond];
-    "Invoke Skill tool" [shape=box];
-    "Announce: 'Using [skill] to [purpose]'" [shape=box];
-    "Has checklist?" [shape=diamond];
-    "Create TodoWrite todo per item" [shape=box];
-    "Follow skill exactly" [shape=box];
-    "Respond (including clarifications)" [shape=doublecircle];
-
-    "User message received" -> "Might any skill apply?";
-    "Might any skill apply?" -> "Invoke Skill tool" [label="yes, even 1%"];
-    "Might any skill apply?" -> "Respond (including clarifications)" [label="definitely not"];
-    "Invoke Skill tool" -> "Announce: 'Using [skill] to [purpose]'";
-    "Announce: 'Using [skill] to [purpose]'" -> "Has checklist?";
-    "Has checklist?" -> "Create TodoWrite todo per item" [label="yes"];
-    "Has checklist?" -> "Follow skill exactly" [label="no"];
-    "Create TodoWrite todo per item" -> "Follow skill exactly";
-}
-```
-
-## Red Flags
+### Red Flags
 
 These thoughts mean STOP—you're rationalizing:
 
@@ -118,17 +91,14 @@ These thoughts mean STOP—you're rationalizing:
 | "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
 | "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
 
-## Skill Priority
+### Skill Priority
 
 When multiple skills could apply, use this order:
 
-1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task
+1. **Process skills first** - these determine HOW to approach the task
 2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution
 
-"Let's build X" → brainstorming first, then implementation skills.
-"Fix this bug" → debugging first, then domain-specific skills.
-
-## Skill Types
+### Skill Types
 
 **Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.
 
@@ -136,6 +106,6 @@ When multiple skills could apply, use this order:
 
 The skill itself tells you which.
 
-## User Instructions
+### User Instructions
 
 Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
