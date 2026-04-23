@@ -1,20 +1,3 @@
----
-name: making-changes
-description: You MUST use this before discussing any change to the behaviour or the code, when working on specs or plans, or iterating on the project.
----
-
-# Transforming user demands into specs
-
-All changes in the code, even the smallest, happen downward from a spec and a plan.
-All user demands, from product behaviour evolution to refactoring, MUST go through the following process.
-
-<HARD-GATE>
-Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a spec and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
-</HARD-GATE>
-
-## Anti-Pattern: "This Is Too Simple To Need A Design"
-
-Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The spec can be short, but you MUST present it and get approval.
 
 ## How to think about changes
 
@@ -26,77 +9,6 @@ When delegating the changes to a coding agent, we MUST ALWAYS:
 3. Establish how the agent can automatically verify that the expected change in behaviour was achieved. We call those conditions the Acceptance Criteria.
 
 Only once those are validated can we move on to looking at what changes will be made to the system internals (the code).
-
-## Process Flow
-
-```dot
-digraph making_changes {
-    subgraph cluster_behavioral_baseline {
-        label="Establish Behavioral Baseline and Expected Behavioural Delta";
-        style=rounded;
-        color=gray;
-
-        "Explore project context" [shape=box];
-        "Establish behavioral baseline" [shape=box];
-        "User approves behavioral baseline?" [shape=diamond];
-        "Establish expected behavioral delta" [shape=box];
-        "User approves behavioral delta?" [shape=diamond];
-    }
-
-    subgraph cluster_behavioral_breakdown {
-        label="Behavioral Delta Breakdown";
-        style=rounded;
-        color=gray;
-
-        "Break into behavioral change units" [shape=box];
-        "Define acceptance criteria\nper unit" [shape=box];
-        "User approves units + criteria?" [shape=diamond];
-        "Write behavioral spec draft" [shape=box];
-    }
-
-    subgraph cluster_structural_design {
-        label="Structural Design";
-        style=rounded;
-        color=gray;
-
-        "Establish structural baseline" [shape=box];
-        "Map structural changes\nper behavioral unit" [shape=box];
-    }
-
-    subgraph cluster_spec_finalization {
-        label="Spec Finalization";
-        style=rounded;
-        color=gray;
-
-        "Write full spec doc" [shape=box];
-        "Spec self-review\n(fix inline)" [shape=box];
-        "User reviews spec?" [shape=diamond];
-    }
-
-    "Invoke writing-plans skill" [shape=doublecircle];
-
-    "Explore project context" -> "Establish behavioral baseline";
-    "Establish behavioral baseline" -> "User approves behavioral baseline?";
-    "User approves behavioral baseline?" -> "Establish behavioral baseline" [label="no, revise"];
-    "User approves behavioral baseline?" -> "Establish expected behavioral delta" [label="yes"];
-    "Establish expected behavioral delta" -> "User approves behavioral delta?";
-    "User approves behavioral delta?" -> "Establish expected behavioral delta" [label="no, revise"];
-    "User approves behavioral delta?" -> "Break into behavioral change units" [label="yes"];
-    "Break into behavioral change units" -> "Define acceptance criteria\nper unit";
-    "Define acceptance criteria\nper unit" -> "User approves units + criteria?";
-    "User approves units + criteria?" -> "Break into behavioral change units" [label="no, revise"];
-    "User approves units + criteria?" -> "Write behavioral spec draft" [label="yes"];
-    "Write behavioral spec draft" -> "Establish structural baseline";
-    "Establish structural baseline" -> "Map structural changes\nper behavioral unit";
-    "Map structural changes\nper behavioral unit" -> "Write full spec doc";
-    "Write full spec doc" -> "Spec self-review\n(fix inline)";
-    "Spec self-review\n(fix inline)" -> "User reviews spec?";
-    "User reviews spec?" -> "Write full spec doc" [label="changes requested"];
-    "User reviews spec?" -> "Invoke writing-plans skill" [label="approved"];
-}
-```
-
-**The terminal state is invoking writing-plans.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after making-changes is writing-plans.
 
 ## Checklist
 
