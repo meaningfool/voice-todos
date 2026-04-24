@@ -11,7 +11,32 @@ The `shape` skill is inspired by Ryan Singer's methodology with my own tweaks. I
 
 In the context of Meanpowers, the `shape` skill provides a process to better define large and/or loosely scoped changes.
 
+## File management
+
+```
+docs/
+└── meanpowers/
+    ├── inbox/
+    │   ├── INB-0002.md
+    │   └── INB-0003.md
+    └── 01_item-name/
+        ├── INB-0001.md
+        ├── 010_spike_spike-name.md
+        ├── 010_shaping_item-name.md
+        ├── 011_spec_title-of-the-spec.md
+        ├── 011_plan_title-of-the-corresponding-spec.md
+        ├── 012_spec_title-of-the-2nd-spec.md
+        └── 012_plan_title-of-the-2nd-spec.md
+```
+
+**Rules**:
+1. Commit regularly
+2. Each item that goes through shaping gets its own folder in `docs/meanpowers/` named according to the following convention `{next_2-digits_increment_available}_{name_of_the_item_validated_by_the_user}.md`
+3. If the session was started from an `inbox` item, move that inbox item into the newly created folder.
+
 ## Core concepts
+
+### Definitions
 
 **Shape:** 
 - A software product is a `system` that interacts / is interacted with by `actors`. 
@@ -46,22 +71,123 @@ In the context of Meanpowers, the `shape` skill provides a process to better def
 - A horizontal slice is a slice that contains only changes to system internals producing no system behaviour change.
 - Horizontal slices are ok in a single case: when breaking down a system refactoring.
 
-## File management
+### R: Requirements
+A numbered set defining the problem space.
 
-```
-docs/
-└── meanpowers/
-    ├── inbox/
-    │   ├── item-1.md
-    │   ├── item-2.md
-    │   └── item-3.md
-    └── 01_item-name/
-        ├── spec_01-01.md
-        ├── plan_01.md
-        ├── spike_spike-name.md
-        └── shaping_item-name.md
+- **R0, R1, R2...** are members of the requirements set
+- Requirements are negotiated collaboratively
+- not filled in automatically
+- Track status: Core goal, Undecided, Leaning yes/no, Must-have, Nice-to-have, Out
+- **R states what's needed, not what's satisfied** 
+
+#### Requirement titles
+
+- Give requirements short descriptive and specific titles.
+- Requirement titles should be framed as assertions, in the present tense.
+- Be concrete, avoid introducing new concepts, use a language that a human may use, don't use language that requires a deep prior understanding (acronyms, jargon)
+
+```markdown
+| ID | Requirement | Status |
+|----|-------------|--------|
+| R0 | {title} | Core goal |
+| R1 | {title} | Undecided |
+| R2 | {title} | {status} |
 ```
 
+### J: Journeys (Solution Options)
+
+- **J1, J2, J3...** are distinct journeys
+- **J1.1, J2.3, J3.1...** are steps in a specific journey
+- **J2.3-A, J2.3-B, J2.3-C...** are alternative steps in the a journey
+
+#### Journey & Journey steps Titles
+
+- Give journeys short descriptive and specific titles that characterizes the action performed. 
+- Title shoud lead with a verb (e.g. "Create a report")
+- Identify clearly which actor is the subject of the journey / step.
+- Provide a 1-2 sentences description
+- Be concrete, avoid introducing new concepts, use a language that a human may use, don't use language that requires a deep prior understanding (acronyms, jargon)
+
+```markdown
+| ID | Journey / Step | Actor | eee |
+|----|-------------|--------|-------------|
+| J1 | {title} | end-user | {description} |
+| J1.1 | {title} | end-user | {description} |
+| J2 | {title} | developer | {description} |
+| J3 | {title} | back-office user | {description} |
+```
+
+### S: Shapes (Solution Options)
+Letters represent mutually exclusive solution approaches.
+
+- **A, B, C...** are top-level shape options (you pick one)
+- **C1, C2, C3...** are components/parts of Shape C (they combine)
+- **C3-A, C3-B, C3-C...** are alternative approaches to component C3 (you pick one)
+
+#### Shape Titles
+
+- Give shapes short descriptive and specific titles that characterizes the approach. 
+- Be concrete, avoid introducing new concepts, use a language that a human may use, don't use language that requires a deep prior understanding (acronyms, jargon)
+
+```markdown
+| ID | Shape |
+|------|-----------|
+| E | {title} |
+| F | {title} |
+```
+
+#### Component Titles
+
+- Give components short descriptive and specific titles that characterizes the change introduced compared to the baseline. 
+- Be concrete, avoid introducing new concepts, use a language that a human may use, don't use language that requires a deep prior understanding (acronyms, jargon)
+- Flag Unknowns: a component can be described at a high level without being concretely understood. The WHAT is described but we don't yet know HOW. Leave empty otherwise.
+
+```markdown
+| ID | Component | Flag |
+|------|-----------|:----:|
+| E1 | {title} | {⚠️} |
+| E2 | {title} | {⚠️} |
+```
+
+Example:
+```markdown
+| ID | Component | Flag |
+|------|-----------|:----:|
+| **F1** | Lead scoring in the dashboard | |
+| **F2** | Magic authentication handler | ⚠️ |
+```
+
+### Avoid Tautologies Between R and S
+
+**R** states the need/constraint (what outcome). **S** describes the system. 
+
+Confusion may arise from "solution in disguise" leaking into the requirements
+
+- ❌ R17: "Use Clerk for authentication"
+- ✅ R17: "Only authenticated users can access the full articles" + C6.3: "Authentication link + Clerk authentication workflow"
+
+### Hierarchical Notation
+
+Start with flat notation (E1, E2, E3...). Only introduce hierarchy (E1.1, E1.2...) when:
+
+- There are too many parts to easily understand
+- You're reaching a conclusion and want to show structure
+- Grouping related mechanisms aids communication
+
+| Notation | Meaning |
+|----------|---------|
+| E1 | Top-level component of shape E |
+| E1.1, E1.2 | Sub-parts of E1 (add later if needed) |
+
+Example of hierarchical grouping (used when shape is mature):
+
+| ID | Component |
+|------|-----------|
+| **E1** | **{component title}** |
+| E1.1 | {sub-component title} |
+| E1.2 | {sub-component title} |
+| **E2** | **{component title}** |
+| E2.1 | {sub-component title} |
 
 ## Running of a shaping session
 
@@ -130,6 +256,8 @@ Considerations:
 
 ### 9-Document
 
+- Always create a document for a shaping session
+
 ## Possible actions
 
 **Refine a shape or component**
@@ -196,216 +324,89 @@ Other ideation techniques:
 - 10x version: "What would this look like at massive scale?"
 - Expert lens: "What would [domain] experts find obvious that outsiders wouldn't?"
 
+
+## Fit Check (Decision Matrix)
+
+THE fit check is the single table comparing all shapes against all requirements. Requirements are rows, shapes are columns. This is how we decide which shape to pursue.
+
+### Format
+
+```markdown
+## Fit Check
+
+| Req | Requirement | Status | A | B | C |
+|-----|-------------|--------|---|---|---|
+| R0 | Items are searchable from index page | Core goal | ✅ | ✅ | ✅ |
+| R1 | State survives page refresh | Must-have | ✅ | ❌ | ✅ |
+| R2 | Back button restores state | Must-have | ❌ | ✅ | ✅ |
+
+**Notes:**
+- A fails R2: [brief explanation]
+- B fails R1: [brief explanation]
+```
+
+### Conventions
+- **Always show full requirement text** — never abbreviate or summarize requirements in fit checks
+- **Fit check is BINARY** — Use ✅ for pass, ❌ for fail. No other values.
+- **Shape columns contain only ✅ or ❌** — no inline commentary; explanations go in Notes section
+- **Never use ⚠️ or other symbols in fit check** — ⚠️ belongs only in the Components table's flagged column
+- Keep notes minimal — just explain failures
+
+### Missing Requirements
+If a shape passes all checks but still feels wrong, there's a missing requirement. Articulate the implicit constraint as a new R, then re-run the fit check.
+
+### Macro Fit Check
+
+A separate tool from the standard fit check, used when working at a high level with chunked requirements and early-stage shapes where most mechanisms are still ⚠️. Use when explicitly requested.
+
+The macro fit check has two columns per shape instead of one:
+
+- **Addressed?** — Does some part of the shape seem to speak to this requirement at a high level?
+- **Answered?** — Can you trace the concrete how? Is the mechanism actually spelled out?
+
+**Format:**
+
+```markdown
+## Macro Fit Check: R × A
+
+| Req | Requirement | Addressed? | Answered? |
+|-----|-------------|:----------:|:---------:|
+| R0 | Core goal description | ✅ | ❌ |
+| R1 | Guided workflow | ✅ | ❌ |
+| R2 | Agent boundary | ⚠️ | ❌ |
+```
+
+**Conventions:**
+- Only show top-level requirements (R0, R1, R2...), not sub-requirements
+- **No notes column** — keep the table narrow and scannable
+- Use ✅ (yes), ⚠️ (partially), ❌ (no) for Addressed
+- Use ✅ (yes) or ❌ (no) for Answered
+- Follow the macro fit check with a separate **Gaps** table listing specific missing parts and their related sub-requirements
+
 ## Spikes
 
-A spike is an investigation task to learn how the existing system works and what concrete steps are needed to implement a component. Use spikes when there's uncertainty about mechanics or feasibility.
-
-### File Management
-
-**Always create spikes in their own file** (e.g.,`spike_[topic].md`). Spikes are standalone investigation documents that may be shared or worked on independently from the shaping doc.
-
-### Purpose
-
+A spike is an investigation task to learn how the existing system works and what concrete steps are needed to implement a component. Use spikes when there's uncertainty about mechanics or feasibility:
 - Learn how the existing system works in the relevant area
 - Identify **what we would need to do** to achieve a result
 - Enable informed decisions about whether to proceed
 - Not about effort — effort is implicit in the steps themselves
 - **Investigate before proposing** — discover what already exists; you may find the system already satisfies requirements
 
-### Structure
+### File Management
 
-```markdown
-## [Component] Spike: [Title]
-
-### Context
-Why we need this investigation. What problem we're solving.
-
-### Goal
-What we're trying to learn or identify.
-
-### Questions
-
-| # | Question |
-|---|----------|
-| **X1-Q1** | Specific question about mechanics |
-| **X1-Q2** | Another specific question |
-
-### Acceptance
-Spike is complete when all questions are answered and we can describe [the understanding we'll have].
-```
-
-### Acceptance Guidelines
-
-Acceptance describes the **information/understanding** we'll have, not a conclusion or decision:
-
-- ✅ "...we can describe how users set their language and where non-English titles appear"
-- ✅ "...we can describe the steps to implement [component]"
-- ❌ "...we can answer whether this is a blocker" (that's a decision, not information)
-- ❌ "...we can decide if we should proceed" (decision comes after the spike)
-
-The spike gathers information; decisions are made afterward based on that information.
-
-### Question Guidelines
-
-Good spike questions ask about mechanics:
-- "Where is the [X] logic?"
-- "What changes are needed to [achieve Y]?"
-- "How do we [perform Z]?"
-- "Are there constraints that affect [approach]?"
-
-Avoid:
-- Effort estimates ("How long will this take?")
-- Vague questions ("Is this hard?")
-- Yes/no questions that don't reveal mechanics
-
-
-## Notation
-
-### R: Requirements
-A numbered set defining the problem space.
-
-- **R0, R1, R2...** are members of the requirements set
-- Requirements are negotiated collaboratively - not filled in automatically
-- Track status: Core goal, Undecided, Leaning yes/no, Must-have, Nice-to-have, Out
-- Requirements extracted from fit checks should be made standalone (not dependent on any specific shape)
-- **R states what's needed, not what's satisfied** — satisfaction is always shown in a fit check (R × S)
-- **Chunking policy:** Never have more than 9 top-level requirements. When R exceeds 9, group related requirements into chunks with sub-requirements (R3.1, R3.2, etc.) so the top level stays at 9 or fewer. This keeps the requirements scannable and forces meaningful grouping.
-
-### S: Shapes (Solution Options)
-Letters represent mutually exclusive solution approaches.
-
-- **A, B, C...** are top-level shape options (you pick one)
-- **C1, C2, C3...** are components/parts of Shape C (they combine)
-- **C3-A, C3-B, C3-C...** are alternative approaches to component C3 (you pick one)
-
-### Shape Titles
-Give shapes a short descriptive title that characterizes the approach. Display the title when showing the shape:
-
-```markdown
-## E: Modify CUR in place to follow S-CUR
-
-| Part | Mechanism |
-|------|-----------|
-| E1 | ... |
-```
-
-Good titles capture the essence of the approach in a few words:
-- ✅ "E: Modify CUR in place to follow S-CUR"
-- ✅ "C: Two data sources with hybrid pagination"
-- ❌ "E: The solution" (too vague)
-- ❌ "E: Add search to widget-grid by swapping..." (too long)
-
-### Notation Hierarchy
-
-| Level | Notation | Meaning | Relationship |
-|-------|----------|---------|--------------|
-| Requirements | R0, R1, R2... | Problem constraints | Members of set R |
-| Shapes | A, B, C... | Solution options | Pick one from S |
-| Components | C1, C2, C3... | Parts of a shape | Combine within shape |
-| Alternatives | C3-A, C3-B... | Approaches to a component | Pick one per component |
-
-
-## Shape Parts
-
-### Flagged Unknown (⚠️)
-
-A mechanism can be described at a high level without being concretely understood. The **Flag** column tracks this:
-
-| Part | Mechanism | Flag |
-|------|-----------|:----:|
-| **F1** | Create widget (component, def, register) | |
-| **F2** | Magic authentication handler | ⚠️ |
-
-- **Empty** = mechanism is understood — we know concretely how to build it
-- **⚠️** = flagged unknown — we've described WHAT but don't yet know HOW
-
-**Why flagged unknowns fail the fit check:**
-
-1. **✅ is a claim of knowledge** — it means "we know how this shape satisfies this requirement"
-2. **Satisfaction requires a mechanism** — some part that concretely delivers the requirement
-3. **A flag means we don't know how** — we've described what we want, not how to build it
-4. **You can't claim what you don't know** — therefore it must be ❌
-
-Fit check is always binary — ✅ or ❌ only. There is no third state. A flagged unknown is a failure until resolved.
-
-This distinguishes "we have a sketch" from "we actually know how to do this." Early shapes (A, B, C) often have many flagged parts — that's fine for exploration. But a selected shape should have no flags (all ❌ resolved), or explicit spikes to resolve them.
-
-### Parts Must Be Mechanisms
-
-Shape parts describe what we BUILD or CHANGE — not intentions or constraints:
-
-- ✅ "Route `childType === 'letter'` to `typesenseService.rawSearch()`" (mechanism)
-- ❌ "Types unchanged" (constraint — belongs in R)
-
-### Avoid Tautologies Between R and S
-
-**R** states the need/constraint (what outcome). **S** describes the mechanism (how to achieve it). If they say the same thing, the shape part isn't adding information.
-
-- ❌ R17: "Admins can bulk request members to sign" + C6.3: "Admin can bulk request members to sign"
-- ✅ R17: "Admins can bring existing members into waiver tracking" + C6.3: "Bulk request UI with member filters, creates WaiverRequests in batch"
-
-The requirement describes the capability needed. The shape part describes the concrete mechanism that provides it. If you find yourself copying text from R into S, stop — the shape part should add specificity about *how*.
-
-### Parts Should Be Vertical Slices
-
-Avoid horizontal layers like "Data model" that group all tables together. Instead, co-locate data models with the features they support:
-
-- ❌ **B4: Data model** — Waivers table, WaiverSignatures table, WaiverRequests table
-- ✅ **B1: Signing handler** — includes WaiverSignatures table + handler logic
-- ✅ **B5: Request tracking** — includes WaiverRequests table + tracking logic
-
-Each part should be a vertical slice containing the mechanism AND the data it needs.
-
-### Extract Shared Logic
-
-When the same logic appears in multiple parts, extract it as a standalone part that others reference:
-
-- ❌ Duplicating "Signing handler: create WaiverSignature + set boolean" in B1 and B2
-- ✅ Extract as **B1: Signing handler**, then B2 and B3 say "→ calls B1"
-
-```markdown
-| **B1** | **Signing handler** |
-| B1.1 | WaiverSignatures table: memberId, waiverId, signedAt |
-| B1.2 | Handler: create WaiverSignature + set member.waiverUpToDate = true |
-| **B2** | **Self-serve signing** |
-| B2 | Self-serve purchase: click to sign inline → calls B1 |
-| **B3** | **POS signing via email** |
-| B3.1 | POS purchase: send waiver email |
-| B3.2 | Passwordless link to sign → calls B1 |
-```
-
-### Hierarchical Notation
-
-Start with flat notation (E1, E2, E3...). Only introduce hierarchy (E1.1, E1.2...) when:
-
-- There are too many parts to easily understand
-- You're reaching a conclusion and want to show structure
-- Grouping related mechanisms aids communication
-
-| Notation | Meaning |
-|----------|---------|
-| E1 | Top-level component of shape E |
-| E1.1, E1.2 | Sub-parts of E1 (add later if needed) |
-
-Example of hierarchical grouping (used when shape is mature):
-
-| Part | Mechanism |
-|------|-----------|
-| **E1** | **Swap data source** |
-| E1.1 | Modify backend indexer |
-| E1.2 | Route letters to new service |
-| E1.3 | Route posts to new service |
-| **E2** | **Add search input** |
-| E2.1 | Add input with debounce |
+- **Always create spikes in their own file in the same folder as the shaping file**. Use the convention `{itemID}_spike_{spike-name}.md`, e.g. `010_spike_clerk-investigation.md`
+- The itemID should match the one used in the shaping session that started it
+- Use `/references/spike-document-template.md` as template
 
 ## Communication
 
 ### Show Full Tables
 
-When displaying R (requirements) or any S (shapes), always show every row — never summarize or abbreviate. The full table is the artifact; partial views lose information and break the collaborative process.
+When displaying R (requirements), S (shapes), or J (journeys) always show every row — never summarize or abbreviate. The full table is the artifact; partial views lose information and break the collaborative process.
 
 - Show all requirements, even if many
 - Show all shape parts, including sub-parts (E1.1, E1.2...)
+- Show all journeys and journey steps, 
 - Show all alternatives in fit checks
 
 ### Why This Matters
@@ -420,5 +421,5 @@ Summaries hide detail and shift control away from the user.
 
 ### Mark Changes with 🟡
 
-When re-rendering a requirements table or shape table after making changes, mark every changed or added line with a 🟡 so the user can instantly spot what's different. Place the 🟡 at the start of the changed cell content. This makes iterative refinement easy to follow — the user should never have to diff the table mentally.
+When re-rendering a table after making changes, mark every changed or added line with a 🟡 so the user can instantly spot what's different. Place the 🟡 at the start of the changed cell content. This makes iterative refinement easy to follow — the user should never have to diff the table mentally.
 
