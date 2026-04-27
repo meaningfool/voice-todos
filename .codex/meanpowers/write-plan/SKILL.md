@@ -7,34 +7,104 @@ description: Use when triggered by the user. Helps writing a spec for a multi-st
 
 ## Overview
 
-Write comprehensive implementation plans assuming the engineer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
+### Context
+Specs provide: `slices`, `sub-slices`, `acceptance-criteria`, and design decisions made during `write-plan` (and possibly the `shaping`) phases.
+
+`write-plan` does 2 things:
+1. Translates acceptance criteria into acceptance tests that can be run automatically.
+2. Maps out the work for each slice (or sub-slice) and divides it into tasks
+
+### Goal
+`write-plan` writes comprehensive implementation plans assuming the engineer that will do the implementation has zero context for our codebase and questionable taste.
+
+Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
 
 Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
 
-**Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
+**Announce at start:** "I'm using the write-plan skill to create the implementation plan."
 
-## Core Principle
+## File Management
 
-Specs are organized hierarchically from phases to tasks to steps: 
-- `phases`: unless the work is pure refactoring, phases are strictly vertical slices, meaning they encode an observable change in the system's behaviour, and are demoable in the UI.
-- `tasks`: if they change code they must be identified as either `refactoring task` or `behavioral change task`. They can't mix both.
-- `steps`: 
+```
+docs/
+└── meanpowers/
+    ├── inbox/
+    │   ├── INB-0002.md
+    │   └── INB-0003.md
+    └── 01_item-name/
+        ├── INB-0001.md
+        ├── 010_spike_spike-name.md
+        ├── 010_shaping_item-name.md
+        ├── 011_spec_title-of-the-spec.md
+        ├── 011_plan_title-of-the-corresponding-spec.md
+        ├── 012_spec_title-of-the-2nd-spec.md
+        └── 012_plan_title-of-the-2nd-spec.md
+```
 
+A plan document:
+- Lives in a `work-item` folder, which has an index and a name (example: `01_item-name` has index `01`)
+- Always matches a `spec` document. 
+- Has the same name as it's matching spec document, except for `plan` replacing `spec`: `[index]_spec_[title of the spec].md` translates into `[index]_plan_[title of the spec].md`
 
-## Scope Check
+**If the plan follows a spec:** read and understand the spec and the shaping document if there is one. Gather context as you need.
 
-If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during brainstorming. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
+**If you are not provided a spec to start from:** ask which spec you should start from. You ABSOLUTELY CANNOT start working on a plan without a matching spec.
 
-## File Structure
+## Plan creation Principles
 
-Before defining tasks, map out which files will be created or modified and what each one is responsible for. This is where decomposition decisions get locked in.
+### General principles
 
+- Before defining tasks, map out which files will be created or modified and what each one is responsible for. This is where decomposition decisions get locked in.
 - Design units with clear boundaries and well-defined interfaces. Each file should have one clear responsibility.
 - You reason best about code you can hold in context at once, and your edits are more reliable when files are focused. Prefer smaller, focused files over large ones that do too much.
 - Files that change together should live together. Split by responsibility, not by technical layer.
 - In existing codebases, follow established patterns. If the codebase uses large files, don't unilaterally restructure - but if a file you're modifying has grown unwieldy, including a split in the plan is reasonable.
 
-This structure informs the task decomposition. Each task should produce self-contained changes that make sense independently.
+### Tasks
+
+- Each `task` should produce self-contained changes that make sense independently.
+- Each `task` must be identified as either `refactoring` or `behavioral change`. A single task can't mix both.
+
+### Acceptance tests
+
+- `Acceptance test`: the concrete automated proof that an acceptance criterion is met.
+- `Verification test`: Any unit, integration, replay, seam, helper, or regression test that improves implementation confidence.
+
+Acceptance is orthogonal to the test pyramid.
+
+An acceptance test may live at different sizes or layers depending on what is required to prove the behavior:
+
+- a backend unit test
+- a backend integration test
+- a CLI-driven integration test
+- a browser-driven end-to-end test
+- a frontend test
+- a non-pytest automated live validation named explicitly in the spec or plan
+
+The test should live where it naturally belongs technically.Acceptance status does not determine placement. Technical ownership and the best execution harness determine placement.
+
+### Good Acceptance Tests
+
+Good acceptance tests are:
+
+**Behavior-oriented:** They prove the intended behavior, not the implementation structure.
+
+**Smallest realistic proof:** They are the smallest tests that still prove the behavior credibly.
+
+**Durable:** They remain useful as part of the regression surface after the phase lands.
+
+**Runnable:** They have concrete inputs, concrete execution steps, and concrete expected outcomes.
+
+**Non-duplicative:** They should not create an "acceptance copy" of a test if an existing test already provides the smallest realistic proof of the behavior.
+
+### Preventing acceptance tests combinatorial explosion
+
+Avoid combinatorial explosion by choosing the smallest durable proof surface that still captures the real contract:
+
+- keep an existing broad acceptance test when it already proves the behavioral contract that matters
+- prefer narrower acceptance or verification coverage for new seams, integrations, or adapters when the broad behavior is already covered
+- split an acceptance test when one broad proof is no longer the clearest or most maintainable way to represent the behavior
+- use one-off supporting verification when needed to validate a specific combination without permanently expanding the acceptance surface
 
 ## Bite-Sized Task Granularity
 
@@ -62,6 +132,27 @@ This structure informs the task decomposition. Each task should produce self-con
 
 ---
 ```
+
+## Slice (or sub-slice) header
+
+```markdown
+## [Slice (or sub-slice) Name]
+
+**Goal:** [Description of the expected system behavioural change]
+
+**Acceptance criteria:** [List of acceptance criteria inherited from the spec]
+
+**Acceptance tests:** [List of acceptance tests translated from acceptance criteria]
+
+**Verification tests:** [List of verification tests that further verify the ]
+
+IMPORTANT: you cannot move on to the next slice unless you have first proven that all acceptance tests pass. A failure to prove MUST be considered as a proof of failure.
+
+---
+```
+
+/note: add a test structure in order to show what to display for tests. Expected: a plain english description + a command for running the test
+
 
 ## Task Structure
 

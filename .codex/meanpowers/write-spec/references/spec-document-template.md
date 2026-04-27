@@ -3,6 +3,12 @@
 ```markdown
 # Spec: [Title]
 
+## Objective
+- What behaviour change this spec introduces
+
+## Non-goals
+- What this spec does not attempt to change.
+
 ## Slices
 
 [List all the slices/sub-slices with their respective acceptance criteria and acceptance tests]
@@ -11,13 +17,13 @@
 
 #### Sub-slice Ni: [Name]
 
-**Goal:** [Goal of the slice]
+**Goal:** [What behaviour change this (sub-)slice introduces]
 
 **Description:** [Description of the baseline and the target]
 
-**Acceptance criterion 1:** [acceptance criterion]
-- [acceptance test 1]
-- [acceptance test 2]
+**Acceptance criteria:**
+- [acceptance criterion 1]
+- [acceptance criterion 2]
 - ...
 
 

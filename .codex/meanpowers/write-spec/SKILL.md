@@ -7,9 +7,9 @@ description: Use when triggered by the user. Helps writing a spec for a multi-st
 
 ## Overview
 
-Write comprehensive spec assuming this is the only document that the engineer will have access to to understand what they have to do. Assume the engineer has zero context for our codebase, the intent, the users and questionable taste. They will likely mess up anything that is left to them to interprete.
+Write comprehensive spec assuming that this is the only document the engineering manager will have access to to understand what they have to do. Assume the engineering manager does not know about the users and has questionable taste. They will likely mess up anything that is left to them to interprete.
 
-The goal of the spec is to provide the engineer with a sequence of behavioural changes that are unambiguously defined through `acceptance criteria` that the engineer will be able to test autonomously to confirm that they have achieved what was expected and move on to the next change. Or course-correct if the criteria are not satisfied. 
+The goal of the spec is to provide the engineering manager with a sequence of behavioural changes that are unambiguously defined through `acceptance criteria` that the engineer will be able to test autonomously to confirm that they have achieved what was expected and move on to the next change. Or course-correct if the criteria are not satisfied. 
 
 A spec captures the work that needs to be done, as well as the decisions that have been made with regards to how things will be implemented.
 
@@ -100,39 +100,49 @@ Good practices:
 - States what is no longer true instead of stating the new behavior positively. Example: `no longer assumes`
 - Concerns itself with implementation details the actor does not care about directly
 
+Acceptance criteria and acceptance tests are not:
+- implementation task lists
+- helper-level checks that do not prove user-visible or externally meaningful
+  behavior
+- purely structural assertions
+- implementation-detail assertions
+- broad regression sweeps unless the phase's behavioral delta is itself broad
+
 ## Process
+
+If the spec follows a shaping session you can skip step 1, and proceed to step 2 directly.
 
 ### 1-Define the target
 
-**Understanding the idea:**
+**Understanding the baseline:**
+- Reframe the user intention as a set of changes with regards to a baseline. 
+- Read the docs, code, commit history, to establish what the baseline is from 3 angles: the internals of the system, how the system behave, and what the actors / journeys that rely on those behaviours are.
 
-- Check out the current project state first (files, docs, recent commits)
-- Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
-- If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
-- For appropriately-scoped projects, ask questions one at a time to refine the idea
-- Prefer multiple choice questions when possible, but open-ended is fine too
+**Clarifying the expected change:**
+- Ask questions to clarify the baseline or the intended change. Don't guess. Any gap, or any hint at the possibility of a gap in the articulations or progression should trigger a question and/or a reframe+validation
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
-- Focus on understanding: purpose, constraints, success criteria
 
-**Exploring approaches:**
-
-- Propose 2-3 different approaches with trade-offs
-- Present options conversationally with your recommendation and reasoning
+**Designing the target:**
+- Think of multiple approaches, repeatedly. What trade-offs do they reveal?
+- Present options and the corresponding tradeoff conversationally with your recommendation and reasoning
 - Lead with your recommended option and explain why
 
-**Presenting the design:**
-
-- Once you believe you understand what you're building, present the design
+**Presenting the change:**
+- Once you believe most design decisions have been made, present the design
 - Scale each section to its complexity: a few sentences if straightforward, up to 200-300 words if nuanced
 - Ask after each section whether it looks right so far
 - Cover: architecture, components, data flow, error handling, testing
 - Be ready to go back and clarify if something doesn't make sense
 
 **Design for isolation and clarity:**
-
 - Break the system into smaller units that each have one clear purpose, communicate through well-defined interfaces, and can be understood and tested independently
 - For each unit, you should be able to answer: what does it do, how do you use it, and what does it depend on?
 - Can someone understand what a unit does without reading its internals? Can you change the internals without breaking consumers? If not, the boundaries need work.
 - Smaller, well-bounded units are also easier for you to work with - you reason better about code you can hold in context at once, and your edits are more reliable when files are focused. When a file grows large, that's often a signal that it's doing too much.
 
 ### 2-Define the slices
+
+Repeatedly slice up the work for going from the baseline to the target: 
+- **Vertical slices:** unless the whole spec is about a refactoring, all slices should result in an observable behavioural change. The change should be demo-able.
+- **Acceptance criteria:** all slices should have acceptance criteria and acceptance tests.
+
