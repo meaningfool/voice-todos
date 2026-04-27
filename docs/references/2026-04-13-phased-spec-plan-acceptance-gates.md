@@ -1,8 +1,6 @@
 # Building Phased Specs And Plans With Acceptance Criteria
 
-This note defines how phased specs and phased plans should be written in this
-repo, and how acceptance criteria, acceptance tests, and verification tests
-relate to phase completion.
+This note defines how phased specs and phased plans should be written in this repo, and how acceptance criteria, acceptance tests, and verification tests relate to phase completion.
 
 ## Core Principle
 
@@ -108,8 +106,7 @@ acceptance completion.
 
 ## Acceptance Criteria And Acceptance Tests
 
-Acceptance criteria and acceptance tests serve different purposes and should be
-written differently.
+Acceptance criteria and acceptance tests serve different purposes and should be written differently.
 
 Acceptance criteria define the human judgment of done.
 

@@ -30,6 +30,31 @@ write-spec → write-plan
 
 **`write-plan` skill:** turns a `spec` into a detailed `plan` containing all the information for the executor to run on. 
 
+## File management
+
+```
+docs/
+└── meanpowers/
+    ├── inbox/
+    │   ├── INB-0002.md
+    │   └── INB-0003.md
+    └── 01_item-name/
+        ├── INB-0001.md
+        ├── 010_spike_spike-name.md
+        ├── 010_shaping_item-name.md
+        ├── 011_spec_title-of-the-spec.md
+        ├── 011_plan_title-of-the-corresponding-spec.md
+        ├── 012_spec_title-of-the-2nd-spec.md
+        └── 012_plan_title-of-the-2nd-spec.md
+```
+
+### File structure
+
+- In `docs/meanpowers` live an `inbox` folder and a number of `work item` folders. 
+- Files in the inbox are created during the `capture` process.
+- `work item` folders are created during the `shape` or `write-plan` processes.
+- Files in the `work-item` folders are created during the `shape`, `write-plan` and `write-spec` processes. Details are provided by those specific skill files
+
 ## Always-on principles and instructions
 
 ### Instruction Priority
