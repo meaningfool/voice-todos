@@ -5,17 +5,17 @@ description: Use when triggered by the user. Helps writing a spec for a multi-st
 
 # Writing Plans
 
-## Overview
+## Input
 
-### Context
-Specs provide: `slices`, `sub-slices`, `acceptance-criteria`, and design decisions made during `write-plan` (and possibly the `shaping`) phases.
+- `write-plan` receives a `spec` as input
+- That spec provides: `slices` and`acceptance-criteria`, and design decisions made during `write-spec` (and possibly the `shaping`) phases.
+
+## Output
+`write-plan` writes comprehensive implementation plans assuming the engineer that will do the implementation has zero context for our codebase and questionable taste.
 
 `write-plan` does 2 things:
 1. Translates acceptance criteria into acceptance tests that can be run automatically.
-2. Maps out the work for each slice (or sub-slice) and divides it into tasks
-
-### Goal
-`write-plan` writes comprehensive implementation plans assuming the engineer that will do the implementation has zero context for our codebase and questionable taste.
+2. Maps out the work for each slice and divides it into tasks
 
 Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
 
@@ -50,7 +50,7 @@ A plan document:
 
 **If you are not provided a spec to start from:** ask which spec you should start from. You ABSOLUTELY CANNOT start working on a plan without a matching spec.
 
-## Plan creation Principles
+## Plan creation principles
 
 ### General principles
 
@@ -97,6 +97,14 @@ Good acceptance tests are:
 
 **Non-duplicative:** They should not create an "acceptance copy" of a test if an existing test already provides the smallest realistic proof of the behavior.
 
+Acceptance tests are not:
+- implementation task lists
+- helper-level checks that do not prove user-visible or externally meaningful
+  behavior
+- purely structural assertions
+- implementation-detail assertions
+- broad regression sweeps unless the phase's behavioral delta is itself broad
+
 ### Preventing acceptance tests combinatorial explosion
 
 Avoid combinatorial explosion by choosing the smallest durable proof surface that still captures the real contract:
@@ -133,25 +141,27 @@ Avoid combinatorial explosion by choosing the smallest durable proof surface tha
 ---
 ```
 
-## Slice (or sub-slice) header
+## Slice header
 
 ```markdown
-## [Slice (or sub-slice) Name]
+## [Slice Name]
 
 **Goal:** [Description of the expected system behavioural change]
 
 **Acceptance criteria:** [List of acceptance criteria inherited from the spec]
 
-**Acceptance tests:** [List of acceptance tests translated from acceptance criteria]
+**Acceptance tests:**
+- [Plain English description of what is being proven] — `pytest tests/path/test_file.py::test_name -v`
+- [Plain English description of what is being proven] — `pytest tests/path/test_file.py::test_name -v`
 
-**Verification tests:** [List of verification tests that further verify the ]
+**Verification tests:**
+- [Plain English description of what is being verified] — `pytest tests/path/test_file.py::test_name -v`
+- [Plain English description of what is being verified] — `pytest tests/path/test_file.py::test_name -v`
 
 IMPORTANT: you cannot move on to the next slice unless you have first proven that all acceptance tests pass. A failure to prove MUST be considered as a proof of failure.
 
 ---
 ```
-
-/note: add a test structure in order to show what to display for tests. Expected: a plain english description + a command for running the test
 
 
 ## Task Structure
@@ -213,9 +223,9 @@ Every step must contain the actual content an engineer needs. These are **plan f
 - Exact commands with expected output
 - DRY, YAGNI, TDD, frequent commits
 
-## Self-Review
+## Adversarial Self-Review
 
-After writing the complete plan, look at the spec with fresh eyes and check the plan against it. This is a checklist you run yourself — not a subagent dispatch.
+After writing the complete plan, look at the spec with fresh eyes and check the plan against it. Run an adversarial self-review using the following checklist:
 
 **1. Spec coverage:** Skim each section/requirement in the spec. Can you point to a task that implements it? List any gaps.
 
@@ -229,7 +239,7 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 
 After saving the plan, offer execution choice:
 
-**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Two execution options:**
+**"Plan complete and saved. Two execution options:"**
 
 **1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
 

@@ -5,13 +5,25 @@ description: Use when triggered by the user. Helps writing a spec for a multi-st
 
 # Writing Specs
 
-## Overview
+## Input
+`write-spec` receives a scope as input. That scope may come from:
+- A conversation or document
+- A shaping session to which the user would point
 
-Write comprehensive spec assuming that this is the only document the engineering manager will have access to to understand what they have to do. Assume the engineering manager does not know about the users and has questionable taste. They will likely mess up anything that is left to them to interprete.
+If the user points to a shaping session, make sure to clarify which slices or sub-slices from that session should be considered as the input scope. 
 
-The goal of the spec is to provide the engineering manager with a sequence of behavioural changes that are unambiguously defined through `acceptance criteria` that the engineer will be able to test autonomously to confirm that they have achieved what was expected and move on to the next change. Or course-correct if the criteria are not satisfied. 
+## Output
+`write-spec` writes comprehensive specs assuming that the engineering manager in charge of processing them does not know about the users, their needs, and does not have access to the Product Manager. They will likely mess up anything that is left to them to interprete.
 
-A spec captures the work that needs to be done, as well as the decisions that have been made with regards to how things will be implemented.
+`write-spec` does 2 things: 
+1. Specify what the target system and its behaviour are and what changes need to be made to the current system. 
+2. Slice the work into a sequence of `vertical slices`, unambiguously defined through `acceptance criteria`. 
+3. Capture decisions made with regards to the system design
+
+Note if the input is from a shaping session:
+- The work has already be sliced. But the slices provided are non-binding. 
+- Similarly the system design was decided on a much larger scope. The decisions made during the shaping session should be considered as a starting point, and should not be changed silently. But the `write-spec` process is the opportunity to identify gaps, or challenge assumptions that may have been missed during the shaping session.
+- Shaping sessions have multi-level sub-slicing to enable for slicing large scopes. `specs` have a single level: slices cannot be sub-sliced for clarity. 
 
 **Announce at start:** "I'm using the write-spec skill to create the specification."
 
@@ -40,41 +52,12 @@ A spec document:
 - The name of the spec is `[index]_spec_[title of the spec].md`
 
 
-**If the spec follows a shaping session:** (i.e. if a shaping document already exists in the work item folder)
-- Create a new spec within the same work-item folder as the shaping session document.
-
-**If the spec is an iteration on an existing work-item:**
-- Create the new spec in the work-item folder
-
-**If the spec is initiated by an `inbox`item:**
-- Create a new `work-item` folder
-- Move the inbox item in that folder
-- Create a new spec in that folder
-
-**If the spec is initiated directly from a conversation or document:**
-- Create a new `work-item` folder
-- Create a new spec in that folder
-
-## Core Principle
+## Core Principles
 
 - `slices`: unless the work is pure refactoring, slices are strictly vertical slices, meaning they encode an observable change in the system's behaviour, and are demoable in the UI.
-- `sub-slices`: slices can be further divided into smaller slices as long as they are vertical slices as well.
 - `acceptance criteria`: human-readable verifiable condition that the intended behavioral change is complete.
-- `acceptance tests`: concrete tests that need to be run against the system to verify an acceptance criterion.
 
-### Acceptance Criteria And Acceptance Tests
-
-**Acceptance criteria and acceptance tests:** they serve different purposes and should be written differently: 
-- Acceptance criteria define the human judgment of done.
-- Acceptance tests provide the exact minimal scenarios that implement an acceptance criterion's intent.
-
-**Slice->(Sub-Slice->)Acceptance Criteria->Acceptance Tests:**
-- A slice may have multiple acceptance criteria. More than 3 acceptance criteria though is usually a signal that the slice is too large or mixes multiple behavioral changes.
-- An acceptance criterion may be verified by a combination of multiple acceptantce tests. More than 3 may reveal an overly broad acceptance criterion to begin with.
-
-### Good and Bad Acceptance Criteria
-
-#### Gooad Acceptance Criteria
+### Good Acceptance Criteria
 Good acceptance criteria are:
 
 - `Slice-specific`: they specifically characterize the behavioral change of their slice. They do not describe unrelated system behaviours.
@@ -90,23 +73,15 @@ Good practices:
 - States the new behavior positively. Contrasts it with the current baseline if that provides additional clarity.
 - Uses details only when they define the scope in a meaningful way
 
-#### Bad Acceptance Criteria
+### Bad Acceptance Criteria
 - Says what the system `accepts`, `maps`, `preserves`, or `is`, instead of saying what happens
 - Talks about hidden machinery instead of the thing the actor does or gets
 - Describes a judgment in someone's head instead of a system output. Examples: `can understand`, `legible`, `readable`
 - Uses vague scope words that are not defined in the sentence. Examples: `minimal`, `control plan`, `interface contract` 
-- Uses made-up and undefined system elements. Example: `shared benchmark system` (what is that?)
 - Uses passive phrasing that hides who is acting. Examples: `a benchmark can be declared`, `a recording can be added`
 - States what is no longer true instead of stating the new behavior positively. Example: `no longer assumes`
 - Concerns itself with implementation details the actor does not care about directly
 
-Acceptance criteria and acceptance tests are not:
-- implementation task lists
-- helper-level checks that do not prove user-visible or externally meaningful
-  behavior
-- purely structural assertions
-- implementation-detail assertions
-- broad regression sweeps unless the phase's behavioral delta is itself broad
 
 ## Process
 
@@ -114,20 +89,27 @@ If the spec follows a shaping session you can skip step 1, and proceed to step 2
 
 ### 1-Define the target
 
-**Understanding the baseline:**
-- Reframe the user intention as a set of changes with regards to a baseline. 
-- Read the docs, code, commit history, to establish what the baseline is from 3 angles: the internals of the system, how the system behave, and what the actors / journeys that rely on those behaviours are.
-
-**Clarifying the expected change:**
-- Ask questions to clarify the baseline or the intended change. Don't guess. Any gap, or any hint at the possibility of a gap in the articulations or progression should trigger a question and/or a reframe+validation
-- Only one question per message - if a topic needs more exploration, break it into multiple questions
+**Understanding the changes:**
+- Baseline: read the docs, code, commit history to understand how the system works and behave in the vicinity of the required changes.
+- Scope: reframe the required changes with regards to a baseline:
+```
+CHANGE {i}
+Baseline: {1-2 short sentences}
+Target: {1-2 short sentences}
+Intent: {1 sentence}
+-------
+```
+- Note: these are the starting point. The best break-down for the expected changes may change during the next phase. 
 
 **Designing the target:**
+- Interview the user relentlessly about every aspect of this scope until you reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one.
+- Ask the questions one at a time.
 - Think of multiple approaches, repeatedly. What trade-offs do they reveal?
 - Present options and the corresponding tradeoff conversationally with your recommendation and reasoning
 - Lead with your recommended option and explain why
+- If a question can be answered by exploring the codebase, explore the codebase instead.
 
-**Presenting the change:**
+**Presenting the target:**
 - Once you believe most design decisions have been made, present the design
 - Scale each section to its complexity: a few sentences if straightforward, up to 200-300 words if nuanced
 - Ask after each section whether it looks right so far
@@ -142,7 +124,29 @@ If the spec follows a shaping session you can skip step 1, and proceed to step 2
 
 ### 2-Define the slices
 
-Repeatedly slice up the work for going from the baseline to the target: 
-- **Vertical slices:** unless the whole spec is about a refactoring, all slices should result in an observable behavioural change. The change should be demo-able.
-- **Acceptance criteria:** all slices should have acceptance criteria and acceptance tests.
+**Explore slicing options:**
+- Slice vertically into slices way, way smaller than you otherwise would. Like, 10x smaller.
+- When a small behavioural change still requires a significant amount of change in the system (e.g. adding a mobile native app), you may create intermediate slices that are mostly technical, as long as those slices produce a demoable output (e.g. a first slice with a mobile app that displays "Hello World", followed by slices integrating the UI and the data by chunks up to the point where it is actually usable)
 
+**Define sequencing options:**
+- Identify 2-3 ways to sequence the slices.
+- Present to the user with the tradeoff for each option, and your recommandation.
+
+**Define acceptance criteria:** 
+- For each slice, define 1 or multiple acceptance criteria
+
+**Present to the user:**
+- Present each slice with its acceptance criteria
+
+**Write the spec:**
+- Use the template `references/spec-document-template.md`
+
+### 3-Execution Handoff
+
+After saving the plan, offer execution choice:
+
+**"Plan complete and saved."**
+**Next step: use write-plan to write the implementation plan. Say "ok" or "yes" to proceed.**
+
+**If go ahead:**
+- **REQUIRED SUB-SKILL:** Use meanpowers:write-plan

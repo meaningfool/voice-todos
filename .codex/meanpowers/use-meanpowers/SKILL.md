@@ -1,5 +1,5 @@
 ---
-name: using-meanpowers
+name: use-meanpowers
 description: Use when starting a conversation - provides context about the framework and the processes to apply when doing software development.
 ---
 

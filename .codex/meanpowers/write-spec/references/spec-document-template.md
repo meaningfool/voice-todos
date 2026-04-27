@@ -15,9 +15,7 @@
 
 ### Slice N: [Name]
 
-#### Sub-slice Ni: [Name]
-
-**Goal:** [What behaviour change this (sub-)slice introduces]
+**Goal:** [What behaviour change this slice introduces]
 
 **Description:** [Description of the baseline and the target]
 
@@ -26,12 +24,14 @@
 - [acceptance criterion 2]
 - ...
 
+#### System changes
+[List of system changes to be done in this slice]
 
 ---
 
 ## Decision record
 
-[List all the meaningful decisions and tradeoffs, rejected options with rationale. If shaping.md exist, link to it, and list only the additional decisions.]
+[List all the meaningful decisions and tradeoffs with regards to the system design, rejected options with rationale. If shaping.md exist, link to it, and list only the additional decisions.]
 
 
 ```
