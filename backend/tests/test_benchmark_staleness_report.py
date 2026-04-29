@@ -114,3 +114,32 @@ def test_report_marks_benchmark_stale_when_hosted_hash_differs(
     assert report.active_lock_path == str(lock_path)
     assert report.locked_dataset_hash == "old-hash"
     assert report.current_hosted_dataset_hash
+
+
+def test_report_ignores_raw_export_wrapper_hash_drift_when_rows_match(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    _write_benchmark(tmp_path)
+    monkeypatch.setenv("EVALS_BENCHMARKS_DIR", str(tmp_path))
+    monkeypatch.setattr("evals.storage.LOCKS_DIR", tmp_path / "locks")
+
+    lock_path = benchmark_lock_path("report_stale")
+    _write_lock(lock_path, dataset_hash="older-raw-export-hash")
+    monkeypatch.setattr(
+        "evals.report.export_hosted_dataset",
+        lambda dataset_id: _exported_payload(transcript="Call Mom"),
+    )
+
+    class FakeQueryClient:
+        def fetch_candidate_runs(self, selectors):
+            return []
+
+    report = build_benchmark_report(
+        benchmark_id="report_stale",
+        query_client=FakeQueryClient(),
+    )
+
+    assert report.stale is False
+    assert report.active_lock_path == str(lock_path)
+    assert report.locked_dataset_hash == "older-raw-export-hash"
+    assert report.current_hosted_dataset_hash

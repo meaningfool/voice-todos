@@ -11,6 +11,7 @@ from evals.resolution import build_entry_query_selector
 from evals.storage import (
     benchmark_lock_path,
     benchmark_report_path,
+    exported_dataset_matches_lock,
     load_benchmark_by_id,
     load_benchmark_lock,
 )
@@ -658,7 +659,13 @@ def _safe_lock_state(benchmark):
         return BenchmarkLockState(
             active_lock_exists=lock is not None,
             stale=(
-                lock is not None and current_hash != lock.benchmark_lock.dataset_hash
+                lock is not None
+                and current_hash != lock.benchmark_lock.dataset_hash
+                and not exported_dataset_matches_lock(
+                    benchmark=benchmark,
+                    exported=exported,
+                    lock=lock,
+                )
             ),
             lock_path=benchmark_lock_path(benchmark.benchmark_id),
             locked_dataset_hash=(

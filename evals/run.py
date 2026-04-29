@@ -9,6 +9,7 @@ from evals.models import BenchmarkRunResult
 from evals.resolution import resolve_entry_config
 from evals.storage import (
     benchmark_lock_path,
+    exported_dataset_matches_lock,
     lock_from_exported_dataset,
     load_benchmark_by_id,
     load_benchmark_lock,
@@ -164,9 +165,14 @@ def inspect_benchmark_lock_state(benchmark) -> BenchmarkLockState:
         )
 
     locked_hash = existing_lock.benchmark_lock.dataset_hash
+    stale = current_hash != locked_hash and not exported_dataset_matches_lock(
+        benchmark=benchmark,
+        exported=exported,
+        lock=existing_lock,
+    )
     return BenchmarkLockState(
         active_lock_exists=True,
-        stale=current_hash != locked_hash,
+        stale=stale,
         lock_path=lock_path,
         locked_dataset_hash=locked_hash,
         current_hosted_dataset_hash=current_hash,

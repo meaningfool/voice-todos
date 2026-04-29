@@ -4,9 +4,9 @@
   "focus": "model",
   "headline_metric": "todo_count_match",
   "display_headline_metric": "passed / total",
-  "active_lock_path": "/Users/josselinperrus/conductor/workspaces/voice-todos/damascus/evals/locks/todo_extraction_bench_v1.json",
+  "active_lock_path": "/Users/josselinperrus/conductor/workspaces/voice-todos/dar-es-salaam/evals/locks/todo_extraction_bench_v1.json",
   "locked_dataset_hash": "930324ca745c631beac0fd2add2078bffed0124f4ee4db32f3e4c2609fe06843",
-  "current_hosted_dataset_hash": "930324ca745c631beac0fd2add2078bffed0124f4ee4db32f3e4c2609fe06843",
+  "current_hosted_dataset_hash": "4e48386c21a1486f2f63f4be7cf1b18e3b1f07db191e306743227327f0b73e18",
   "stale": false,
   "entries": [
     {
