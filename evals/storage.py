@@ -96,6 +96,20 @@ def lock_from_exported_dataset(
     )
 
 
+def exported_dataset_matches_lock(
+    *,
+    benchmark: BenchmarkDefinition,
+    exported: dict,
+    lock: LockedDatasetDefinition,
+) -> bool:
+    current = lock_from_exported_dataset(
+        benchmark=benchmark,
+        exported=exported,
+        fetched_at=lock.benchmark_lock.fetched_at,
+    )
+    return current.rows == lock.rows
+
+
 def _dataset_name_and_version(hosted_name: str) -> tuple[str, str]:
     stem, separator, version = hosted_name.rpartition("_")
     if separator and version.startswith("v"):
