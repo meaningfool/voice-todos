@@ -182,6 +182,7 @@ def test_main_allows_explicit_untracked_mode(monkeypatch):
         lambda path=None: type("DS", (), {"name": "unused", "cases": []})(),
     )
     monkeypatch.setattr(runner, "_selected_experiments", lambda **kwargs: [])
+    monkeypatch.setattr(runner, "_resolve_dataset_path", lambda path: path)
 
     assert (
         runner.main(

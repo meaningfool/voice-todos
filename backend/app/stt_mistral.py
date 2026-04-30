@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import AsyncIterator, Mapping
 from typing import Any
 
@@ -91,9 +92,7 @@ class MistralSession(SttSession):
         async for raw_event in self._connection.events():
             payload = _serialize_realtime_event(raw_event)
             if self._raw_event_callback is not None:
-                self._raw_event_callback(
-                    payload if isinstance(raw_event, Mapping) else payload.copy()
-                )
+                self._raw_event_callback(json.dumps(payload))
             if payload.get("type") == "transcription.done":
                 text = payload.get("text")
                 self._final_transcript_text = text if isinstance(text, str) else None
