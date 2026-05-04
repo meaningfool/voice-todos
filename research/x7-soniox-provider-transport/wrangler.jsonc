@@ -1,0 +1,23 @@
+{
+  "name": "x7-soniox-provider-transport",
+  "main": "src/entry.py",
+  "compatibility_date": "2026-04-30",
+  "compatibility_flags": ["python_workers"],
+  "secrets": {
+    "required": ["SONIOX_API_KEY"]
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SONIOX_TRANSPORT_PROOF",
+        "class_name": "SonioxTransportProof"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["SonioxTransportProof"]
+    }
+  ]
+}

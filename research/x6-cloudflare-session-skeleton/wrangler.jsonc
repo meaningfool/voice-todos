@@ -1,0 +1,20 @@
+{
+  "name": "x6-cloudflare-session-skeleton",
+  "main": "src/entry.py",
+  "compatibility_date": "2026-04-30",
+  "compatibility_flags": ["python_workers"],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SESSION_RUNTIME",
+        "class_name": "SessionRuntime"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["SessionRuntime"]
+    }
+  ]
+}
