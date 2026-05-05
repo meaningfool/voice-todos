@@ -11,8 +11,14 @@ from settings import get_settings
 
 bootstrap_backend_imports()
 
+from app.extract import extract_todos  # noqa: E402
+from app.extraction_loop import ExtractionLoop, TodoStopOutcome  # noqa: E402
+from app.extraction_thresholds import EXTRACTION_TOKEN_THRESHOLD  # noqa: E402
 from app.live_session import LiveSessionController, StopResult  # noqa: E402
+from app.models import Todo  # noqa: E402
 from stt_factory_cf import create_stt_session  # noqa: E402
+
+TOKEN_THRESHOLD = EXTRACTION_TOKEN_THRESHOLD
 
 WebSocketPair: Any | None
 
@@ -67,6 +73,7 @@ class HostedSessionActor:
         self._controller_factory = controller_factory
         self._settings = settings
         self._controller = None
+        self._extraction_loop: ExtractionLoop | Any | None = None
         self._cleanup_started = False
         self._terminal_sent = False
 
@@ -101,9 +108,11 @@ class HostedSessionActor:
         self._controller = self._build_controller()
         try:
             await self._controller.start(self._settings)
+            self._extraction_loop = self._build_extraction_loop(self._controller)
         except Exception as exc:
             await self._handle_session_error(exc)
             self._controller = None
+            self._extraction_loop = None
             return None
         await self._browser_ws.send_json({"type": "started"})
         return "started"
@@ -112,13 +121,19 @@ class HostedSessionActor:
         if self._terminal_sent or self._cleanup_started:
             return
         stop_result = await self._stop_controller()
+        stop_outcome = await self._stop_extraction_loop(stop_result)
+        await self._browser_ws.send_json(
+            {
+                "type": "todos",
+                "items": _serialize_todos(stop_outcome.items_to_send),
+            }
+        )
         payload = {
             "type": "stopped",
             "transcript": stop_result.transcript_text,
         }
-        warning = self._warning_from_stop_result(stop_result)
-        if warning is not None:
-            payload["warning"] = warning
+        if stop_outcome.warning is not None:
+            payload["warning"] = stop_outcome.warning
         await self._browser_ws.send_json(payload)
         self._terminal_sent = True
         await self._cleanup(close_socket=True, close_code=1000, close_reason=close_reason)
@@ -133,15 +148,32 @@ class HostedSessionActor:
             on_error=self._handle_session_error,
         )
 
-    async def _handle_transcript_update(self, result: Any) -> None:
-        if not result.tokens:
-            return
-        await self._browser_ws.send_json(
-            {
-                "type": "transcript",
-                "tokens": result.tokens,
-            }
+    def _build_extraction_loop(self, controller: Any) -> ExtractionLoop | Any:
+        if not hasattr(controller, "transcript"):
+            return None
+        return ExtractionLoop(
+            transcript=controller.transcript,
+            send_fn=self._send_todos,
+            extract_fn=extract_todos,
+            token_threshold=TOKEN_THRESHOLD,
         )
+
+    async def _handle_transcript_update(self, result: Any) -> None:
+        if result.tokens:
+            await self._browser_ws.send_json(
+                {
+                    "type": "transcript",
+                    "tokens": result.tokens,
+                }
+            )
+
+        if self._extraction_loop is None:
+            return
+
+        if result.has_endpoint:
+            await self._extraction_loop.on_endpoint()
+        elif result.transcript_changed:
+            self._extraction_loop.on_transcript_changed()
 
     async def _handle_session_error(self, exc: Exception) -> None:
         await self.on_provider_failure(exc)
@@ -175,10 +207,29 @@ class HostedSessionActor:
         self._controller = None
         return await controller.stop(timeout_seconds=self._stop_timeout_seconds())
 
-    def _warning_from_stop_result(self, stop_result: Any) -> str | None:
-        if not getattr(stop_result, "timed_out", False):
-            return None
-        return "Timed out waiting for the final transcript."
+    async def _stop_extraction_loop(self, stop_result: Any) -> TodoStopOutcome:
+        if self._extraction_loop is None:
+            return TodoStopOutcome(
+                items_to_send=[],
+                warning=None,
+                should_resend_latest_snapshot=True,
+                final_extraction_ran=False,
+            )
+
+        extraction_loop = self._extraction_loop
+        self._extraction_loop = None
+        return await extraction_loop.on_stop(
+            final_transcript_text=stop_result.transcript_text,
+            transcript_timed_out=stop_result.timed_out,
+        )
+
+    async def _send_todos(self, todos: list[Todo]) -> None:
+        await self._browser_ws.send_json(
+            {
+                "type": "todos",
+                "items": _serialize_todos(todos),
+            }
+        )
 
     async def _cleanup(
         self,
@@ -196,6 +247,10 @@ class HostedSessionActor:
         else:
             controller = self._controller
             self._controller = None
+
+        if self._extraction_loop is not None:
+            self._extraction_loop.cancel()
+            self._extraction_loop = None
 
         if controller is not None:
             await controller.close()
@@ -217,6 +272,13 @@ def _message_to_bytes(message: Any) -> bytes:
             return bytes(converted)
         return _message_to_bytes(converted)
     return bytes(message)
+
+
+def _serialize_todos(todos: list[Todo]) -> list[dict[str, Any]]:
+    return [
+        todo.model_dump(exclude_none=True, mode="json")
+        for todo in todos
+    ]
 
 
 class SessionRuntime(DurableObject):

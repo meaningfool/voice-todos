@@ -22,6 +22,25 @@ class _FakeBrowserSocket:
         self.close_calls.append((code, reason))
 
 
+def _todo_stop_outcome(
+    *,
+    items: list[dict] | None = None,
+    warning: str | None = None,
+    should_resend_latest_snapshot: bool = False,
+    final_extraction_ran: bool = True,
+):
+    from app.extraction_loop import TodoStopOutcome
+    from app.models import Todo
+
+    todo_items = [] if items is None else [Todo(**item) for item in items]
+    return TodoStopOutcome(
+        items_to_send=todo_items,
+        warning=warning,
+        should_resend_latest_snapshot=should_resend_latest_snapshot,
+        final_extraction_ran=final_extraction_ran,
+    )
+
+
 @pytest.mark.asyncio
 async def test_hosted_session_start_sends_started_message():
     browser_ws = _FakeBrowserSocket()
@@ -106,7 +125,7 @@ async def test_hosted_session_relay_errors_return_browser_error(
     monkeypatch: pytest.MonkeyPatch,
 ):
     browser_ws = _FakeBrowserSocket()
-    controller = SimpleNamespace(start=AsyncMock(), close=AsyncMock())
+    controller = SimpleNamespace(start=AsyncMock(), close=AsyncMock(), transcript=object())
     controller_cls = Mock(return_value=controller)
     monkeypatch.setattr(session_runtime, "LiveSessionController", controller_cls)
     session = HostedSessionActor(
@@ -151,9 +170,318 @@ async def test_hosted_session_manual_stop_sends_terminal_message_once():
     controller.stop.assert_awaited_once_with(timeout_seconds=1.5)
     assert browser_ws.json_messages == [
         {"type": "started"},
+        {"type": "todos", "items": []},
         {"type": "stopped", "transcript": "Stop the button."},
     ]
     assert browser_ws.close_calls == [(1000, "session finished")]
+
+
+@pytest.mark.asyncio
+async def test_hosted_session_sends_todos_during_recording(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(start=AsyncMock(), close=AsyncMock(), transcript=object())
+    controller_cls = Mock(return_value=controller)
+    monkeypatch.setattr(session_runtime, "LiveSessionController", controller_cls)
+    monkeypatch.setattr(session_runtime, "extract_todos", AsyncMock(), raising=False)
+    monkeypatch.setattr(session_runtime, "TOKEN_THRESHOLD", 3, raising=False)
+
+    def build_loop(*, send_fn, **kwargs):
+        del kwargs
+        loop = Mock()
+        loop.cancel = Mock()
+        loop.on_stop = AsyncMock()
+        loop.on_transcript_changed = Mock()
+
+        async def on_endpoint():
+            from app.models import Todo
+
+            await send_fn([Todo(text="Buy milk")])
+
+        loop.on_endpoint = AsyncMock(side_effect=on_endpoint)
+        return loop
+
+    loop_cls = Mock(side_effect=build_loop)
+    monkeypatch.setattr(session_runtime, "ExtractionLoop", loop_cls, raising=False)
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        settings=SimpleNamespace(stt_provider="soniox"),
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+
+    on_update = controller_cls.call_args.kwargs["on_update"]
+    await on_update(
+        SimpleNamespace(
+            tokens=[{"text": "Buy milk. ", "is_final": True}],
+            has_endpoint=True,
+            transcript_changed=True,
+        )
+    )
+
+    assert browser_ws.json_messages == [
+        {"type": "started"},
+        {
+            "type": "transcript",
+            "tokens": [{"text": "Buy milk. ", "is_final": True}],
+        },
+        {"type": "todos", "items": [{"text": "Buy milk"}]},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_hosted_session_stop_uses_finalized_transcript_for_final_pass(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(
+        start=AsyncMock(),
+        stop=AsyncMock(
+            return_value=SimpleNamespace(
+                transcript_text="Buy milk tomorrow",
+                timed_out=False,
+            )
+        ),
+        close=AsyncMock(),
+        transcript=object(),
+    )
+    controller_cls = Mock(return_value=controller)
+    monkeypatch.setattr(session_runtime, "LiveSessionController", controller_cls)
+    monkeypatch.setattr(session_runtime, "extract_todos", AsyncMock(), raising=False)
+    monkeypatch.setattr(session_runtime, "TOKEN_THRESHOLD", 3, raising=False)
+    loop = Mock()
+    loop.cancel = Mock()
+    loop.on_endpoint = AsyncMock()
+    loop.on_transcript_changed = Mock()
+    loop.on_stop = AsyncMock(
+        return_value=_todo_stop_outcome(items=[{"text": "Buy milk tomorrow"}])
+    )
+    loop_cls = Mock(return_value=loop)
+    monkeypatch.setattr(session_runtime, "ExtractionLoop", loop_cls, raising=False)
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        settings=SimpleNamespace(stt_provider="soniox", stop_timeout_seconds=1.5),
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+    await session.on_text(json.dumps({"type": "stop"}))
+
+    loop.on_stop.assert_awaited_once_with(
+        final_transcript_text="Buy milk tomorrow",
+        transcript_timed_out=False,
+    )
+    assert browser_ws.json_messages == [
+        {"type": "started"},
+        {"type": "todos", "items": [{"text": "Buy milk tomorrow"}]},
+        {"type": "stopped", "transcript": "Buy milk tomorrow"},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_hosted_session_stop_reuses_latest_snapshot_without_rerunning_final_extraction(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(
+        start=AsyncMock(),
+        stop=AsyncMock(
+            return_value=SimpleNamespace(
+                transcript_text="Buy milk tomorrow",
+                timed_out=False,
+            )
+        ),
+        close=AsyncMock(),
+        transcript=object(),
+    )
+    controller_cls = Mock(return_value=controller)
+    monkeypatch.setattr(session_runtime, "LiveSessionController", controller_cls)
+    monkeypatch.setattr(session_runtime, "extract_todos", AsyncMock(), raising=False)
+    monkeypatch.setattr(session_runtime, "TOKEN_THRESHOLD", 3, raising=False)
+    loop = Mock()
+    loop.cancel = Mock()
+    loop.on_endpoint = AsyncMock()
+    loop.on_transcript_changed = Mock()
+    loop.on_stop = AsyncMock(
+        return_value=_todo_stop_outcome(
+            items=[{"text": "Buy milk tomorrow"}],
+            should_resend_latest_snapshot=True,
+            final_extraction_ran=False,
+        )
+    )
+    loop_cls = Mock(return_value=loop)
+    monkeypatch.setattr(session_runtime, "ExtractionLoop", loop_cls, raising=False)
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        settings=SimpleNamespace(stt_provider="soniox", stop_timeout_seconds=1.5),
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+    await session.on_text(json.dumps({"type": "stop"}))
+
+    assert browser_ws.json_messages == [
+        {"type": "started"},
+        {"type": "todos", "items": [{"text": "Buy milk tomorrow"}]},
+        {"type": "stopped", "transcript": "Buy milk tomorrow"},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_hosted_session_stop_surfaces_final_extraction_failure(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(
+        start=AsyncMock(),
+        stop=AsyncMock(
+            return_value=SimpleNamespace(
+                transcript_text="Buy milk tomorrow",
+                timed_out=False,
+            )
+        ),
+        close=AsyncMock(),
+        transcript=object(),
+    )
+    controller_cls = Mock(return_value=controller)
+    monkeypatch.setattr(session_runtime, "LiveSessionController", controller_cls)
+    monkeypatch.setattr(session_runtime, "extract_todos", AsyncMock(), raising=False)
+    monkeypatch.setattr(session_runtime, "TOKEN_THRESHOLD", 3, raising=False)
+    loop = Mock()
+    loop.cancel = Mock()
+    loop.on_endpoint = AsyncMock()
+    loop.on_transcript_changed = Mock()
+    loop.on_stop = AsyncMock(
+        return_value=_todo_stop_outcome(
+            warning="Todo extraction failed.",
+            should_resend_latest_snapshot=True,
+            final_extraction_ran=True,
+        )
+    )
+    loop_cls = Mock(return_value=loop)
+    monkeypatch.setattr(session_runtime, "ExtractionLoop", loop_cls, raising=False)
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        settings=SimpleNamespace(stt_provider="soniox", stop_timeout_seconds=1.5),
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+    await session.on_text(json.dumps({"type": "stop"}))
+
+    assert browser_ws.json_messages == [
+        {"type": "started"},
+        {"type": "todos", "items": []},
+        {
+            "type": "stopped",
+            "transcript": "Buy milk tomorrow",
+            "warning": "Todo extraction failed.",
+        },
+    ]
+
+
+@pytest.mark.asyncio
+async def test_hosted_session_stop_timeout_skips_extraction_and_surfaces_warning(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(
+        start=AsyncMock(),
+        stop=AsyncMock(
+            return_value=SimpleNamespace(
+                transcript_text="Buy milk tomorrow",
+                timed_out=True,
+            )
+        ),
+        close=AsyncMock(),
+        transcript=object(),
+    )
+    controller_cls = Mock(return_value=controller)
+    monkeypatch.setattr(session_runtime, "LiveSessionController", controller_cls)
+    monkeypatch.setattr(session_runtime, "extract_todos", AsyncMock(), raising=False)
+    monkeypatch.setattr(session_runtime, "TOKEN_THRESHOLD", 3, raising=False)
+    loop = Mock()
+    loop.cancel = Mock()
+    loop.on_endpoint = AsyncMock()
+    loop.on_transcript_changed = Mock()
+    loop.on_stop = AsyncMock(
+        return_value=_todo_stop_outcome(
+            warning=(
+                "Timed out waiting for the final transcript; "
+                "todos were not extracted."
+            ),
+            should_resend_latest_snapshot=True,
+            final_extraction_ran=False,
+        )
+    )
+    loop_cls = Mock(return_value=loop)
+    monkeypatch.setattr(session_runtime, "ExtractionLoop", loop_cls, raising=False)
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        settings=SimpleNamespace(stt_provider="soniox", stop_timeout_seconds=1.5),
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+    await session.on_text(json.dumps({"type": "stop"}))
+
+    loop.on_stop.assert_awaited_once_with(
+        final_transcript_text="Buy milk tomorrow",
+        transcript_timed_out=True,
+    )
+    assert browser_ws.json_messages == [
+        {"type": "started"},
+        {"type": "todos", "items": []},
+        {
+            "type": "stopped",
+            "transcript": "Buy milk tomorrow",
+            "warning": (
+                "Timed out waiting for the final transcript; "
+                "todos were not extracted."
+            ),
+        },
+    ]
+
+
+@pytest.mark.asyncio
+async def test_hosted_session_stop_sends_todos_before_stopped(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(
+        start=AsyncMock(),
+        stop=AsyncMock(
+            return_value=SimpleNamespace(
+                transcript_text="Buy milk tomorrow",
+                timed_out=False,
+            )
+        ),
+        close=AsyncMock(),
+        transcript=object(),
+    )
+    controller_cls = Mock(return_value=controller)
+    monkeypatch.setattr(session_runtime, "LiveSessionController", controller_cls)
+    monkeypatch.setattr(session_runtime, "extract_todos", AsyncMock(), raising=False)
+    monkeypatch.setattr(session_runtime, "TOKEN_THRESHOLD", 3, raising=False)
+    loop = Mock()
+    loop.cancel = Mock()
+    loop.on_endpoint = AsyncMock()
+    loop.on_transcript_changed = Mock()
+    loop.on_stop = AsyncMock(
+        return_value=_todo_stop_outcome(items=[{"text": "Buy milk tomorrow"}])
+    )
+    loop_cls = Mock(return_value=loop)
+    monkeypatch.setattr(session_runtime, "ExtractionLoop", loop_cls, raising=False)
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        settings=SimpleNamespace(stt_provider="soniox", stop_timeout_seconds=1.5),
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+    await session.on_text(json.dumps({"type": "stop"}))
+
+    assert browser_ws.json_messages == [
+        {"type": "started"},
+        {"type": "todos", "items": [{"text": "Buy milk tomorrow"}]},
+        {"type": "stopped", "transcript": "Buy milk tomorrow"},
+    ]
 
 
 @pytest.mark.asyncio
@@ -182,6 +510,7 @@ async def test_hosted_session_cap_expiry_sends_terminal_message_once():
     controller.stop.assert_awaited_once_with(timeout_seconds=1.5)
     assert browser_ws.json_messages == [
         {"type": "started"},
+        {"type": "todos", "items": []},
         {"type": "stopped", "transcript": "Stop the button."},
     ]
     assert browser_ws.close_calls == [(1000, "session cap reached")]
