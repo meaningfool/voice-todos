@@ -3,7 +3,13 @@ name = "voice-todos-cloudflare"
 version = "0.1.0"
 description = "Cloudflare hosted runtime for voice-todos"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "logfire>=4.29.0",
+    "mistralai>=1.9.11,<2",
+    "pydantic-ai>=1.70.0",
+    "pydantic-settings>=2.13.1",
+    "pyyaml>=6.0.2",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "strict"
