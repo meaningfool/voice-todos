@@ -797,6 +797,67 @@ def test_ws_stop_uses_controller_stop_result_for_warning_and_transcript():
     mock_extract.assert_not_awaited()
 
 
+def test_ws_stop_uses_shared_todo_stop_outcome_for_fallback_and_warning():
+    from app.extraction_loop import TodoStopOutcome
+    from app.live_session import StopResult
+
+    fake_controller = SimpleNamespace(
+        transcript=TranscriptAccumulator(),
+        start=AsyncMock(),
+        send_audio=AsyncMock(),
+        stop=AsyncMock(
+            return_value=StopResult(
+                transcript_text="Buy milk tomorrow",
+                timed_out=False,
+            )
+        ),
+        close=AsyncMock(),
+    )
+    extraction_loop = Mock()
+    extraction_loop.on_stop = AsyncMock(
+        return_value=TodoStopOutcome(
+            items_to_send=[Todo(text="Buy milk tomorrow")],
+            warning="Todo extraction failed.",
+            should_resend_latest_snapshot=True,
+            final_extraction_ran=True,
+        )
+    )
+    extraction_loop.cancel = Mock()
+
+    with (
+        patch("app.ws.get_settings", return_value=_settings()),
+        patch(
+            "app.ws.LiveSessionController",
+            return_value=fake_controller,
+            create=True,
+        ),
+        patch("app.ws.ExtractionLoop", return_value=extraction_loop),
+        patch("app.ws.extract_todos", new_callable=AsyncMock) as mock_extract,
+    ):
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "start"})
+            assert ws.receive_json() == {"type": "started"}
+
+            ws.send_json({"type": "stop"})
+
+            assert ws.receive_json() == {
+                "type": "todos",
+                "items": [{"text": "Buy milk tomorrow"}],
+            }
+            assert ws.receive_json() == {
+                "type": "stopped",
+                "transcript": "Buy milk tomorrow",
+                "warning": "Todo extraction failed.",
+            }
+
+    extraction_loop.on_stop.assert_awaited_once_with(
+        final_transcript_text="Buy milk tomorrow",
+        transcript_timed_out=False,
+    )
+    mock_extract.assert_not_awaited()
+
+
 def test_ws_maps_stop_actions_through_provider_session():
     """Stop should use the app-level STT session actions, not Soniox transport calls."""
     fake_session = _FakeSttSession(
