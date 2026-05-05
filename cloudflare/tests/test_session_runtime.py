@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-import src.session_runtime as session_runtime
-from src.session_runtime import HostedSessionActor
+import session_runtime
+from session_runtime import HostedSessionActor
 
 
 class _FakeBrowserSocket:

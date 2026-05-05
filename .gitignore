@@ -10,6 +10,14 @@ backend/*.egg-info/
 frontend/node_modules/
 frontend/dist/
 
+# Cloudflare
+cloudflare/.venv/
+cloudflare/.venv-workers/
+cloudflare/.dev.vars
+cloudflare/.wrangler/
+cloudflare/python_modules/
+cloudflare/**/__pycache__/
+
 # IDE
 .idea/
 .vscode/
