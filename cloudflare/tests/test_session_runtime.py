@@ -13,9 +13,13 @@ from session_runtime import HostedSessionActor
 class _FakeBrowserSocket:
     def __init__(self) -> None:
         self.json_messages: list[dict] = []
+        self.close_calls: list[tuple[int, str]] = []
 
     async def send_json(self, payload: dict) -> None:
         self.json_messages.append(payload)
+
+    def close(self, code: int = 1000, reason: str = "") -> None:
+        self.close_calls.append((code, reason))
 
 
 @pytest.mark.asyncio
@@ -102,7 +106,7 @@ async def test_hosted_session_relay_errors_return_browser_error(
     monkeypatch: pytest.MonkeyPatch,
 ):
     browser_ws = _FakeBrowserSocket()
-    controller = SimpleNamespace(start=AsyncMock())
+    controller = SimpleNamespace(start=AsyncMock(), close=AsyncMock())
     controller_cls = Mock(return_value=controller)
     monkeypatch.setattr(session_runtime, "LiveSessionController", controller_cls)
     session = HostedSessionActor(
@@ -119,3 +123,90 @@ async def test_hosted_session_relay_errors_return_browser_error(
         {"type": "started"},
         {"type": "error", "message": "boom"},
     ]
+    assert browser_ws.close_calls == [(1011, "provider failure")]
+
+
+@pytest.mark.asyncio
+async def test_hosted_session_manual_stop_sends_terminal_message_once():
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(
+        start=AsyncMock(),
+        stop=AsyncMock(
+            return_value=SimpleNamespace(
+                transcript_text="Stop the button.",
+                timed_out=False,
+            )
+        ),
+        close=AsyncMock(),
+    )
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        controller_factory=Mock(return_value=controller),
+        settings=SimpleNamespace(stop_timeout_seconds=1.5),
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+    await session.on_text(json.dumps({"type": "stop"}))
+
+    controller.stop.assert_awaited_once_with(timeout_seconds=1.5)
+    assert browser_ws.json_messages == [
+        {"type": "started"},
+        {"type": "stopped", "transcript": "Stop the button."},
+    ]
+    assert browser_ws.close_calls == [(1000, "session finished")]
+
+
+@pytest.mark.asyncio
+async def test_hosted_session_cap_expiry_sends_terminal_message_once():
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(
+        start=AsyncMock(),
+        stop=AsyncMock(
+            return_value=SimpleNamespace(
+                transcript_text="Stop the button.",
+                timed_out=False,
+            )
+        ),
+        close=AsyncMock(),
+    )
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        controller_factory=Mock(return_value=controller),
+        settings=SimpleNamespace(stop_timeout_seconds=1.5),
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+    await session.on_cap_expiry()
+    await session.on_cap_expiry()
+
+    controller.stop.assert_awaited_once_with(timeout_seconds=1.5)
+    assert browser_ws.json_messages == [
+        {"type": "started"},
+        {"type": "stopped", "transcript": "Stop the button."},
+    ]
+    assert browser_ws.close_calls == [(1000, "session cap reached")]
+
+
+@pytest.mark.asyncio
+async def test_hosted_session_browser_disconnect_after_provider_failure_cleanup_is_idempotent():
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(
+        start=AsyncMock(),
+        close=AsyncMock(),
+    )
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        controller_factory=Mock(return_value=controller),
+        settings=SimpleNamespace(),
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+    await session.on_provider_failure(RuntimeError("boom"))
+    await session.close()
+
+    controller.close.assert_awaited_once()
+    assert browser_ws.json_messages == [
+        {"type": "started"},
+        {"type": "error", "message": "boom"},
+    ]
+    assert browser_ws.close_calls == [(1011, "provider failure")]

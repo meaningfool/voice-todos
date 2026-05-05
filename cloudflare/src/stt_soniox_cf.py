@@ -10,12 +10,16 @@ from repo_bootstrap import bootstrap_backend_imports
 
 bootstrap_backend_imports()
 
-from app.stt import BoundaryState, SttCapabilities, SttEvent, SttSession, SttToken
+from app.stt import BoundaryState, SttCapabilities, SttEvent, SttSession, SttToken  # noqa: E402
+
+Uint8Array: Any | None
 
 try:
-    from js import Uint8Array
+    from js import Uint8Array as js_uint8_array
 except ImportError:  # pragma: no cover - unavailable in local pytest
     Uint8Array = None
+else:
+    Uint8Array = js_uint8_array
 
 try:
     from pyodide.ffi import create_proxy
@@ -23,10 +27,14 @@ except ImportError:  # pragma: no cover - unavailable in local pytest
     def create_proxy(handler):
         return handler
 
+fetch: Any | None
+
 try:
-    from workers import fetch
+    from workers import fetch as workers_fetch
 except ModuleNotFoundError:  # pragma: no cover - unavailable in local pytest
     fetch = None
+else:
+    fetch = workers_fetch
 
 
 SONIOX_FETCH_URL = "https://stt-rt.soniox.com/transcribe-websocket"

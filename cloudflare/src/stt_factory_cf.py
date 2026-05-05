@@ -5,7 +5,7 @@ from stt_soniox_cf import connect_soniox
 
 bootstrap_backend_imports()
 
-from app.stt import SttSession
+from app.stt import SttSession  # noqa: E402
 
 
 async def create_stt_session(

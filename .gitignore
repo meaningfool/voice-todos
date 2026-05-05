@@ -13,6 +13,7 @@ frontend/dist/
 # Cloudflare
 cloudflare/.venv/
 cloudflare/.venv-workers/
+cloudflare/.env
 cloudflare/.dev.vars
 cloudflare/.wrangler/
 cloudflare/python_modules/
