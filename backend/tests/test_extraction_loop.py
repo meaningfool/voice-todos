@@ -201,10 +201,14 @@ async def test_on_stop_waits_for_in_flight_then_runs_exactly_one_final_pass():
     await asyncio.sleep(0)
 
     release_first.set()
-    await stop_task
+    outcome = await stop_task
 
     assert call_texts == ["Buy milk", "Buy milk and call mom"]
-    assert send_fn.await_count == 2
+    assert send_fn.await_count == 1
+    assert outcome.items_to_send == [Todo(text="Buy milk and call mom")]
+    assert outcome.warning is None
+    assert outcome.should_resend_latest_snapshot is False
+    assert outcome.final_extraction_ran is True
 
 
 @pytest.mark.asyncio
@@ -234,10 +238,14 @@ async def test_on_stop_skips_redundant_final_pass_when_transcript_is_unchanged()
     await asyncio.sleep(0)
 
     release_first.set()
-    await stop_task
+    outcome = await stop_task
 
     assert call_texts == ["Buy milk"]
     assert send_fn.await_count == 1
+    assert outcome.items_to_send == [Todo(text="Buy milk")]
+    assert outcome.warning is None
+    assert outcome.should_resend_latest_snapshot is True
+    assert outcome.final_extraction_ran is False
 
 
 @pytest.mark.asyncio
@@ -251,14 +259,18 @@ async def test_on_stop_without_in_flight_runs_one_pass():
         extract_fn=extract_fn,
     )
 
-    await loop.on_stop()
+    outcome = await loop.on_stop()
 
     extract_fn.assert_awaited_once_with("Buy milk", previous_todos=None)
-    send_fn.assert_awaited_once_with([Todo(text="Buy milk")])
+    send_fn.assert_not_awaited()
+    assert outcome.items_to_send == [Todo(text="Buy milk")]
+    assert outcome.warning is None
+    assert outcome.should_resend_latest_snapshot is False
+    assert outcome.final_extraction_ran is True
 
 
 @pytest.mark.asyncio
-async def test_on_stop_propagates_final_pass_failure():
+async def test_on_stop_returns_warning_outcome_on_final_pass_failure():
     transcript = TranscriptAccumulator(final_parts=["Buy milk"])
     extract_fn = AsyncMock(side_effect=RuntimeError("boom"))
     send_fn = AsyncMock()
@@ -268,9 +280,12 @@ async def test_on_stop_propagates_final_pass_failure():
         extract_fn=extract_fn,
     )
 
-    with pytest.raises(RuntimeError, match="boom"):
-        await loop.on_stop()
+    outcome = await loop.on_stop()
 
+    assert outcome.items_to_send == []
+    assert outcome.warning == "Todo extraction failed."
+    assert outcome.should_resend_latest_snapshot is True
+    assert outcome.final_extraction_ran is True
     send_fn.assert_not_awaited()
 
 
@@ -365,4 +380,79 @@ async def test_empty_transcript_skips_extraction():
     await loop.on_stop()
 
     extract_fn.assert_not_awaited()
+    send_fn.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_on_stop_returns_resend_outcome_when_final_transcript_is_unchanged():
+    transcript = TranscriptAccumulator(final_parts=["Buy milk tomorrow"])
+    extract_fn = AsyncMock(return_value=[Todo(text="Buy milk tomorrow")])
+    send_fn = AsyncMock()
+    loop = ExtractionLoop(
+        transcript=transcript,
+        send_fn=send_fn,
+        extract_fn=extract_fn,
+    )
+
+    await loop.on_endpoint()
+    await _wait_for_background(loop)
+
+    outcome = await loop.on_stop(
+        final_transcript_text="Buy milk tomorrow",
+        transcript_timed_out=False,
+    )
+
+    assert outcome.items_to_send == [Todo(text="Buy milk tomorrow")]
+    assert outcome.warning is None
+    assert outcome.should_resend_latest_snapshot is True
+    assert outcome.final_extraction_ran is False
+    assert extract_fn.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_on_stop_returns_timeout_outcome_without_running_extraction():
+    transcript = TranscriptAccumulator(final_parts=["Buy milk tomorrow"])
+    extract_fn = AsyncMock(return_value=[Todo(text="Buy milk tomorrow")])
+    send_fn = AsyncMock()
+    loop = ExtractionLoop(
+        transcript=transcript,
+        send_fn=send_fn,
+        extract_fn=extract_fn,
+    )
+
+    outcome = await loop.on_stop(
+        final_transcript_text="Buy milk tomorrow",
+        transcript_timed_out=True,
+    )
+
+    assert outcome.items_to_send == []
+    assert (
+        outcome.warning
+        == "Timed out waiting for the final transcript; todos were not extracted."
+    )
+    assert outcome.should_resend_latest_snapshot is True
+    assert outcome.final_extraction_ran is False
+    extract_fn.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_on_stop_returns_warning_outcome_on_final_extraction_failure():
+    transcript = TranscriptAccumulator(final_parts=["Buy milk"])
+    extract_fn = AsyncMock(side_effect=RuntimeError("boom"))
+    send_fn = AsyncMock()
+    loop = ExtractionLoop(
+        transcript=transcript,
+        send_fn=send_fn,
+        extract_fn=extract_fn,
+    )
+
+    outcome = await loop.on_stop(
+        final_transcript_text="Buy milk tomorrow",
+        transcript_timed_out=False,
+    )
+
+    assert outcome.items_to_send == []
+    assert outcome.warning == "Todo extraction failed."
+    assert outcome.should_resend_latest_snapshot is True
+    assert outcome.final_extraction_ran is True
     send_fn.assert_not_awaited()

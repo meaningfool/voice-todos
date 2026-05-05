@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 
 import logfire
 
@@ -10,6 +11,14 @@ from app.models import Todo
 from app.transcript_accumulator import TranscriptAccumulator
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class TodoStopOutcome:
+    items_to_send: list[Todo]
+    warning: str | None
+    should_resend_latest_snapshot: bool
+    final_extraction_ran: bool
 
 
 class ExtractionLoop:
@@ -41,14 +50,71 @@ class ExtractionLoop:
         elif self._in_flight_task is not None and not self._in_flight_task.done():
             self._dirty = True
 
-    async def on_stop(self) -> None:
+    async def on_stop(
+        self,
+        *,
+        final_transcript_text: str | None = None,
+        transcript_timed_out: bool = False,
+    ) -> TodoStopOutcome:
         self._stopping = True
         try:
             task = self._in_flight_task
             if task is not None:
                 await task
 
-            await self._run_extraction(propagate_errors=True, trigger_reason="stop")
+            stop_transcript = final_transcript_text
+            if stop_transcript is None:
+                stop_transcript = self._transcript_text()
+
+            if transcript_timed_out:
+                return TodoStopOutcome(
+                    items_to_send=list(self._previous_todos),
+                    warning=(
+                        "Timed out waiting for the final transcript; "
+                        "todos were not extracted."
+                    ),
+                    should_resend_latest_snapshot=True,
+                    final_extraction_ran=False,
+                )
+
+            if not stop_transcript.strip():
+                return TodoStopOutcome(
+                    items_to_send=list(self._previous_todos),
+                    warning=None,
+                    should_resend_latest_snapshot=True,
+                    final_extraction_ran=False,
+                )
+
+            if stop_transcript == self._last_successful_transcript:
+                return TodoStopOutcome(
+                    items_to_send=list(self._previous_todos),
+                    warning=None,
+                    should_resend_latest_snapshot=True,
+                    final_extraction_ran=False,
+                )
+
+            previous_todos = list(self._previous_todos) or None
+            try:
+                todos = await self._extract_todos(
+                    stop_transcript,
+                    trigger_reason="stop",
+                    previous_todos=previous_todos,
+                )
+            except Exception:
+                return TodoStopOutcome(
+                    items_to_send=list(self._previous_todos),
+                    warning="Todo extraction failed.",
+                    should_resend_latest_snapshot=True,
+                    final_extraction_ran=True,
+                )
+
+            self._record_success(todos, transcript_text=stop_transcript)
+            return TodoStopOutcome(
+                items_to_send=list(todos),
+                warning=None,
+                should_resend_latest_snapshot=False,
+                final_extraction_ran=True,
+            )
         finally:
             self._dirty = False
             self._stopping = False
@@ -120,25 +186,13 @@ class ExtractionLoop:
         if not transcript_text.strip():
             return False
 
-        if (
-            trigger_reason == "stop"
-            and transcript_text == self._last_successful_transcript
-        ):
-            return False
-
         try:
             previous_todos = list(self._previous_todos) or None
-            with logfire.span(
-                "extraction_cycle",
-                _span_name="extraction_cycle",
+            todos = await self._extract_todos(
+                transcript_text,
                 trigger_reason=trigger_reason,
-                transcript_length=len(transcript_text),
-                previous_todo_count=len(previous_todos) if previous_todos else 0,
-            ):
-                todos = await self._extract_fn(
-                    transcript_text,
-                    previous_todos=previous_todos,
-                )
+                previous_todos=previous_todos,
+            )
 
             if generation is not None and generation != self._generation:
                 return False
@@ -148,8 +202,7 @@ class ExtractionLoop:
             if generation is not None and generation != self._generation:
                 return False
 
-            self._previous_todos = list(todos)
-            self._last_successful_transcript = transcript_text
+            self._record_success(todos, transcript_text=transcript_text)
             return True
         except asyncio.CancelledError:
             raise
@@ -159,6 +212,29 @@ class ExtractionLoop:
 
             logger.exception("Background todo extraction failed")
             return False
+
+    async def _extract_todos(
+        self,
+        transcript_text: str,
+        *,
+        trigger_reason: str,
+        previous_todos: list[Todo] | None,
+    ) -> list[Todo]:
+        with logfire.span(
+            "extraction_cycle",
+            _span_name="extraction_cycle",
+            trigger_reason=trigger_reason,
+            transcript_length=len(transcript_text),
+            previous_todo_count=len(previous_todos) if previous_todos else 0,
+        ):
+            return await self._extract_fn(
+                transcript_text,
+                previous_todos=previous_todos,
+            )
+
+    def _record_success(self, todos: list[Todo], *, transcript_text: str) -> None:
+        self._previous_todos = list(todos)
+        self._last_successful_transcript = transcript_text
 
     def _transcript_text(self) -> str:
         return self._transcript.full_text
