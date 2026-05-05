@@ -1,5 +1,3 @@
-import asyncio
-import contextlib
 import json
 import logging
 
@@ -11,12 +9,12 @@ from app.config import get_settings
 from app.extract import extract_todos
 from app.extraction_loop import ExtractionLoop
 from app.extraction_thresholds import EXTRACTION_TOKEN_THRESHOLD
+from app.live_session import LiveSessionController
 from app.models import Todo
 from app.session_recorder import SessionRecorder
 from app.stt import SttSession
 from app.stt_factory import create_stt_session as _create_stt_session
 from app.stt_soniox import connect_soniox
-from app.transcript_accumulator import TranscriptAccumulator
 
 logger = logging.getLogger(__name__)
 
@@ -41,63 +39,12 @@ async def create_stt_session(
     )
 
 
-async def _relay_stt_to_browser(
-    stt_session: SttSession,
-    browser_ws: WebSocket,
-    transcript: TranscriptAccumulator,
-    extraction_loop: ExtractionLoop,
-    recorder: SessionRecorder | None = None,
-    *,
-    finalized_event: asyncio.Event,
-):
-    """Read transcript events from the configured STT provider and forward them."""
-    stt_event_count = 0
-    browser_relay_count = 0
-    with logfire.span("ws.stt_relay") as relay_span:
-        try:
-            async for event in stt_session:
-                stt_event_count += 1
-
-                if event.is_finished:
-                    return
-
-                result = transcript.apply_stt_event(event)
-                if result.has_fin:
-                    finalized_event.set()
-                tokens = result.tokens
-                if tokens:
-                    browser_relay_count += 1
-                    await browser_ws.send_json(
-                        {
-                            "type": "transcript",
-                            "tokens": tokens,
-                        }
-                    )
-
-                if result.has_endpoint:
-                    await extraction_loop.on_endpoint()
-                elif result.transcript_changed:
-                    extraction_loop.on_transcript_changed()
-        except websockets.ConnectionClosed:
-            logger.warning("STT connection closed unexpectedly during relay")
-        except Exception as e:
-            logger.exception("Error relaying from STT provider")
-            with contextlib.suppress(Exception):
-                await browser_ws.send_json({"type": "error", "message": str(e)})
-        finally:
-            relay_span.set_attribute("stt_event_count", stt_event_count)
-            relay_span.set_attribute("browser_relay_count", browser_relay_count)
-
-
 @router.websocket("/ws")
 async def websocket_endpoint(browser_ws: WebSocket):
     await browser_ws.accept()
 
     settings = get_settings()
-    stt_session = None
-    relay_task = None
-    finalized_event = asyncio.Event()
-    transcript = TranscriptAccumulator()
+    controller: LiveSessionController | None = None
     extraction_loop: ExtractionLoop | None = None
     recorder = SessionRecorder() if settings.record_sessions else None
     latest_todo_items: list[dict] = []
@@ -130,6 +77,27 @@ async def websocket_endpoint(browser_ws: WebSocket):
             remember_snapshot=True,
         )
 
+    async def handle_transcript_update(result) -> None:
+        if result.tokens:
+            await browser_ws.send_json(
+                {
+                    "type": "transcript",
+                    "tokens": result.tokens,
+                }
+            )
+
+        if extraction_loop is None:
+            return
+
+        if result.has_endpoint:
+            await extraction_loop.on_endpoint()
+        elif result.transcript_changed:
+            extraction_loop.on_transcript_changed()
+
+    async def handle_session_error(exc: Exception) -> None:
+        logger.error("Error relaying from STT provider", exc_info=exc)
+        await browser_ws.send_json({"type": "error", "message": str(exc)})
+
     with logfire.span("ws.connection_session", connection_id=connection_id):
         try:
             while True:
@@ -156,17 +124,9 @@ async def websocket_endpoint(browser_ws: WebSocket):
 
                     if msg_type == "start":
                         ws_phase = "start"
-                        # If already connected, close existing connection first
-                        if relay_task:
-                            relay_task.cancel()
-                            with contextlib.suppress(asyncio.CancelledError):
-                                await relay_task
-                            relay_task = None
-                        if stt_session is not None:
-                            with contextlib.suppress(Exception):
-                                await stt_session.close()
-                            stt_session = None
-                        finalized_event = asyncio.Event()
+                        if controller is not None:
+                            await controller.close()
+                            controller = None
                         if extraction_loop is not None:
                             extraction_loop.cancel()
                             extraction_loop = None
@@ -179,28 +139,22 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             ws_phase = "connecting_to_stt"
                             if recorder:
                                 recorder.start(provider_name=provider_name)
-                            stt_session = await create_stt_session(
-                                settings,
-                                recorder=recorder,
+                            controller = LiveSessionController(
+                                create_stt_session=create_stt_session,
+                                on_update=handle_transcript_update,
+                                on_error=handle_session_error,
                             )
-                            transcript.reset()
                             latest_todo_items = []
                             todo_send_count = 0
                             extraction_loop = ExtractionLoop(
-                                transcript=transcript,
+                                transcript=controller.transcript,
                                 send_fn=send_todos,
                                 extract_fn=extract_todos,
                                 token_threshold=TOKEN_THRESHOLD,
                             )
-                            relay_task = asyncio.create_task(
-                                _relay_stt_to_browser(
-                                    stt_session,
-                                    browser_ws,
-                                    transcript,
-                                    extraction_loop,
-                                    recorder,
-                                    finalized_event=finalized_event,
-                                )
+                            await controller.start(
+                                settings,
+                                recorder=recorder,
                             )
                             ws_phase = "sending_started"
                             await browser_ws.send_json({"type": "started"})
@@ -211,6 +165,9 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             if extraction_loop is not None:
                                 extraction_loop.cancel()
                                 extraction_loop = None
+                            if controller is not None:
+                                await controller.close()
+                                controller = None
                             if recorder:
                                 recorder.stop()
                             await browser_ws.send_json(
@@ -222,23 +179,14 @@ async def websocket_endpoint(browser_ws: WebSocket):
                                 }
                             )
 
-                    elif msg_type == "stop" and stt_session:
+                    elif msg_type == "stop" and controller is not None:
                         logfire.info("ws.stop_received", connection_id=connection_id)
-                        ws_phase = "stop_finalize"
-                        await stt_session.request_final_transcript()
-                        ws_phase = "stop_eos"
-                        await stt_session.end_stream()
+                        ws_phase = "stop"
+                        stop_result = await controller.stop(
+                            timeout_seconds=settings.soniox_stop_timeout_seconds,
+                        )
                         warning_message: str | None = None
-                        try:
-                            ws_phase = "stop_waiting_for_fin"
-                            await asyncio.wait_for(
-                                _wait_for_final_transcript(
-                                    stt_session,
-                                    finalized_event=finalized_event,
-                                ),
-                                timeout=settings.soniox_stop_timeout_seconds,
-                            )
-                        except TimeoutError:
+                        if stop_result.timed_out:
                             warning_message = (
                                 "Timed out waiting for the final transcript; "
                                 "todos were not extracted."
@@ -246,20 +194,8 @@ async def websocket_endpoint(browser_ws: WebSocket):
                             logger.warning(
                                 "Timed out waiting for the final transcript to finish"
                             )
-                            if relay_task and not relay_task.done():
-                                relay_task.cancel()
-                                with contextlib.suppress(asyncio.CancelledError):
-                                    await relay_task
-                                relay_task = None
 
-                        full_transcript = (
-                            stt_session.final_transcript_text
-                            if stt_session.final_transcript_text is not None
-                            else transcript.full_text
-                        )
-                        if stt_session.final_transcript_text is not None:
-                            transcript.final_parts = [full_transcript]
-                            transcript.interim_parts.clear()
+                        full_transcript = stop_result.transcript_text
                         logger.info(
                             "Transcript (%d chars): %s",
                             len(full_transcript),
@@ -309,22 +245,14 @@ async def websocket_endpoint(browser_ws: WebSocket):
                         if extraction_loop is not None:
                             extraction_loop.cancel()
                             extraction_loop = None
-                        ws_phase = "stop_closing_soniox"
-                        with contextlib.suppress(Exception):
-                            await stt_session.close()
-                        if relay_task and not relay_task.done():
-                            relay_task.cancel()
-                            with contextlib.suppress(asyncio.CancelledError):
-                                await relay_task
-                        relay_task = None
-                        stt_session = None
+                        controller = None
 
                 # Binary message = audio frame
                 elif "bytes" in message:
-                    if stt_session:
+                    if controller is not None:
                         if recorder:
                             recorder.write_audio(message["bytes"])
-                        await stt_session.send_audio(message["bytes"])
+                        await controller.send_audio(message["bytes"])
 
         except WebSocketDisconnect:
             logger.info(
@@ -340,30 +268,7 @@ async def websocket_endpoint(browser_ws: WebSocket):
         finally:
             if recorder:
                 recorder.stop()
-            if relay_task:
-                relay_task.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await relay_task
             if extraction_loop is not None:
                 extraction_loop.cancel()
-            if stt_session:
-                with contextlib.suppress(Exception):
-                    await stt_session.close()
-
-
-async def _wait_for_final_transcript(
-    stt_session: SttSession,
-    *,
-    finalized_event: asyncio.Event,
-) -> None:
-    wait_tasks = [
-        asyncio.create_task(stt_session.wait_for_final_transcript()),
-        asyncio.create_task(finalized_event.wait()),
-    ]
-    done, pending = await asyncio.wait(wait_tasks, return_when=asyncio.FIRST_COMPLETED)
-    for task in pending:
-        task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await task
-    for task in done:
-        task.result()
+            if controller is not None:
+                await controller.close()

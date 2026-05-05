@@ -202,3 +202,32 @@ async def test_controller_close_is_idempotent_after_stop_or_relay_cancel():
     await controller.close()
 
     fake_session.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_controller_surfaces_relay_errors_through_error_callback():
+    from app.live_session import LiveSessionController
+
+    class _ExplodingSession(_FakeSttSession):
+        async def _iterate(self):
+            raise RuntimeError("boom")
+            yield  # pragma: no cover
+
+    errors: list[str] = []
+    error_seen = asyncio.Event()
+    session_factory = AsyncMock(return_value=_ExplodingSession())
+
+    async def on_error(exc: Exception):
+        errors.append(str(exc))
+        error_seen.set()
+
+    controller = LiveSessionController(
+        create_stt_session=session_factory,
+        on_error=on_error,
+    )
+
+    await controller.start(SimpleNamespace())
+    await asyncio.wait_for(error_seen.wait(), timeout=1)
+    await controller.close()
+
+    assert errors == ["boom"]

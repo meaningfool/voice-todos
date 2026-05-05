@@ -12,6 +12,7 @@ from app.transcript_accumulator import (
 )
 
 UpdateCallback = Callable[[TranscriptAccumulatorResult], Awaitable[None] | None]
+ErrorCallback = Callable[[Exception], Awaitable[None] | None]
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,13 +27,19 @@ class LiveSessionController:
         *,
         create_stt_session: Callable[..., Awaitable[Any]],
         on_update: UpdateCallback | None = None,
+        on_error: ErrorCallback | None = None,
     ) -> None:
         self._create_stt_session = create_stt_session
         self._on_update = on_update
+        self._on_error = on_error
         self._transcript = TranscriptAccumulator()
         self._stt_session = None
         self._relay_task: asyncio.Task[None] | None = None
         self._finalized_event = asyncio.Event()
+
+    @property
+    def transcript(self) -> TranscriptAccumulator:
+        return self._transcript
 
     async def start(self, settings: Any, *, recorder: Any = None) -> None:
         self._transcript.reset()
@@ -50,7 +57,10 @@ class LiveSessionController:
 
     async def stop(self, *, timeout_seconds: float) -> StopResult:
         if self._stt_session is None:
-            return StopResult(transcript_text=self._transcript.full_text, timed_out=False)
+            return StopResult(
+                transcript_text=self._transcript.full_text,
+                timed_out=False,
+            )
 
         await self._stt_session.request_final_transcript()
         await self._stt_session.end_stream()
@@ -91,15 +101,23 @@ class LiveSessionController:
     async def _relay_provider_events(self) -> None:
         assert self._stt_session is not None
 
-        async for event in self._stt_session:
-            if event.is_finished:
-                return
+        try:
+            async for event in self._stt_session:
+                if event.is_finished:
+                    return
 
-            result = self._transcript.apply_stt_event(event)
-            if result.has_fin:
-                self._finalized_event.set()
-            if self._on_update is not None:
-                maybe_awaitable = self._on_update(result)
+                result = self._transcript.apply_stt_event(event)
+                if result.has_fin:
+                    self._finalized_event.set()
+                if self._on_update is not None:
+                    maybe_awaitable = self._on_update(result)
+                    if maybe_awaitable is not None:
+                        await maybe_awaitable
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            if self._on_error is not None:
+                maybe_awaitable = self._on_error(exc)
                 if maybe_awaitable is not None:
                     await maybe_awaitable
 
