@@ -95,3 +95,110 @@ async def test_controller_send_audio_forwards_bytes_to_active_session():
     await controller.close()
 
     fake_session.send_audio.assert_awaited_once_with(b"\x00\x01")
+
+
+@pytest.mark.asyncio
+async def test_controller_stop_requests_finalize_before_end_stream():
+    from app.live_session import LiveSessionController
+
+    call_order: list[str] = []
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy groceries. ", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.NOT_OBSERVED,
+            )
+        ]
+    )
+    fake_session.request_final_transcript.side_effect = lambda: call_order.append(
+        "finalize"
+    )
+    fake_session.end_stream.side_effect = lambda: call_order.append("end_stream")
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+    session_factory = AsyncMock(return_value=fake_session)
+    controller = LiveSessionController(create_stt_session=session_factory)
+
+    await controller.start(SimpleNamespace())
+    result = await controller.stop(timeout_seconds=0.1)
+
+    assert result.transcript_text == "Buy groceries. "
+    fake_session.request_final_transcript.assert_awaited_once()
+    fake_session.end_stream.assert_awaited_once()
+    assert call_order == ["finalize", "end_stream"]
+
+
+@pytest.mark.asyncio
+async def test_controller_stop_prefers_provider_final_transcript_text_when_available():
+    from app.live_session import LiveSessionController
+
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy milk", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            )
+        ],
+        final_transcript_text="Buy milk tomorrow",
+        capabilities=SttCapabilities(
+            exposes_finalization_boundary=False,
+            exposes_endpoint_boundary=False,
+        ),
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(return_value=None)
+    session_factory = AsyncMock(return_value=fake_session)
+    controller = LiveSessionController(create_stt_session=session_factory)
+
+    await controller.start(SimpleNamespace())
+    result = await controller.stop(timeout_seconds=0.1)
+
+    assert result.transcript_text == "Buy milk tomorrow"
+    assert result.timed_out is False
+
+
+@pytest.mark.asyncio
+async def test_controller_stop_returns_timeout_result_without_raising():
+    from app.live_session import LiveSessionController
+
+    async def never_finish():
+        await asyncio.sleep(1)
+
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy milk", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            )
+        ],
+        final_transcript_text=None,
+        capabilities=SttCapabilities(
+            exposes_finalization_boundary=False,
+            exposes_endpoint_boundary=False,
+        ),
+    )
+    fake_session.wait_for_final_transcript = AsyncMock(side_effect=never_finish)
+    session_factory = AsyncMock(return_value=fake_session)
+    controller = LiveSessionController(create_stt_session=session_factory)
+
+    await controller.start(SimpleNamespace())
+    result = await controller.stop(timeout_seconds=0.01)
+
+    assert result.transcript_text == "Buy milk"
+    assert result.timed_out is True
+
+
+@pytest.mark.asyncio
+async def test_controller_close_is_idempotent_after_stop_or_relay_cancel():
+    from app.live_session import LiveSessionController
+
+    fake_session = _FakeSttSession(events=[SttEvent(is_finished=True)])
+    session_factory = AsyncMock(return_value=fake_session)
+    controller = LiveSessionController(create_stt_session=session_factory)
+
+    await controller.start(SimpleNamespace())
+    await controller.close()
+    await controller.close()
+
+    fake_session.close.assert_awaited_once()
