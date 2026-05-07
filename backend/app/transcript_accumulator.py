@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 from app.stt import BoundaryState, SttEvent, SttToken
 
@@ -76,10 +76,12 @@ class TranscriptAccumulator:
             for token in tokens:
                 if token.get("is_final", False):
                     saw_final = True
-                    self.final_parts.append(token["text"])
+                    self.final_parts.append(cast("str", token["text"]))
 
             interim_text = "".join(
-                token["text"] for token in tokens if not token.get("is_final", False)
+                cast("str", token["text"])
+                for token in tokens
+                if not token.get("is_final", False)
             )
             if interim_text:
                 self.interim_parts.clear()
@@ -89,7 +91,10 @@ class TranscriptAccumulator:
 
         return TranscriptAccumulatorResult(
             tokens=[
-                {"text": token["text"], "is_final": token.get("is_final", False)}
+                {
+                    "text": cast("str", token["text"]),
+                    "is_final": token.get("is_final", False),
+                }
                 for token in tokens
             ],
             has_fin=has_fin,

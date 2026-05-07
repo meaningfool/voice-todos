@@ -1,0 +1,23 @@
+{
+  "name": "voice-todos-cloudflare",
+  "main": "src/entry.py",
+  "compatibility_date": "2026-05-05",
+  "compatibility_flags": ["python_workers"],
+  "secrets": {
+    "required": ["SONIOX_API_KEY", "SESSION_CAP_MS", "GEMINI_API_KEY"]
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SESSION_RUNTIME",
+        "class_name": "SessionRuntime"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["SessionRuntime"]
+    }
+  ]
+}
