@@ -254,6 +254,32 @@ describe("useTranscript", () => {
       "/dev-fixtures/while-speaking-two-todos/audio.pcm"
     );
     expect(ws.sent).toContainEqual(JSON.stringify({ type: "start" }));
-    expect(ws.sent.filter((message) => message instanceof ArrayBuffer)).toHaveLength(2);
+    expect(
+      ws.sent.filter((message) => message instanceof ArrayBuffer).length
+    ).toBeGreaterThanOrEqual(2);
+  });
+
+  it("keeps fixture audio streaming until the user stops", async () => {
+    window.history.replaceState(null, "", "/?fixture=while-speaking-two-todos");
+    fetchFixture.mockResolvedValueOnce({
+      arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array(3200).buffer),
+    });
+    const { result } = renderHook(() => useTranscript());
+
+    const ws = await startRecording(result);
+
+    await act(async () => {
+      await Promise.resolve();
+      vi.runOnlyPendingTimers();
+      await Promise.resolve();
+      vi.runOnlyPendingTimers();
+      await Promise.resolve();
+    });
+
+    const audioFrames = ws.sent.filter(
+      (message): message is ArrayBuffer => message instanceof ArrayBuffer
+    );
+    expect(audioFrames.length).toBeGreaterThan(1);
+    expect(audioFrames.at(-1)?.byteLength).toBe(3200);
   });
 });

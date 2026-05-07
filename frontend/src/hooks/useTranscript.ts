@@ -13,6 +13,7 @@ const DEV_FIXTURE_AUDIO_PATHS: Record<string, string> = {
 };
 const FIXTURE_CHUNK_BYTES = 3200;
 const FIXTURE_CHUNK_DELAY_MS = 100;
+const FIXTURE_SILENCE_CHUNK = new ArrayBuffer(FIXTURE_CHUNK_BYTES);
 
 interface Token {
   text: string;
@@ -70,17 +71,21 @@ export function useTranscript() {
     setMicRecordingUrl(null);
   }, []);
 
+  const cancelFixtureStreaming = useCallback(() => {
+    if (fixtureChunkTimeoutRef.current !== null) {
+      clearTimeout(fixtureChunkTimeoutRef.current);
+      fixtureChunkTimeoutRef.current = null;
+    }
+    fixtureStreamTokenRef.current += 1;
+  }, []);
+
   const cleanup = useCallback(
     ({ revokeRecordingUrl = false }: { revokeRecordingUrl?: boolean } = {}) => {
       if (micTailTimeoutRef.current !== null) {
         clearTimeout(micTailTimeoutRef.current);
         micTailTimeoutRef.current = null;
       }
-      if (fixtureChunkTimeoutRef.current !== null) {
-        clearTimeout(fixtureChunkTimeoutRef.current);
-        fixtureChunkTimeoutRef.current = null;
-      }
-      fixtureStreamTokenRef.current += 1;
+      cancelFixtureStreaming();
       if (stopTimeoutRef.current !== null) {
         clearTimeout(stopTimeoutRef.current);
         stopTimeoutRef.current = null;
@@ -116,7 +121,7 @@ export function useTranscript() {
         clearMicRecordingUrl();
       }
     },
-    [clearMicRecordingUrl]
+    [cancelFixtureStreaming, clearMicRecordingUrl]
   );
 
   useEffect(() => {
@@ -169,6 +174,19 @@ export function useTranscript() {
                 }, FIXTURE_CHUNK_DELAY_MS);
               });
             }
+          }
+
+          while (
+            fixtureStreamToken === fixtureStreamTokenRef.current &&
+            ws.readyState === WebSocket.OPEN
+          ) {
+            ws.send(FIXTURE_SILENCE_CHUNK.slice(0));
+            await new Promise<void>((resolve) => {
+              fixtureChunkTimeoutRef.current = setTimeout(() => {
+                fixtureChunkTimeoutRef.current = null;
+                resolve();
+              }, FIXTURE_CHUNK_DELAY_MS);
+            });
           }
         } catch (err) {
           console.error("Failed to stream fixture audio:", err);
@@ -297,6 +315,7 @@ export function useTranscript() {
     const MIC_TAIL_MS = 200;
 
     const teardownAndStop = () => {
+      cancelFixtureStreaming();
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         mediaRecorderRef.current.stop();
         mediaRecorderRef.current = null;
@@ -327,7 +346,7 @@ export function useTranscript() {
     };
 
     micTailTimeoutRef.current = setTimeout(teardownAndStop, MIC_TAIL_MS);
-  }, [cleanup, status]);
+  }, [cancelFixtureStreaming, cleanup, status]);
 
   return {
     status,
