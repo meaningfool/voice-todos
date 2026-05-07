@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
@@ -539,3 +540,16 @@ async def test_hosted_session_browser_disconnect_after_provider_failure_cleanup_
         {"type": "error", "message": "boom"},
     ]
     assert browser_ws.close_calls == [(1011, "provider failure")]
+
+
+@pytest.mark.asyncio
+async def test_session_runtime_duplicate_cap_paths_stop_only_once():
+    storage = SimpleNamespace(setAlarm=Mock())
+    ctx = SimpleNamespace(storage=storage)
+    on_cap_expiry = AsyncMock()
+    runtime = session_runtime.SessionRuntime(ctx, env=SimpleNamespace())
+    runtime._session = SimpleNamespace(on_cap_expiry=on_cap_expiry)
+
+    await asyncio.gather(runtime.alarm(), runtime.alarm())
+
+    on_cap_expiry.assert_awaited_once()

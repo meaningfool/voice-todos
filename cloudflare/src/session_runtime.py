@@ -315,9 +315,10 @@ class SessionRuntime(DurableObject):
         if isinstance(message, str):
             outcome = await self._session.on_text(str(message))
             if outcome == "started":
-                self.ctx.storage.setAlarm(
-                    int(time.time() * 1000) + self._settings.session_cap_ms
-                )
+                if hasattr(self.ctx, "storage") and hasattr(self.ctx.storage, "setAlarm"):
+                    self.ctx.storage.setAlarm(
+                        int(time.time() * 1000) + self._settings.session_cap_ms
+                    )
                 self._schedule_cap_timer()
             elif outcome == "stopped":
                 self._cancel_cap_timer()
@@ -329,20 +330,18 @@ class SessionRuntime(DurableObject):
     async def webSocketClose(self, ws, code, reason, was_clean):
         del ws, code, reason, was_clean
 
-        if self._session is None:
+        session = self._claim_session()
+        if session is None:
             return
 
-        self._cancel_cap_timer()
-        await self._session.close()
-        self._session = None
+        await session.close()
 
     async def alarm(self):
-        if self._session is None:
+        session = self._claim_session()
+        if session is None:
             return
 
-        self._cancel_cap_timer()
-        await self._session.on_cap_expiry()
-        self._session = None
+        await session.on_cap_expiry()
 
     def _schedule_cap_timer(self) -> None:
         self._cancel_cap_timer()
@@ -357,9 +356,17 @@ class SessionRuntime(DurableObject):
     async def _run_cap_timer(self) -> None:
         try:
             await asyncio.sleep(self._settings.session_cap_ms / 1000)
-            if self._session is None:
+            session = self._claim_session()
+            if session is None:
                 return
-            await self._session.on_cap_expiry()
-            self._session = None
+            await session.on_cap_expiry()
         except asyncio.CancelledError:
             raise
+
+    def _claim_session(self) -> HostedSessionActor | None:
+        session = self._session
+        if session is None:
+            return None
+        self._session = None
+        self._cancel_cap_timer()
+        return session

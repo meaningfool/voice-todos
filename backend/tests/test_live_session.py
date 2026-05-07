@@ -183,6 +183,40 @@ async def test_controller_stop_returns_timeout_result_without_raising():
     controller = LiveSessionController(create_stt_session=session_factory)
 
     await controller.start(SimpleNamespace())
+    await asyncio.sleep(0)
+    result = await controller.stop(timeout_seconds=0.01)
+
+    assert result.transcript_text == "Buy milk"
+    assert result.timed_out is True
+
+
+@pytest.mark.asyncio
+async def test_controller_stop_tolerates_finalization_send_failures():
+    from app.live_session import LiveSessionController
+
+    fake_session = _FakeSttSession(
+        events=[
+            SttEvent(
+                tokens=[SttToken(text="Buy milk", is_final=True)],
+                finalization_state=BoundaryState.NOT_OBSERVED,
+                endpoint_state=BoundaryState.UNSUPPORTED,
+            )
+        ],
+        final_transcript_text=None,
+        capabilities=SttCapabilities(
+            exposes_finalization_boundary=False,
+            exposes_endpoint_boundary=False,
+        ),
+    )
+    fake_session.request_final_transcript = AsyncMock(
+        side_effect=RuntimeError("websocket closed")
+    )
+    fake_session.end_stream = AsyncMock(side_effect=RuntimeError("websocket closed"))
+    session_factory = AsyncMock(return_value=fake_session)
+    controller = LiveSessionController(create_stt_session=session_factory)
+
+    await controller.start(SimpleNamespace())
+    await asyncio.sleep(0)
     result = await controller.stop(timeout_seconds=0.01)
 
     assert result.transcript_text == "Buy milk"
