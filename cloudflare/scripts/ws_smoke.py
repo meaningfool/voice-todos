@@ -88,6 +88,70 @@ async def _run_transcript_stop(args) -> None:
             )
 
 
+async def _run_todo_stop(args) -> None:
+    url = _with_session(args.base_url, args.session_id)
+    transcript_messages = 0
+    todo_messages = 0
+    started_seen = False
+    terminal_payload: dict[str, object] | None = None
+    saw_todos_before_terminal = False
+
+    async with websockets.connect(url, max_size=None) as ws:
+        start_payload = {"type": "start"}
+        await ws.send(json.dumps(start_payload))
+        _print_event("client ->", start_payload)
+
+        while not started_seen:
+            payload = await _expect_json(ws, timeout_seconds=5.0)
+            if payload.get("type") == "started":
+                started_seen = True
+                break
+            if payload.get("type") == "error":
+                raise RuntimeError(f"server error before start: {payload['message']}")
+
+        fixture = Path(args.fixture_path).read_bytes()
+        for index in range(0, len(fixture), args.chunk_bytes):
+            await ws.send(fixture[index : index + args.chunk_bytes])
+            await asyncio.sleep(args.chunk_delay_ms / 1000)
+
+        stop_payload = {"type": "stop"}
+        await ws.send(json.dumps(stop_payload))
+        _print_event("client ->", stop_payload)
+
+        while terminal_payload is None:
+            payload = await _expect_json(ws, timeout_seconds=20.0)
+            payload_type = payload.get("type")
+            if payload_type == "transcript":
+                transcript_messages += 1
+            elif payload_type == "todos":
+                todo_messages += 1
+                saw_todos_before_terminal = True
+            elif payload_type == "error":
+                raise RuntimeError(f"server error after stop: {payload['message']}")
+            elif payload_type == args.expect_terminal_type:
+                terminal_payload = payload
+                if not saw_todos_before_terminal:
+                    raise RuntimeError(
+                        f"expected at least {args.expect_todos_min} todos messages "
+                        f"before {args.expect_terminal_type}"
+                    )
+
+    if args.expect_started and not started_seen:
+        raise RuntimeError("expected started message")
+    if transcript_messages < args.expect_transcript_min:
+        raise RuntimeError(
+            f"expected at least {args.expect_transcript_min} transcript messages, "
+            f"saw {transcript_messages}"
+        )
+    if todo_messages < args.expect_todos_min:
+        raise RuntimeError(
+            f"expected at least {args.expect_todos_min} todos messages, "
+            f"saw {todo_messages}"
+        )
+    if terminal_payload is None:
+        raise RuntimeError(f"expected terminal message {args.expect_terminal_type!r}")
+
+
 async def _run_cap_expiry(args) -> None:
     url = _with_session(args.base_url, args.session_id)
     terminal_payload: dict[str, object] | None = None
@@ -130,7 +194,11 @@ async def _run_cap_expiry(args) -> None:
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Hosted websocket smoke checks.")
     parser.add_argument("--base-url", required=True)
-    parser.add_argument("--mode", required=True, choices=["transcript-stop", "cap-expiry"])
+    parser.add_argument(
+        "--mode",
+        required=True,
+        choices=["transcript-stop", "todo-stop", "cap-expiry"],
+    )
     parser.add_argument("--session-id", required=True)
     parser.add_argument("--fixture-path")
     parser.add_argument("--chunk-bytes", type=int, default=3200)
@@ -138,6 +206,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--hold-open-ms", type=int, default=0)
     parser.add_argument("--expect-started", action="store_true")
     parser.add_argument("--expect-transcript-min", type=int, default=0)
+    parser.add_argument("--expect-todos-min", type=int, default=0)
     parser.add_argument("--expect-final-transcript")
     parser.add_argument("--expect-terminal-type", default="stopped")
     parser.add_argument("--expect-close-code", type=int)
@@ -149,6 +218,11 @@ async def _main_async(args) -> None:
         if not args.fixture_path:
             raise RuntimeError("--fixture-path is required for transcript-stop mode")
         await _run_transcript_stop(args)
+        return
+    if args.mode == "todo-stop":
+        if not args.fixture_path:
+            raise RuntimeError("--fixture-path is required for todo-stop mode")
+        await _run_todo_stop(args)
         return
 
     await _run_cap_expiry(args)

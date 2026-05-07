@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from pydantic_ai import Agent
 
@@ -116,12 +116,13 @@ def build_extraction_agent(
     prompt_ref: PromptRef | None = None,
 ) -> Agent[None, ExtractionResult]:
     resolved_prompt_ref = prompt_ref or get_extraction_prompt_ref(config)
-    return Agent(
+    agent = Agent(  # ty: ignore[no-matching-overload]
         _build_model(config),
         output_type=ExtractionResult,
         instructions=resolved_prompt_ref.content,
         model_settings=_resolve_model_settings(config),
     )
+    return cast("Agent[None, ExtractionResult]", agent)
 
 
 def _get_agent(

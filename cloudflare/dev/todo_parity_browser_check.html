@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hosted Todo Parity Browser Check</title>
+    <style>
+      body {
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        margin: 24px;
+      }
+      button {
+        padding: 10px 14px;
+        font: inherit;
+      }
+      pre {
+        background: #111827;
+        color: #f9fafb;
+        padding: 12px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="run-check">Run Check</button>
+    <p id="status">idle</p>
+    <pre id="log"></pre>
+    <script>
+      const button = document.getElementById("run-check");
+      const statusEl = document.getElementById("status");
+      const logEl = document.getElementById("log");
+
+      function setStatus(text) {
+        statusEl.textContent = text;
+      }
+
+      function append(line) {
+        logEl.textContent += `${line}\n`;
+      }
+
+      async function runCheck() {
+        button.disabled = true;
+        setStatus("connecting");
+        append("opening websocket");
+
+        const ws = new WebSocket("ws://127.0.0.1:8788/ws?session=browser-todo-parity");
+        const messages = [];
+
+        ws.addEventListener("message", (event) => {
+          append(`server -> ${event.data}`);
+          messages.push(JSON.parse(event.data));
+        });
+
+        await new Promise((resolve, reject) => {
+          ws.addEventListener("open", resolve, { once: true });
+          ws.addEventListener("error", () => reject(new Error("websocket error")), {
+            once: true,
+          });
+        });
+
+        ws.send(JSON.stringify({ type: "start" }));
+        append('client -> {"type":"start"}');
+
+        while (!messages.some((message) => message.type === "started")) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+
+        setStatus("streaming");
+        const response = await fetch("/backend/tests/fixtures/while-speaking-two-todos/audio.pcm");
+        const audio = new Uint8Array(await response.arrayBuffer());
+        const chunkBytes = 3200;
+        for (let index = 0; index < audio.length; index += chunkBytes) {
+          ws.send(audio.slice(index, index + chunkBytes));
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+
+        ws.send(JSON.stringify({ type: "stop" }));
+        append('client -> {"type":"stop"}');
+
+        let stopped = null;
+        while (!stopped) {
+          stopped = messages.find((message) => message.type === "stopped") || null;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+
+        const transcriptCount = messages.filter(
+          (message) => message.type === "transcript"
+        ).length;
+        const todoMessages = messages.filter((message) => message.type === "todos");
+        const stoppedIndex = messages.findIndex((message) => message.type === "stopped");
+        const todoBeforeStopped = messages.findIndex((message) => message.type === "todos");
+
+        if (transcriptCount < 1) {
+          throw new Error("expected at least one transcript message");
+        }
+        if (todoMessages.length < 1) {
+          throw new Error("expected at least one todos message");
+        }
+        if (todoBeforeStopped === -1 || todoBeforeStopped > stoppedIndex) {
+          throw new Error("expected todos before stopped");
+        }
+
+        setStatus("PASS");
+        ws.close();
+        button.disabled = false;
+      }
+
+      button.addEventListener("click", () => {
+        runCheck().catch((error) => {
+          append(`error -> ${error.message}`);
+          setStatus(`FAIL: ${error.message}`);
+          button.disabled = false;
+        });
+      });
+    </script>
+  </body>
+</html>
