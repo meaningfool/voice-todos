@@ -84,6 +84,7 @@ describe("useTranscript", () => {
   const closeAudioContext = vi.fn().mockResolvedValue(undefined);
   const createObjectURL = vi.fn();
   const revokeObjectURL = vi.fn();
+  const fetchFixture = vi.fn();
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -99,8 +100,14 @@ describe("useTranscript", () => {
       .mockReturnValueOnce("blob:first")
       .mockReturnValueOnce("blob:second");
     revokeObjectURL.mockReset();
+    fetchFixture.mockReset();
+    fetchFixture.mockResolvedValue({
+      arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array(6400).buffer),
+    });
+    window.history.replaceState(null, "", "/");
 
     vi.stubGlobal("WebSocket", MockWebSocket);
+    vi.stubGlobal("fetch", fetchFixture);
     vi.stubGlobal("MediaRecorder", MockMediaRecorder);
     vi.stubGlobal("AudioWorkletNode", MockAudioWorkletNode);
     vi.stubGlobal(
@@ -219,5 +226,34 @@ describe("useTranscript", () => {
     expect(result.current.warningMessage).toBe(
       "Timed out waiting for the final transcript."
     );
+  });
+
+  it("keeps the /ws websocket shape in fixture mode", async () => {
+    window.history.replaceState(null, "", "/?fixture=while-speaking-two-todos");
+    const { result } = renderHook(() => useTranscript());
+
+    await startRecording(result);
+
+    expect(MockWebSocket.instances.at(-1)?.url).toBe("ws://localhost:3000/ws");
+  });
+
+  it("streams deterministic fixture PCM without opening the microphone", async () => {
+    window.history.replaceState(null, "", "/?fixture=while-speaking-two-todos");
+    const { result } = renderHook(() => useTranscript());
+
+    const ws = await startRecording(result);
+
+    await act(async () => {
+      await Promise.resolve();
+      vi.runOnlyPendingTimers();
+      await Promise.resolve();
+    });
+
+    expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+    expect(fetchFixture).toHaveBeenCalledWith(
+      "/dev-fixtures/while-speaking-two-todos/audio.pcm"
+    );
+    expect(ws.sent).toContainEqual(JSON.stringify({ type: "start" }));
+    expect(ws.sent.filter((message) => message instanceof ArrayBuffer)).toHaveLength(2);
   });
 });
