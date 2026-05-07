@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from urllib.parse import parse_qs, urlparse
 
 from repo_bootstrap import bootstrap_backend_imports
@@ -34,9 +35,7 @@ class Default(WorkerEntrypoint):
         if not upgrade_header or upgrade_header.lower() != "websocket":
             return Response("Worker expected Upgrade: websocket", status=426)
 
-        session_id = parse_qs(url.query).get("session", [None])[0]
-        if not session_id:
-            return Response("Missing session query parameter", status=400)
+        session_id = parse_qs(url.query).get("session", [None])[0] or uuid.uuid4().hex
 
         stub = self.env.SESSION_RUNTIME.getByName(session_id)
         return await stub.fetch(request)

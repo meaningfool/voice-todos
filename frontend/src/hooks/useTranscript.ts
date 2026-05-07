@@ -8,6 +8,13 @@ import {
 
 export type Status = "idle" | "connecting" | "recording" | "extracting";
 
+const DEV_FIXTURE_AUDIO_PATHS: Record<string, string> = {
+  "while-speaking-two-todos": "/dev-fixtures/while-speaking-two-todos/audio.pcm",
+};
+const FIXTURE_CHUNK_BYTES = 3200;
+const FIXTURE_CHUNK_DELAY_MS = 100;
+const FIXTURE_SILENCE_CHUNK = new ArrayBuffer(FIXTURE_CHUNK_BYTES);
+
 interface Token {
   text: string;
   is_final: boolean;
@@ -45,6 +52,8 @@ export function useTranscript() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const micTailTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fixtureChunkTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fixtureStreamTokenRef = useRef(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const micChunksRef = useRef<Blob[]>([]);
 
@@ -62,12 +71,21 @@ export function useTranscript() {
     setMicRecordingUrl(null);
   }, []);
 
+  const cancelFixtureStreaming = useCallback(() => {
+    if (fixtureChunkTimeoutRef.current !== null) {
+      clearTimeout(fixtureChunkTimeoutRef.current);
+      fixtureChunkTimeoutRef.current = null;
+    }
+    fixtureStreamTokenRef.current += 1;
+  }, []);
+
   const cleanup = useCallback(
     ({ revokeRecordingUrl = false }: { revokeRecordingUrl?: boolean } = {}) => {
       if (micTailTimeoutRef.current !== null) {
         clearTimeout(micTailTimeoutRef.current);
         micTailTimeoutRef.current = null;
       }
+      cancelFixtureStreaming();
       if (stopTimeoutRef.current !== null) {
         clearTimeout(stopTimeoutRef.current);
         stopTimeoutRef.current = null;
@@ -103,7 +121,7 @@ export function useTranscript() {
         clearMicRecordingUrl();
       }
     },
-    [clearMicRecordingUrl]
+    [cancelFixtureStreaming, clearMicRecordingUrl]
   );
 
   useEffect(() => {
@@ -123,6 +141,58 @@ export function useTranscript() {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
       wsRef.current = ws;
+      const fixtureName =
+        import.meta.env.DEV ?
+          new URLSearchParams(window.location.search).get("fixture")
+        : null;
+      const fixtureAudioPath =
+        fixtureName ? DEV_FIXTURE_AUDIO_PATHS[fixtureName] : undefined;
+      const fixtureStreamToken = fixtureStreamTokenRef.current;
+
+      const streamFixtureAudio = async () => {
+        if (!fixtureAudioPath) return;
+
+        try {
+          const response = await fetch(fixtureAudioPath);
+          const audio = await response.arrayBuffer();
+
+          for (let offset = 0; offset < audio.byteLength; offset += FIXTURE_CHUNK_BYTES) {
+            if (
+              fixtureStreamToken !== fixtureStreamTokenRef.current ||
+              ws.readyState !== WebSocket.OPEN
+            ) {
+              return;
+            }
+
+            ws.send(audio.slice(offset, offset + FIXTURE_CHUNK_BYTES));
+
+            if (offset + FIXTURE_CHUNK_BYTES < audio.byteLength) {
+              await new Promise<void>((resolve) => {
+                fixtureChunkTimeoutRef.current = setTimeout(() => {
+                  fixtureChunkTimeoutRef.current = null;
+                  resolve();
+                }, FIXTURE_CHUNK_DELAY_MS);
+              });
+            }
+          }
+
+          while (
+            fixtureStreamToken === fixtureStreamTokenRef.current &&
+            ws.readyState === WebSocket.OPEN
+          ) {
+            ws.send(FIXTURE_SILENCE_CHUNK.slice(0));
+            await new Promise<void>((resolve) => {
+              fixtureChunkTimeoutRef.current = setTimeout(() => {
+                fixtureChunkTimeoutRef.current = null;
+                resolve();
+              }, FIXTURE_CHUNK_DELAY_MS);
+            });
+          }
+        } catch (err) {
+          console.error("Failed to stream fixture audio:", err);
+          setWarningMessage("Fixture audio setup failed.");
+        }
+      };
 
       await new Promise<void>((resolve, reject) => {
         ws.onopen = () => {
@@ -138,6 +208,7 @@ export function useTranscript() {
 
         if (msg.type === "started") {
           setStatus("recording");
+          void streamFixtureAudio();
         } else if (msg.type === "transcript" && msg.tokens) {
           updateTranscriptState(
             applyTranscriptTokens(transcriptStateRef.current, msg.tokens)
@@ -177,6 +248,11 @@ export function useTranscript() {
       ws.onclose = () => {
         setStatus("idle");
       };
+
+      if (fixtureAudioPath) {
+        ws.send(JSON.stringify({ type: "start" }));
+        return;
+      }
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -239,6 +315,7 @@ export function useTranscript() {
     const MIC_TAIL_MS = 200;
 
     const teardownAndStop = () => {
+      cancelFixtureStreaming();
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         mediaRecorderRef.current.stop();
         mediaRecorderRef.current = null;
@@ -269,7 +346,7 @@ export function useTranscript() {
     };
 
     micTailTimeoutRef.current = setTimeout(teardownAndStop, MIC_TAIL_MS);
-  }, [cleanup, status]);
+  }, [cancelFixtureStreaming, cleanup, status]);
 
   return {
     status,
