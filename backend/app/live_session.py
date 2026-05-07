@@ -62,16 +62,18 @@ class LiveSessionController:
                 timed_out=False,
             )
 
-        await self._stt_session.request_final_transcript()
-        await self._stt_session.end_stream()
-
         timed_out = False
         try:
-            await asyncio.wait_for(
-                self._wait_for_final_transcript(),
-                timeout=timeout_seconds,
-            )
-        except TimeoutError:
+            await self._stt_session.request_final_transcript()
+            await self._stt_session.end_stream()
+            try:
+                await asyncio.wait_for(
+                    self._wait_for_final_transcript(),
+                    timeout=timeout_seconds,
+                )
+            except TimeoutError:
+                timed_out = True
+        except Exception:
             timed_out = True
 
         transcript_text = (
