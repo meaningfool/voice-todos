@@ -6,6 +6,21 @@ import path from "path";
 
 const frontendPort = Number(process.env.FRONTEND_PORT ?? "5173");
 const backendPort = Number(process.env.BACKEND_PORT ?? "8000");
+const cloudflarePort = Number(process.env.CLOUDFLARE_PORT ?? "8788");
+
+function resolveWsBackendTarget() {
+  const wsBackend = process.env.WS_BACKEND ?? "fastapi";
+
+  if (wsBackend === "fastapi") {
+    return `ws://localhost:${backendPort}`;
+  }
+
+  if (wsBackend === "cloudflare") {
+    return `ws://localhost:${cloudflarePort}`;
+  }
+
+  throw new Error(`Unsupported WS_BACKEND: ${wsBackend}`);
+}
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -24,7 +39,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/ws": {
-        target: `ws://localhost:${backendPort}`,
+        target: resolveWsBackendTarget(),
         ws: true,
       },
     },
