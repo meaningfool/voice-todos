@@ -27,6 +27,7 @@ def resolve_entry_config(
     entry: BenchmarkEntry,
 ) -> ResolvedEntryConfig:
     dataset_family = benchmark.dataset_family
+    implementation = entry.config.get("implementation", {})
 
     return ResolvedEntryConfig(
         suite=(
@@ -38,6 +39,7 @@ def resolve_entry_config(
         provider=entry.config["provider"],
         model_name=entry.config["model"],
         prompt_version=entry.config["prompt_version"],
+        implementation_family=implementation.get("family"),
         model_settings=entry.config.get("model_settings", {}),
     )
 

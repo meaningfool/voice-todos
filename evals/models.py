@@ -54,6 +54,7 @@ class ResolvedEntryConfig(BaseModel):
     provider: str
     model_name: str
     prompt_version: str
+    implementation_family: str | None = None
     model_settings: dict = Field(default_factory=dict)
 
 
