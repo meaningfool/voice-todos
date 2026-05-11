@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 
 from app.stt import SttSession
 from app.stt_mistral import connect_mistral
@@ -11,8 +11,8 @@ async def create_stt_session(
     settings,
     *,
     recorder=None,
-    connect_soniox_fn: Callable[..., object] = connect_soniox,
-    connect_mistral_fn: Callable[..., object] | None = None,
+    connect_soniox_fn: Callable[..., Awaitable[SttSession]] = connect_soniox,
+    connect_mistral_fn: Callable[..., Awaitable[SttSession]] | None = None,
 ) -> SttSession:
     provider = getattr(settings, "stt_provider", "soniox")
     if provider == "mistral":
