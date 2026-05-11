@@ -9,13 +9,15 @@ export function SessionDetails({ finalText, micRecordingUrl }: Props) {
   }
 
   return (
-    <details className="voice-session-details">
+    <details className="voice-session-details" data-testid="session-details">
       <summary className="voice-session-details__summary">Session details</summary>
       <div className="voice-session-details__content">
         {finalText ? (
           <div className="voice-session-details__section">
             <h2 className="voice-session-details__label">Transcript</h2>
-            <p className="voice-session-transcript">{finalText}</p>
+            <p className="voice-session-transcript" data-testid="session-transcript">
+              {finalText}
+            </p>
           </div>
         ) : null}
         {micRecordingUrl ? (

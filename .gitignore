@@ -16,6 +16,7 @@ cloudflare/.venv-workers/
 cloudflare/.env
 cloudflare/.dev.vars
 cloudflare/.wrangler/
+cloudflare/public/
 cloudflare/python_modules/
 cloudflare/**/__pycache__/
 

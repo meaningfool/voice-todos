@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useTranscript } from "./useTranscript";
+import { resolveFixtureAudioPath, useTranscript } from "./useTranscript";
 
 class MockWebSocket {
   static CONNECTING = 0;
@@ -237,6 +237,12 @@ describe("useTranscript", () => {
     expect(MockWebSocket.instances.at(-1)?.url).toBe("ws://localhost:3000/ws");
   });
 
+  it("resolves the smoke fixture path from the fixture query", () => {
+    expect(
+      resolveFixtureAudioPath("?fixture=while-speaking-two-todos")
+    ).toBe("/smoke-fixtures/while-speaking-two-todos/audio.pcm");
+  });
+
   it("streams deterministic fixture PCM without opening the microphone", async () => {
     window.history.replaceState(null, "", "/?fixture=while-speaking-two-todos");
     const { result } = renderHook(() => useTranscript());
@@ -251,7 +257,7 @@ describe("useTranscript", () => {
 
     expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
     expect(fetchFixture).toHaveBeenCalledWith(
-      "/dev-fixtures/while-speaking-two-todos/audio.pcm"
+      "/smoke-fixtures/while-speaking-two-todos/audio.pcm"
     );
     expect(ws.sent).toContainEqual(JSON.stringify({ type: "start" }));
     expect(

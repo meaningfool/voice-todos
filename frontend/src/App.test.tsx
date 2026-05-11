@@ -26,11 +26,13 @@ describe("App", () => {
 
     const { container } = render(<App />);
 
+    expect(screen.getByTestId("voice-app-shell")).toBeInTheDocument();
     expect(screen.getByText("Voice Todos")).toBeInTheDocument();
     expect(screen.getByText("Get started")).toBeInTheDocument();
     expect(
       screen.getByText("Your voice will be turned into tasks in real time.")
     ).toBeInTheDocument();
+    expect(screen.getByTestId("voice-empty-state")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start Session" })).toBeInTheDocument();
     expect(container.querySelectorAll(".lucide-mic")).toHaveLength(2);
     expect(screen.queryByTestId("app-icon-mic")).not.toBeInTheDocument();
@@ -45,8 +47,15 @@ describe("App", () => {
 
     render(<App />);
 
+    expect(screen.getByTestId("todo-feed")).toBeInTheDocument();
+    expect(screen.getByTestId("session-dock")).toHaveAttribute(
+      "data-status",
+      "recording",
+    );
     expect(screen.getByText("Draft agenda")).toBeInTheDocument();
-    expect(screen.getByText("Listening now...")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-indicator")).toHaveTextContent(
+      "Listening now...",
+    );
   });
 
   it.each([
@@ -107,8 +116,11 @@ describe("App", () => {
 
     render(<App />);
 
+    expect(screen.getByTestId("session-details")).toBeInTheDocument();
     expect(screen.getByText("Session details")).toBeInTheDocument();
-    expect(screen.getByText("Call Marie tomorrow")).toBeInTheDocument();
+    expect(screen.getByTestId("session-transcript")).toHaveTextContent(
+      "Call Marie tomorrow",
+    );
     expect(document.querySelector("audio")).not.toBeNull();
     expect(
       screen.getByRole("link", { name: "Download raw recording" })
@@ -123,7 +135,8 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(screen.getByTestId("warning-card")).toHaveAttribute("role", "alert");
+    expect(screen.getByTestId("warning-card")).toHaveTextContent(
       "Timed out waiting for the final transcript."
     );
   });
