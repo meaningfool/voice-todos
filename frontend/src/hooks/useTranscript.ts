@@ -8,8 +8,8 @@ import {
 
 export type Status = "idle" | "connecting" | "recording" | "extracting";
 
-const DEV_FIXTURE_AUDIO_PATHS: Record<string, string> = {
-  "while-speaking-two-todos": "/dev-fixtures/while-speaking-two-todos/audio.pcm",
+const SMOKE_FIXTURE_AUDIO_PATHS: Record<string, string> = {
+  "while-speaking-two-todos": "/smoke-fixtures/while-speaking-two-todos/audio.pcm",
 };
 const FIXTURE_CHUNK_BYTES = 3200;
 const FIXTURE_CHUNK_DELAY_MS = 100;
@@ -34,6 +34,11 @@ interface TranscriptMessage {
     assign_to?: string;
   }>;
   message?: string;
+}
+
+export function resolveFixtureAudioPath(search: string): string | undefined {
+  const fixtureName = new URLSearchParams(search).get("fixture");
+  return fixtureName ? SMOKE_FIXTURE_AUDIO_PATHS[fixtureName] : undefined;
 }
 
 export function useTranscript() {
@@ -141,12 +146,7 @@ export function useTranscript() {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
       wsRef.current = ws;
-      const fixtureName =
-        import.meta.env.DEV ?
-          new URLSearchParams(window.location.search).get("fixture")
-        : null;
-      const fixtureAudioPath =
-        fixtureName ? DEV_FIXTURE_AUDIO_PATHS[fixtureName] : undefined;
+      const fixtureAudioPath = resolveFixtureAudioPath(window.location.search);
       const fixtureStreamToken = fixtureStreamTokenRef.current;
 
       const streamFixtureAudio = async () => {
