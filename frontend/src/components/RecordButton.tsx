@@ -9,13 +9,15 @@ interface Props {
 
 function ListeningUi() {
   return (
-    <div className="voice-listening-ui">
+    <div className="voice-listening-ui" data-testid="listening-ui">
       <div className="voice-waveform" aria-hidden="true">
         {Array.from({ length: 9 }).map((_, index) => (
           <span key={index} className="wave-bar" data-testid="wave-bar" />
         ))}
       </div>
-      <p className="voice-listening-label">Listening now...</p>
+      <p className="voice-listening-label" data-testid="listening-indicator">
+        Listening now...
+      </p>
     </div>
   );
 }
@@ -40,13 +42,14 @@ export function RecordButton({ status, onStart, onStop }: Props) {
   };
 
   return (
-    <div className="voice-dock" data-status={status}>
+    <div className="voice-dock" data-status={status} data-testid="session-dock">
       {isRecording ? <ListeningUi /> : null}
       <button
         type="button"
         className="voice-primary-button"
         disabled={isDisabled}
         onClick={handleClick}
+        data-testid="session-toggle"
       >
         {status === "idle" ? (
           <Mic aria-hidden="true" className="voice-button-icon" />

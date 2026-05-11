@@ -59,7 +59,9 @@ export function TodoCard({
       <div className="voice-todo-card__body">
         <div className={cn("voice-todo-circle", circleClass)} />
         <div className="voice-todo-content">
-          <p className="voice-todo-title">{todo.text}</p>
+          <p className="voice-todo-title" data-testid="todo-card-title">
+            {todo.text}
+          </p>
           <div className="voice-meta-row">
             {todo.dueDate ? (
               <MetaChip icon="calendar" className="voice-meta-chip--calendar">

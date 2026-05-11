@@ -30,14 +30,18 @@ function App() {
 
   return (
     <main className="voice-page-shell">
-      <section className="voice-device-shell" aria-label="Voice-Todos app shell">
+      <section
+        className="voice-device-shell"
+        aria-label="Voice-Todos app shell"
+        data-testid="voice-app-shell"
+      >
         <header className="voice-header">
           <h1>Voice Todos</h1>
         </header>
 
         <div className="voice-task-container">
           {showInitialEmptyState ? (
-            <div className="voice-empty-state">
+            <div className="voice-empty-state" data-testid="voice-empty-state">
               <div className="voice-empty-illustration" aria-hidden="true">
                 <Mic aria-hidden="true" className="voice-empty-illustration__icon" />
               </div>
@@ -47,7 +51,7 @@ function App() {
           ) : null}
 
           {warningMessage ? (
-            <div className="voice-warning-card" role="alert">
+            <div className="voice-warning-card" role="alert" data-testid="warning-card">
               {warningMessage}
             </div>
           ) : null}

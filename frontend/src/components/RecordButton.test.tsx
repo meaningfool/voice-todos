@@ -6,11 +6,13 @@ describe("RecordButton", () => {
     const onStart = vi.fn();
     render(<RecordButton status="idle" onStart={onStart} onStop={() => {}} />);
 
+    expect(screen.getByTestId("session-dock")).toHaveAttribute("data-status", "idle");
     const button = screen.getByRole("button", { name: "Start Session" });
+    expect(screen.getByTestId("session-toggle")).toBe(button);
     expect(button).toBeEnabled();
     expect(button.querySelector(".lucide-mic")).not.toBeNull();
     expect(screen.queryByTestId("app-icon-mic")).not.toBeInTheDocument();
-    expect(screen.queryByText("Listening now...")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("listening-indicator")).not.toBeInTheDocument();
     fireEvent.click(button);
     expect(onStart).toHaveBeenCalledTimes(1);
   });
@@ -22,7 +24,7 @@ describe("RecordButton", () => {
 
     const button = screen.getByRole("button", { name: "Connecting..." });
     expect(button).toBeDisabled();
-    expect(screen.queryByText("Listening now...")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("listening-indicator")).not.toBeInTheDocument();
     fireEvent.click(button);
     expect(onStart).not.toHaveBeenCalled();
     expect(onStop).not.toHaveBeenCalled();
@@ -34,7 +36,9 @@ describe("RecordButton", () => {
 
     const button = screen.getByRole("button", { name: "Finish Session" });
     expect(button).toBeEnabled();
-    expect(screen.getByText("Listening now...")).toBeInTheDocument();
+    expect(screen.getByTestId("listening-indicator")).toHaveTextContent(
+      "Listening now...",
+    );
     expect(screen.getAllByTestId("wave-bar")).toHaveLength(9);
     expect(screen.queryByTestId("app-icon-mic")).not.toBeInTheDocument();
     fireEvent.click(button);
@@ -48,7 +52,7 @@ describe("RecordButton", () => {
 
     const button = screen.getByRole("button", { name: "Extracting..." });
     expect(button).toBeDisabled();
-    expect(screen.queryByText("Listening now...")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("listening-indicator")).not.toBeInTheDocument();
     fireEvent.click(button);
     expect(onStart).not.toHaveBeenCalled();
     expect(onStop).not.toHaveBeenCalled();

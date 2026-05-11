@@ -25,6 +25,8 @@ describe("TodoList", () => {
       { text: "Review PR", assignTo: "Marie" },
     ];
     render(<TodoList todos={todos} />);
+    expect(screen.getByTestId("todo-feed")).toBeInTheDocument();
+    expect(screen.getAllByTestId("todo-card-title")).toHaveLength(3);
     expect(screen.getByText("Buy groceries")).toBeInTheDocument();
     expect(screen.getByText("Call dentist")).toBeInTheDocument();
     expect(screen.getByText("Review PR")).toBeInTheDocument();
