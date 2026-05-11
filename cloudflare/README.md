@@ -8,7 +8,6 @@ Required secrets must exist in `backend/.env`:
 
 - `SONIOX_API_KEY`
 - `GEMINI_API_KEY`
-- `MISTRAL_API_KEY`
 
 Required non-secret runtime config:
 
@@ -99,14 +98,15 @@ What this command owns:
 - uploads required Cloudflare secrets from `backend/.env`
 - publishes the Worker on the custom domain
 
-Current account note:
+Free-tier bundle note:
 
-- if Cloudflare rejects the publish with a `3 MiB` Worker size-limit error, the
-  account is still on the free Worker plan
-- the immediate operator fix is upgrading the Worker plan so the deployment can
-  use the higher paid-plan size limit
-- the engineering alternative is shrinking the Cloudflare runtime bundle in a
-  follow-up slice
+- this first public bundle is intentionally narrowed to the Soniox + Gemini
+  path
+- hosted Mistral remains in-repo as deferred source only and is not part of
+  the routed public production contract
+- if Cloudflare still rejects the publish with error `10027`, treat that as a
+  regression in the free-tier bundle contract rather than upgrading the plan to
+  compensate
 
 ## Post-Deploy Smoke
 
@@ -163,6 +163,7 @@ After recovery, rerun the required public smoke:
 
 ## Mistral Note
 
-[2026-05-07-mistral-live-validation-findings.md](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/docs/references/2026-05-07-mistral-live-validation-findings.md:1)
-is linked context only. It does not block the first public deploy because the
-deploy contract for this slice is Soniox-based.
+`docs/references/2026-05-07-mistral-live-validation-findings.md` remains linked
+context only. It does not block the first public deploy because the deploy
+contract for this slice is Soniox-based and hosted Mistral is rejected
+explicitly in the free-tier public runtime.

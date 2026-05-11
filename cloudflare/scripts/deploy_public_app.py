@@ -11,7 +11,6 @@ from pathlib import Path
 REQUIRED_SECRET_NAMES = (
     "SONIOX_API_KEY",
     "GEMINI_API_KEY",
-    "MISTRAL_API_KEY",
 )
 
 

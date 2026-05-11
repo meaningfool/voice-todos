@@ -33,7 +33,6 @@ def test_collect_required_secrets_reads_only_public_provider_keys(
     assert module.collect_required_secrets(env_file) == {
         "SONIOX_API_KEY": "s",
         "GEMINI_API_KEY": "g",
-        "MISTRAL_API_KEY": "m",
     }
 
 
@@ -44,11 +43,19 @@ def test_collect_required_secrets_rejects_missing_required_key(
     env_file = tmp_path / "backend.env"
     env_file.write_text(
         "SONIOX_API_KEY=s\n"
-        "GEMINI_API_KEY=g\n"
     )
 
     with pytest.raises(ValueError, match="Missing required secrets"):
         module.collect_required_secrets(env_file)
+
+
+def test_required_secret_names_match_narrowed_public_bundle_contract() -> None:
+    module = _load_module()
+
+    assert module.REQUIRED_SECRET_NAMES == (
+        "SONIOX_API_KEY",
+        "GEMINI_API_KEY",
+    )
 
 
 def test_build_deploy_command_uses_public_domain_and_explicit_runtime_vars() -> None:

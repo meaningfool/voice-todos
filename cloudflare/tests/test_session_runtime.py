@@ -156,6 +156,49 @@ async def test_hosted_session_start_builds_controller_with_hosted_factory(
 
 
 @pytest.mark.asyncio
+async def test_hosted_session_start_surfaces_unsupported_provider_error(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    browser_ws = _FakeBrowserSocket()
+
+    class _Controller:
+        def __init__(self, *, create_stt_session, on_update, on_error) -> None:
+            self._create_stt_session = create_stt_session
+            self.close = AsyncMock()
+
+        async def start(self, settings) -> None:
+            await self._create_stt_session(
+                settings,
+                connect_soniox_fn=AsyncMock(),
+                connect_mistral_fn=AsyncMock(),
+            )
+
+    monkeypatch.setattr(session_runtime, "LiveSessionController", _Controller)
+    settings = SimpleNamespace(
+        stt_provider="mistral",
+        mistral_api_key="mistral-test-key",
+        stop_timeout_seconds=1.5,
+    )
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        settings=settings,
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+
+    assert browser_ws.json_messages == [
+        {
+            "type": "error",
+            "message": (
+                "Hosted Mistral is deferred from the free-tier public "
+                "Cloudflare bundle. Use STT_PROVIDER=soniox."
+            ),
+        }
+    ]
+    assert browser_ws.close_calls == [(1011, "provider failure")]
+
+
+@pytest.mark.asyncio
 async def test_hosted_session_binary_audio_frames_forward_to_controller():
     browser_ws = _FakeBrowserSocket()
     controller = SimpleNamespace(
@@ -285,7 +328,7 @@ async def test_hosted_session_sends_todos_during_recording(
 
 
 @pytest.mark.asyncio
-async def test_hosted_session_stop_uses_finalized_transcript_for_final_pass(
+async def test_hosted_session_stop_uses_finalized_transcript_for_final_pass_from_streaming_controller(
     monkeypatch: pytest.MonkeyPatch,
 ):
     browser_ws = _FakeBrowserSocket()
@@ -495,7 +538,7 @@ async def test_hosted_session_stop_timeout_skips_extraction_and_surfaces_warning
 
 
 @pytest.mark.asyncio
-async def test_hosted_session_stop_sends_todos_before_stopped(
+async def test_hosted_session_stop_sends_todos_before_stopped_from_streaming_controller(
     monkeypatch: pytest.MonkeyPatch,
 ):
     browser_ws = _FakeBrowserSocket()
@@ -539,7 +582,7 @@ async def test_hosted_session_stop_sends_todos_before_stopped(
 
 
 @pytest.mark.asyncio
-async def test_hosted_mistral_session_streams_and_stops_with_final_done_text(
+async def test_hosted_session_streams_and_stops_with_final_done_text(
     monkeypatch: pytest.MonkeyPatch,
 ):
     browser_ws = _FakeBrowserSocket()
@@ -571,7 +614,7 @@ async def test_hosted_mistral_session_streams_and_stops_with_final_done_text(
     )
     session = HostedSessionActor(
         browser_ws=browser_ws,
-        settings=SimpleNamespace(stt_provider="mistral", stop_timeout_seconds=1.5),
+        settings=SimpleNamespace(stt_provider="soniox", stop_timeout_seconds=1.5),
     )
 
     await session.on_text(json.dumps({"type": "start"}))
@@ -600,7 +643,7 @@ async def test_hosted_mistral_session_streams_and_stops_with_final_done_text(
 
 
 @pytest.mark.asyncio
-async def test_hosted_mistral_transcript_state_acceptance(
+async def test_hosted_session_transcript_state_acceptance(
     monkeypatch: pytest.MonkeyPatch,
 ):
     browser_ws = _FakeBrowserSocket()
@@ -619,7 +662,7 @@ async def test_hosted_mistral_transcript_state_acceptance(
     )
     session = HostedSessionActor(
         browser_ws=browser_ws,
-        settings=SimpleNamespace(stt_provider="mistral"),
+        settings=SimpleNamespace(stt_provider="soniox"),
     )
 
     await session.on_text(json.dumps({"type": "start"}))
@@ -644,7 +687,7 @@ async def test_hosted_mistral_transcript_state_acceptance(
 
 
 @pytest.mark.asyncio
-async def test_hosted_mistral_stop_uses_finalized_transcript_for_final_pass(
+async def test_hosted_session_stop_uses_finalized_transcript_for_final_pass(
     monkeypatch: pytest.MonkeyPatch,
 ):
     browser_ws = _FakeBrowserSocket()
@@ -678,7 +721,7 @@ async def test_hosted_mistral_stop_uses_finalized_transcript_for_final_pass(
     )
     session = HostedSessionActor(
         browser_ws=browser_ws,
-        settings=SimpleNamespace(stt_provider="mistral", stop_timeout_seconds=1.5),
+        settings=SimpleNamespace(stt_provider="soniox", stop_timeout_seconds=1.5),
     )
 
     await session.on_text(json.dumps({"type": "start"}))
@@ -696,7 +739,7 @@ async def test_hosted_mistral_stop_uses_finalized_transcript_for_final_pass(
 
 
 @pytest.mark.asyncio
-async def test_hosted_mistral_stop_sends_todos_before_stopped(
+async def test_hosted_session_stop_sends_todos_before_stopped(
     monkeypatch: pytest.MonkeyPatch,
 ):
     browser_ws = _FakeBrowserSocket()
@@ -730,7 +773,7 @@ async def test_hosted_mistral_stop_sends_todos_before_stopped(
     )
     session = HostedSessionActor(
         browser_ws=browser_ws,
-        settings=SimpleNamespace(stt_provider="mistral", stop_timeout_seconds=1.5),
+        settings=SimpleNamespace(stt_provider="soniox", stop_timeout_seconds=1.5),
     )
 
     await session.on_text(json.dumps({"type": "start"}))

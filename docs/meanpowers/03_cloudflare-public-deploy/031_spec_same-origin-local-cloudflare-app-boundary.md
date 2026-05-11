@@ -3,7 +3,7 @@
 ## Source
 
 - Slice `V1` from
-  [030_shaping_cloudflare-public-deploy.md](/Users/josselinperrus/conductor/workspaces/voice-todos/kingston/docs/meanpowers/03_cloudflare-public-deploy/030_shaping_cloudflare-public-deploy.md:1)
+  [030_shaping_cloudflare-public-deploy.md](030_shaping_cloudflare-public-deploy.md)
 - Follow-on work after `016`, which proved local runtime switching through the
   frontend dev server but did not make `cloudflare/` the same-origin app
   boundary
@@ -12,28 +12,24 @@
 
 After `016`, the repo supports two local websocket runtime targets:
 
-- FastAPI through [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/kingston/backend/app/ws.py:1)
-- Cloudflare Worker + Durable Object through
-  [cloudflare/src/entry.py](/Users/josselinperrus/conductor/workspaces/voice-todos/kingston/cloudflare/src/entry.py:1)
-  and
-  [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/kingston/cloudflare/src/session_runtime.py:1)
+- FastAPI through `backend/app/ws.py`
+- Cloudflare Worker + Durable Object through `cloudflare/src/entry.py` and
+  `cloudflare/src/session_runtime.py`
 
 The real frontend currently connects to:
 
 - `ws(s)://<current-host>/ws`
-  in
-  [frontend/src/hooks/useTranscript.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/kingston/frontend/src/hooks/useTranscript.ts:1)
+  in `frontend/src/hooks/useTranscript.ts`
 
 Local runtime selection today is owned by the Vite dev server proxy in
-[frontend/vite.config.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/kingston/frontend/vite.config.ts:1):
+`frontend/vite.config.ts`:
 
 - `WS_BACKEND=fastapi` proxies `/ws` to FastAPI
 - `WS_BACKEND=cloudflare` proxies `/ws` to the local Worker runtime
 
 The Cloudflare app boundary is still websocket-only:
 
-- [cloudflare/src/entry.py](/Users/josselinperrus/conductor/workspaces/voice-todos/kingston/cloudflare/src/entry.py:1)
-  accepts `/ws`
+- `cloudflare/src/entry.py` accepts `/ws`
 - non-`/ws` routes currently return `404`
 
 So the current state is:

@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED HANDOFF: use `superpowers:executing-plans` to implement this plan task-by-task. `superpowers:subagent-driven-development` is also acceptable if the environment supports it well. Steps use checkbox syntax for tracking.
 
-**Spec:** [031_spec_same-origin-local-cloudflare-app-boundary.md](/Users/josselinperrus/conductor/workspaces/voice-todos/montpelier/docs/meanpowers/03_cloudflare-public-deploy/031_spec_same-origin-local-cloudflare-app-boundary.md:1)
+**Spec:** [031_spec_same-origin-local-cloudflare-app-boundary.md](031_spec_same-origin-local-cloudflare-app-boundary.md)
 
 **Goal:** Make `cloudflare/` the real local same-origin app boundary by serving the built frontend UI and the existing Worker + Durable Object `/ws` runtime from one Cloudflare origin, with a deterministic browser smoke that runs against the Cloudflare-served app rather than the Vite dev server.
 
-**Architecture:** Keep `frontend/` as the UI source of truth, build it with Vite, and sync the build output into `cloudflare/public/`. Configure [cloudflare/wrangler.jsonc](/Users/josselinperrus/conductor/workspaces/voice-todos/montpelier/cloudflare/wrangler.jsonc:1) to serve `./public` as SPA assets with an `ASSETS` binding and selective Worker-first routing for `/ws`, so the existing websocket runtime in [cloudflare/src/entry.py](/Users/josselinperrus/conductor/workspaces/voice-todos/montpelier/cloudflare/src/entry.py:1) keeps session ownership while frontend routes are served from the same Cloudflare origin. Reuse the existing real-UI fixture mode from [frontend/src/hooks/useTranscript.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/montpelier/frontend/src/hooks/useTranscript.ts:1), but make it build-compatible and drive it through an upgraded [scripts/browser_ui_smoke.sh](/Users/josselinperrus/conductor/workspaces/voice-todos/montpelier/scripts/browser_ui_smoke.sh:1) smoke script.
+**Architecture:** Keep `frontend/` as the UI source of truth, build it with Vite, and sync the build output into `cloudflare/public/`. Configure `cloudflare/wrangler.jsonc` to serve `./public` as SPA assets with an `ASSETS` binding and selective Worker-first routing for `/ws`, so the existing websocket runtime in `cloudflare/src/entry.py` keeps session ownership while frontend routes are served from the same Cloudflare origin. Reuse the existing real-UI fixture mode from `frontend/src/hooks/useTranscript.ts`, but make it build-compatible and drive it through an upgraded `scripts/browser_ui_smoke.sh` smoke script.
 
 **Tech Stack:** React 19, Vite 8, Cloudflare Workers static assets, workers-py, pywrangler, bash, rsync, Vitest, pytest, ruff, ty, `agent-browser`
 
@@ -230,7 +230,7 @@ agent-browser --session 031-cloudflare close
 Expected:
 
 - the browser-visible app shell comes from port `8788`, not the Vite dev server
-- the same real UI flow produces todo cards and the final transcript from [backend/tests/fixtures/while-speaking-two-todos/result.json](/Users/josselinperrus/conductor/workspaces/voice-todos/montpelier/backend/tests/fixtures/while-speaking-two-todos/result.json:1)
+- the same real UI flow produces todo cards and the final transcript from `backend/tests/fixtures/while-speaking-two-todos/result.json`
 - no Vite dev server is required for the browser-facing app boundary
 
 Evidence to collect:
@@ -413,7 +413,7 @@ Expected: FAIL because `cloudflare/wrangler.jsonc` does not yet define the front
 
 - [ ] **Step 3: Write the minimal config change**
 
-Update [cloudflare/wrangler.jsonc](/Users/josselinperrus/conductor/workspaces/voice-todos/montpelier/cloudflare/wrangler.jsonc:1) to add:
+Update `cloudflare/wrangler.jsonc` to add:
 
 ```jsonc
 "assets": {
@@ -455,7 +455,7 @@ Leave behind one repeatable command that refreshes the Cloudflare-served app she
 
 - [ ] **Step 1: Write the handoff script**
 
-Create [cloudflare/scripts/sync_frontend_dist.sh](/Users/josselinperrus/conductor/workspaces/voice-todos/montpelier/cloudflare/scripts/sync_frontend_dist.sh:1) with behavior equivalent to:
+Create `cloudflare/scripts/sync_frontend_dist.sh` with behavior equivalent to:
 
 ```bash
 #!/usr/bin/env bash
@@ -542,7 +542,7 @@ Expected: FAIL because the current hook still treats fixture mode as dev-only an
 
 - [ ] **Step 3: Write the minimal implementation**
 
-Update [frontend/src/hooks/useTranscript.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/montpelier/frontend/src/hooks/useTranscript.ts:1) so that:
+Update `frontend/src/hooks/useTranscript.ts` so that:
 
 - the websocket target stays `ws(s)://<current-host>/ws`
 - fixture mode is resolved from the URL query without an `import.meta.env.DEV` guard
@@ -596,12 +596,12 @@ Reuse the existing repo smoke entrypoint instead of inventing a second browser s
 
 - [ ] **Step 1: Expand the smoke script behavior**
 
-Update [scripts/browser_ui_smoke.sh](/Users/josselinperrus/conductor/workspaces/voice-todos/montpelier/scripts/browser_ui_smoke.sh:1) so it:
+Update `scripts/browser_ui_smoke.sh` so it:
 
 - accepts `<base-url>` and `<fixture-name>` arguments
 - opens `"$base_url/?fixture=$fixture_name"`
 - uses `agent-browser` to click `Start Session` and `Finish Session`
-- waits for todo text and final transcript from [backend/tests/fixtures/while-speaking-two-todos/result.json](/Users/josselinperrus/conductor/workspaces/voice-todos/montpelier/backend/tests/fixtures/while-speaking-two-todos/result.json:1)
+- waits for todo text and final transcript from `backend/tests/fixtures/while-speaking-two-todos/result.json`
 - exits non-zero on any missing state transition or assertion
 
 Prefer reading expectations from the fixture `result.json` instead of hard-coding transcript/todo text in the script.

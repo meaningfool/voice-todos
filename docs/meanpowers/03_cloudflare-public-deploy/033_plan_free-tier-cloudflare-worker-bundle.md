@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED HANDOFF: use `superpowers:executing-plans` to implement this plan task-by-task. `superpowers:subagent-driven-development` is also acceptable if the environment supports it well. Steps use checkbox syntax for tracking.
 
-**Spec:** [033_spec_free-tier-cloudflare-worker-bundle.md](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/docs/meanpowers/03_cloudflare-public-deploy/033_spec_free-tier-cloudflare-worker-bundle.md:1)
+**Spec:** [033_spec_free-tier-cloudflare-worker-bundle.md](033_spec_free-tier-cloudflare-worker-bundle.md)
 
 **Goal:** Make the accepted Cloudflare public app deployable on the free Worker plan again by slimming the production runtime bundle down to the Soniox + Gemini path that the public app actually needs, while preserving the accepted same-origin UI and deterministic Soniox smoke.
 

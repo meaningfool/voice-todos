@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED HANDOFF: use `superpowers:executing-plans` to implement this plan task-by-task. `superpowers:subagent-driven-development` is also acceptable if the environment supports it well. Steps use checkbox syntax for tracking.
 
-**Spec:** [032_spec_scripted-public-cloudflare-deploy-path.md](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/docs/meanpowers/03_cloudflare-public-deploy/032_spec_scripted-public-cloudflare-deploy-path.md:1)
+**Spec:** [032_spec_scripted-public-cloudflare-deploy-path.md](032_spec_scripted-public-cloudflare-deploy-path.md)
 
 **Goal:** Add one accepted public deployment path for the Cloudflare-hosted app so an operator can prove the local same-origin Cloudflare smoke, run one scripted deploy command from `cloudflare/`, publish directly to the final public subdomain, and treat the deployment as complete only after the real public app passes the deterministic fixture smoke.
 
-**Architecture:** Keep `frontend/` as the UI source of truth and `cloudflare/` as the deployment boundary. Add one deploy entrypoint in [cloudflare/scripts/deploy_public_app.py](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/cloudflare/scripts/deploy_public_app.py:1) that builds the frontend, reuses [cloudflare/scripts/sync_frontend_dist.sh](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/cloudflare/scripts/sync_frontend_dist.sh:1), uploads only the required Cloudflare secrets from the shared [backend/.env](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/backend/.env:1) source, and deploys with `uv run pywrangler deploy --domain <final-public-subdomain>`. Keep the public runtime config contract explicit by committing only base Worker config in [cloudflare/wrangler.jsonc](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/cloudflare/wrangler.jsonc:1), passing `STT_PROVIDER=soniox` and optional non-secret runtime overrides through the deploy script, and using the repo-owned [scripts/browser_ui_smoke.sh](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/scripts/browser_ui_smoke.sh:1) as both the local pre-publish prerequisite and the public post-deploy completion gate.
+**Architecture:** Keep `frontend/` as the UI source of truth and `cloudflare/` as the deployment boundary. Add one deploy entrypoint in `cloudflare/scripts/deploy_public_app.py` that builds the frontend, reuses `cloudflare/scripts/sync_frontend_dist.sh`, uploads only the required Cloudflare secrets from the shared `backend/.env` source, and deploys with `uv run pywrangler deploy --domain <final-public-subdomain>`. Keep the public runtime config contract explicit by committing only base Worker config in `cloudflare/wrangler.jsonc`, passing `STT_PROVIDER=soniox` and optional non-secret runtime overrides through the deploy script, and using the repo-owned `scripts/browser_ui_smoke.sh` as both the local pre-publish prerequisite and the public post-deploy completion gate.
 
 **Tech Stack:** Python 3.12+, `pywrangler`, Wrangler deploy-time secrets, bash, React 19 + Vite 8, `agent-browser`
 
@@ -245,7 +245,7 @@ Expected:
 
 - the script runs the frontend build
 - the script refreshes `cloudflare/public/` via
-  [cloudflare/scripts/sync_frontend_dist.sh](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/cloudflare/scripts/sync_frontend_dist.sh:1)
+  `cloudflare/scripts/sync_frontend_dist.sh`
 - the script prints the `pywrangler deploy` command it would execute, including:
   - `--domain voice-todos.example.com`
   - `--var STT_PROVIDER=soniox`
@@ -602,7 +602,7 @@ Expected:
 
 - [ ] **Step 3: Write the minimal config change**
 
-Update [cloudflare/wrangler.jsonc](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/cloudflare/wrangler.jsonc:1) so that:
+Update `cloudflare/wrangler.jsonc` so that:
 
 - `secrets.required` contains only:
   - `SONIOX_API_KEY`
@@ -706,7 +706,7 @@ Expected:
 
 - [ ] **Step 3: Write the minimal deploy entrypoint**
 
-Implement [cloudflare/scripts/deploy_public_app.py](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/cloudflare/scripts/deploy_public_app.py:1) so it:
+Implement `cloudflare/scripts/deploy_public_app.py` so it:
 
 - requires `--public-domain`
 - defaults the backend env source to `../backend/.env`
@@ -717,7 +717,7 @@ Implement [cloudflare/scripts/deploy_public_app.py](/Users/josselinperrus/conduc
 - writes those three keys to a temporary `.env`-format secrets file for
   `pywrangler deploy --secrets-file`
 - runs `pnpm build` in `frontend/`
-- runs [cloudflare/scripts/sync_frontend_dist.sh](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/cloudflare/scripts/sync_frontend_dist.sh:1)
+- runs `cloudflare/scripts/sync_frontend_dist.sh`
 - builds a deploy command that always includes:
   - `--domain <public-domain>`
   - `--var STT_PROVIDER=soniox`
@@ -772,11 +772,11 @@ than a smoke that only proves "something happened."
 
 - [ ] **Step 1: Expand the smoke assertions**
 
-Update [scripts/browser_ui_smoke.sh](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/scripts/browser_ui_smoke.sh:1) so it:
+Update `scripts/browser_ui_smoke.sh` so it:
 
 - keeps accepting `<base-url>` and `<fixture-name>`
 - keeps driving the real UI through `agent-browser`
-- reads [backend/tests/fixtures/while-speaking-two-todos/result.json](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/backend/tests/fixtures/while-speaking-two-todos/result.json:1)
+- reads `backend/tests/fixtures/while-speaking-two-todos/result.json`
   for expected transcript and final todo titles
 - fails if the final transcript or final todo list diverges from the fixture
   contract
@@ -847,7 +847,7 @@ spreading critical knowledge across shell history and prior conversations.
 
 - [ ] **Step 1: Write the runbook**
 
-Create [cloudflare/README.md](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/cloudflare/README.md:1) with concise sections for:
+Create `cloudflare/README.md` with concise sections for:
 
 - required secrets in `backend/.env`:
   - `SONIOX_API_KEY`
@@ -886,7 +886,7 @@ cd cloudflare && uv run python scripts/deploy_public_app.py \
   --public-domain "$PUBLIC_APP_DOMAIN"
 ```
 
-- a short note that [2026-05-07-mistral-live-validation-findings.md](/Users/josselinperrus/conductor/workspaces/voice-todos/marseille/docs/references/2026-05-07-mistral-live-validation-findings.md:1)
+- a short note that `docs/references/2026-05-07-mistral-live-validation-findings.md`
   remains linked context only and is not a blocker for the Soniox-based first
   public deploy
 
