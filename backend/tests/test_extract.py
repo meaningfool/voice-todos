@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from pydantic_ai import NativeOutput
 
 import app.extract as _extract_mod
 from app.backend_env import read_backend_env_var
@@ -207,6 +208,57 @@ def test_build_model_uses_deepinfra_factory_lazily():
     deepinfra_api_key_getter.assert_called_once_with()
 
 
+@pytest.mark.parametrize(
+    "model_name",
+    [
+        "Qwen/Qwen3.5-0.8B",
+        "Qwen/Qwen3.5-2B",
+        "Qwen/Qwen3.5-4B",
+        "Qwen/Qwen3.5-9B",
+    ],
+)
+def test_build_model_infers_deepinfra_for_all_qwen35_sizes(model_name):
+    from app import model_providers
+
+    gemini_api_key_getter = Mock(
+        side_effect=AssertionError("Gemini lookup should not happen for DeepInfra")
+    )
+    deepinfra_api_key_getter = Mock(return_value="deepinfra-test-key")
+
+    class FakeOpenAIProvider:
+        def __init__(self, *, base_url, api_key):
+            self.base_url = base_url
+            self.api_key = api_key
+
+    class FakeOpenAIChatModel:
+        def __init__(self, model_name, *, provider):
+            self.model_name = model_name
+            self.provider = provider
+
+    fake_openai_module = SimpleNamespace(OpenAIChatModel=FakeOpenAIChatModel)
+    fake_provider_module = SimpleNamespace(OpenAIProvider=FakeOpenAIProvider)
+
+    with patch.dict(
+        sys.modules,
+        {
+            "pydantic_ai.models.openai": fake_openai_module,
+            "pydantic_ai.providers.openai": fake_provider_module,
+        },
+    ):
+        model = model_providers.build_model(
+            model_name,
+            gemini_api_key_getter=gemini_api_key_getter,
+            deepinfra_api_key_getter=deepinfra_api_key_getter,
+        )
+
+    assert isinstance(model, FakeOpenAIChatModel)
+    assert model.model_name == model_name
+    assert model.provider.base_url == "https://api.deepinfra.com/v1/openai"
+    assert model.provider.api_key == "deepinfra-test-key"
+    gemini_api_key_getter.assert_not_called()
+    deepinfra_api_key_getter.assert_called_once_with()
+
+
 def test_build_extraction_agent_delegates_to_model_provider():
     from app.extract import ExtractionConfig, build_extraction_agent
 
@@ -251,6 +303,86 @@ def test_build_extraction_agent_delegates_to_model_provider():
         ).content,
         model_settings={},
     )
+
+
+def test_build_extraction_agent_keeps_output_tool_family():
+    from app.extract import ExtractionConfig, build_extraction_agent
+
+    fake_model = object()
+    fake_agent = object()
+
+    with (
+        patch("app.extract._get_gemini_api_key") as mock_gemini_key,
+        patch("app.extract._get_mistral_api_key") as mock_mistral_key,
+        patch("app.extract._get_deepinfra_api_key") as mock_deepinfra_key,
+        patch("app.extract.build_model", return_value=fake_model) as mock_build_model,
+        patch("app.extract.Agent", return_value=fake_agent) as mock_agent,
+    ):
+        agent = build_extraction_agent(
+            ExtractionConfig(
+                model_name="Qwen/Qwen3.5-4B",
+                provider="deepinfra",
+                implementation_family="deepinfra-output-tool",
+                model_settings={"temperature": 0, "max_tokens": 512},
+            )
+        )
+
+    assert agent is fake_agent
+    mock_build_model.assert_called_once_with(
+        "Qwen/Qwen3.5-4B",
+        provider="deepinfra",
+        gemini_api_key_getter=mock_gemini_key,
+        mistral_api_key_getter=mock_mistral_key,
+        deepinfra_api_key_getter=mock_deepinfra_key,
+    )
+    assert mock_agent.call_args.kwargs["output_type"] is ExtractionResult
+    assert mock_agent.call_args.kwargs["model_settings"] == {
+        "temperature": 0,
+        "max_tokens": 512,
+    }
+
+
+def test_build_extraction_agent_uses_native_output_for_provider_json_schema():
+    from app.extract import ExtractionConfig, build_extraction_agent
+
+    fake_model = object()
+    fake_agent = object()
+
+    with (
+        patch("app.extract._get_gemini_api_key") as mock_gemini_key,
+        patch("app.extract._get_mistral_api_key") as mock_mistral_key,
+        patch("app.extract._get_deepinfra_api_key") as mock_deepinfra_key,
+        patch("app.extract.build_model", return_value=fake_model) as mock_build_model,
+        patch("app.extract.Agent", return_value=fake_agent) as mock_agent,
+    ):
+        agent = build_extraction_agent(
+            ExtractionConfig(
+                model_name="Qwen/Qwen3.5-4B",
+                provider="deepinfra",
+                implementation_family="deepinfra-provider-json-schema",
+                model_settings={"temperature": 0, "max_tokens": 512},
+            )
+        )
+
+    assert agent is fake_agent
+    mock_build_model.assert_called_once_with(
+        "Qwen/Qwen3.5-4B",
+        provider="deepinfra",
+        gemini_api_key_getter=mock_gemini_key,
+        mistral_api_key_getter=mock_mistral_key,
+        deepinfra_api_key_getter=mock_deepinfra_key,
+    )
+    output_type = mock_agent.call_args.kwargs["output_type"]
+    assert isinstance(output_type, NativeOutput)
+    assert output_type.outputs is ExtractionResult
+    assert output_type.strict is True
+    assert mock_agent.call_args.kwargs["model_settings"] == {
+        "temperature": 0,
+        "max_tokens": 512,
+        "extra_body": {
+            "chat_template_kwargs": {"enable_thinking": False}
+        },
+    }
 
 
 def test_get_agent_uses_minimal_google_thinking():
@@ -435,6 +567,32 @@ def test_get_agent_rebuilds_when_prompt_sha_changes():
     assert agent_two is second_agent
     assert agent_one is not agent_two
     assert mock_agent.call_count == 2
+
+
+def test_config_cache_key_changes_when_implementation_family_changes():
+    from app.extract import ExtractionConfig
+
+    prompt_ref = _extract_mod.get_extraction_prompt_ref()
+    output_tool_key = _extract_mod._config_cache_key(
+        ExtractionConfig(
+            model_name="Qwen/Qwen3.5-4B",
+            provider="deepinfra",
+            implementation_family="deepinfra-output-tool",
+            model_settings={"temperature": 0, "max_tokens": 512},
+        ),
+        prompt_sha256=prompt_ref.sha256,
+    )
+    provider_json_key = _extract_mod._config_cache_key(
+        ExtractionConfig(
+            model_name="Qwen/Qwen3.5-4B",
+            provider="deepinfra",
+            implementation_family="deepinfra-provider-json-schema",
+            model_settings={"temperature": 0, "max_tokens": 512},
+        ),
+        prompt_sha256=prompt_ref.sha256,
+    )
+
+    assert output_tool_key != provider_json_key
 
 
 @requires_gemini

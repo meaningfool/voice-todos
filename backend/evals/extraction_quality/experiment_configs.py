@@ -207,6 +207,7 @@ def experiment_definition_from_entry_config(
             provider=extraction_provider,
             model_settings=resolved_model_settings,
             prompt_version=prompt_version,
+            implementation_family=implementation_family,
         ),
         provider=provider,
         thinking_mode=thinking_mode,
