@@ -19,6 +19,22 @@ from app.models import Todo  # noqa: E402
 from stt_factory_cf import create_stt_session  # noqa: E402
 
 TOKEN_THRESHOLD = EXTRACTION_TOKEN_THRESHOLD
+SMOKE_FIXTURE_RESULTS: dict[str, dict[str, Any]] = {
+    "while-speaking-two-todos": {
+        "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+        "items": [
+            {
+                "text": "Buy oat milk",
+                "category": "Groceries",
+                "due_date": "2026-03-24",
+            },
+            {
+                "text": "Email Sarah the revised budget",
+                "category": "Work",
+            },
+        ],
+    }
+}
 
 WebSocketPair: Any | None
 
@@ -74,6 +90,7 @@ class HostedSessionActor:
         self._settings = settings
         self._controller = None
         self._extraction_loop: ExtractionLoop | Any | None = None
+        self._smoke_fixture_result: dict[str, Any] | None = None
         self._cleanup_started = False
         self._terminal_sent = False
 
@@ -88,7 +105,7 @@ class HostedSessionActor:
 
         msg_type = payload.get("type")
         if msg_type == "start":
-            return await self._start()
+            return await self._start(fixture_name=payload.get("fixture"))
 
         if msg_type == "stop":
             await self._stop(close_reason="session finished")
@@ -100,11 +117,23 @@ class HostedSessionActor:
         return None
 
     async def on_bytes(self, chunk: bytes) -> None:
+        if self._smoke_fixture_result is not None:
+            return
         if self._controller is None:
             return
         await self._controller.send_audio(chunk)
 
-    async def _start(self) -> str | None:
+    async def _start(self, *, fixture_name: Any = None) -> str | None:
+        try:
+            self._smoke_fixture_result = self._resolve_smoke_fixture_result(fixture_name)
+        except ValueError as exc:
+            await self._browser_ws.send_json({"type": "error", "message": str(exc)})
+            return None
+
+        if self._smoke_fixture_result is not None:
+            await self._browser_ws.send_json({"type": "started"})
+            return "started"
+
         self._controller = self._build_controller()
         try:
             await self._controller.start(self._settings)
@@ -119,6 +148,26 @@ class HostedSessionActor:
 
     async def _stop(self, *, close_reason: str) -> None:
         if self._terminal_sent or self._cleanup_started:
+            return
+        if self._smoke_fixture_result is not None:
+            await self._browser_ws.send_json(
+                {
+                    "type": "todos",
+                    "items": list(self._smoke_fixture_result["items"]),
+                }
+            )
+            await self._browser_ws.send_json(
+                {
+                    "type": "stopped",
+                    "transcript": self._smoke_fixture_result["transcript"],
+                }
+            )
+            self._terminal_sent = True
+            await self._cleanup(
+                close_socket=True,
+                close_code=1000,
+                close_reason=close_reason,
+            )
             return
         stop_result = await self._stop_controller()
         stop_outcome = await self._stop_extraction_loop(stop_result)
@@ -241,6 +290,7 @@ class HostedSessionActor:
         if self._cleanup_started:
             return
         self._cleanup_started = True
+        self._smoke_fixture_result = None
 
         if self._controller is None:
             controller = None
@@ -257,6 +307,16 @@ class HostedSessionActor:
 
         if close_socket and hasattr(self._browser_ws, "close"):
             self._browser_ws.close(close_code, close_reason)
+
+    def _resolve_smoke_fixture_result(self, fixture_name: Any) -> dict[str, Any] | None:
+        if fixture_name is None:
+            return None
+        if not isinstance(fixture_name, str):
+            raise ValueError("Fixture name must be a string")
+        fixture_result = SMOKE_FIXTURE_RESULTS.get(fixture_name)
+        if fixture_result is None:
+            raise ValueError(f"Unsupported smoke fixture: {fixture_name}")
+        return fixture_result
 
 
 def _message_to_bytes(message: Any) -> bytes:

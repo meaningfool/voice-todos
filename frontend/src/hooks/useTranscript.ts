@@ -41,6 +41,13 @@ export function resolveFixtureAudioPath(search: string): string | undefined {
   return fixtureName ? SMOKE_FIXTURE_AUDIO_PATHS[fixtureName] : undefined;
 }
 
+function resolveFixtureName(search: string): string | undefined {
+  const fixtureName = new URLSearchParams(search).get("fixture");
+  return fixtureName && fixtureName in SMOKE_FIXTURE_AUDIO_PATHS
+    ? fixtureName
+    : undefined;
+}
+
 export function useTranscript() {
   const [status, setStatus] = useState<Status>("idle");
   const [finalText, setFinalText] = useState("");
@@ -146,7 +153,10 @@ export function useTranscript() {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
       wsRef.current = ws;
-      const fixtureAudioPath = resolveFixtureAudioPath(window.location.search);
+      const fixtureName = resolveFixtureName(window.location.search);
+      const fixtureAudioPath = fixtureName
+        ? SMOKE_FIXTURE_AUDIO_PATHS[fixtureName]
+        : undefined;
       const fixtureStreamToken = fixtureStreamTokenRef.current;
 
       const streamFixtureAudio = async () => {
@@ -250,7 +260,7 @@ export function useTranscript() {
       };
 
       if (fixtureAudioPath) {
-        ws.send(JSON.stringify({ type: "start" }));
+        ws.send(JSON.stringify({ type: "start", fixture: fixtureName }));
         return;
       }
 

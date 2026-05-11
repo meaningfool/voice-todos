@@ -259,7 +259,9 @@ describe("useTranscript", () => {
     expect(fetchFixture).toHaveBeenCalledWith(
       "/smoke-fixtures/while-speaking-two-todos/audio.pcm"
     );
-    expect(ws.sent).toContainEqual(JSON.stringify({ type: "start" }));
+    expect(ws.sent).toContainEqual(
+      JSON.stringify({ type: "start", fixture: "while-speaking-two-todos" })
+    );
     expect(
       ws.sent.filter((message) => message instanceof ArrayBuffer).length
     ).toBeGreaterThanOrEqual(2);
