@@ -89,7 +89,7 @@ def test_run_ws_smoke_streams_audio_and_collects_stopped_transcript(tmp_path: Pa
                 mistral_api_key="mistral-test-key",
                 soniox_api_key="unused",
                 record_sessions=False,
-                soniox_stop_timeout_seconds=30.0,
+                stop_timeout_seconds=30.0,
             ),
         ),
         patch(

@@ -60,6 +60,59 @@ async def test_hosted_session_start_sends_started_message():
 
 
 @pytest.mark.asyncio
+async def test_hosted_session_fixture_start_replays_saved_result_without_live_controller():
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(
+        start=AsyncMock(),
+        stop=AsyncMock(
+            return_value=SimpleNamespace(
+                transcript_text="unexpected live transcript",
+                timed_out=False,
+            )
+        ),
+        close=AsyncMock(),
+    )
+    controller_factory = Mock(return_value=controller)
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        controller_factory=controller_factory,
+        settings=SimpleNamespace(),
+    )
+
+    await session.on_text(
+        json.dumps({"type": "start", "fixture": "while-speaking-two-todos"})
+    )
+    await session.on_bytes(b"\x00\x01")
+    await session.on_text(json.dumps({"type": "stop"}))
+
+    controller_factory.assert_not_called()
+    assert browser_ws.json_messages == [
+        {"type": "started"},
+        {
+            "type": "todos",
+            "items": [
+                {
+                    "text": "Buy oat milk",
+                    "category": "Groceries",
+                    "due_date": "2026-03-24",
+                },
+                {
+                    "text": "Email Sarah the revised budget",
+                    "category": "Work",
+                },
+            ],
+        },
+        {
+            "type": "stopped",
+            "transcript": (
+                "By oat milk tonight. Zen email Sarah the revised budget."
+            ),
+        },
+    ]
+    assert browser_ws.close_calls == [(1000, "session finished")]
+
+
+@pytest.mark.asyncio
 async def test_hosted_session_unknown_control_message_returns_browser_error():
     browser_ws = _FakeBrowserSocket()
     controller_factory = Mock()

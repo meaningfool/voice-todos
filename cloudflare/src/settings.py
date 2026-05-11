@@ -13,7 +13,7 @@ class CloudflareSettings:
     mistral_api_key: str | None = None
     deepinfra_api_key: str | None = None
     google_cloud_project_id: str | None = None
-    stop_timeout_seconds: float = 10.0
+    stop_timeout_seconds: float = 30.0
 
 
 def _get_runtime_value(env, name: str) -> str | None:
@@ -48,6 +48,6 @@ def get_settings(env=None) -> CloudflareSettings:
         deepinfra_api_key=_get_runtime_value(env, "DEEPINFRA_API_KEY"),
         google_cloud_project_id=_get_runtime_value(env, "GOOGLE_CLOUD_PROJECT_ID"),
         stop_timeout_seconds=float(
-            _get_runtime_value(env, "STOP_TIMEOUT_SECONDS") or "10.0"
+            _get_runtime_value(env, "STOP_TIMEOUT_SECONDS") or "30.0"
         ),
     )

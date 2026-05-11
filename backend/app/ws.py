@@ -166,7 +166,7 @@ async def websocket_endpoint(browser_ws: WebSocket):
                         logfire.info("ws.stop_received", connection_id=connection_id)
                         ws_phase = "stop"
                         stop_result = await controller.stop(
-                            timeout_seconds=settings.soniox_stop_timeout_seconds,
+                            timeout_seconds=settings.stop_timeout_seconds,
                         )
                         full_transcript = stop_result.transcript_text
                         logger.info(

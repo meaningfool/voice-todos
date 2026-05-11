@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,7 +11,13 @@ class Settings(BaseSettings):
     google_cloud_project_id: str | None = None
     mistral_api_key: str | None = None
     record_sessions: bool = False
-    soniox_stop_timeout_seconds: float = 30.0
+    stop_timeout_seconds: float = Field(
+        default=30.0,
+        validation_alias=AliasChoices(
+            "STOP_TIMEOUT_SECONDS",
+            "SONIOX_STOP_TIMEOUT_SECONDS",
+        ),
+    )
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
