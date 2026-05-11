@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, cast
 
-from pydantic_ai import Agent
+from pydantic_ai import Agent, NativeOutput
 
 from app.backend_env import read_backend_env_var
 from app.config import get_settings
@@ -33,6 +33,7 @@ class ExtractionConfig:
     model_settings: dict[str, Any] | None = None
     prompt_family: str = "todo_extraction"
     prompt_version: str = "v1"
+    implementation_family: str | None = None
 
 
 _DEFAULT_MODEL_SETTINGS: dict[str, Any] = {
@@ -64,8 +65,9 @@ def _config_cache_key(
         config.provider,
         config.prompt_family,
         config.prompt_version,
+        config.implementation_family,
         prompt_sha256,
-        _freeze_for_cache(config.model_settings),
+        _freeze_for_cache(_resolve_model_settings(config)),
     )
 
 
@@ -81,8 +83,22 @@ def get_extraction_prompt_ref(
 
 def _resolve_model_settings(config: ExtractionConfig) -> dict[str, Any]:
     if config.model_settings is not None:
-        return deepcopy(config.model_settings)
-    return deepcopy(_DEFAULT_MODEL_SETTINGS)
+        resolved = deepcopy(config.model_settings)
+    else:
+        resolved = deepcopy(_DEFAULT_MODEL_SETTINGS)
+
+    if config.implementation_family == "deepinfra-provider-json-schema":
+        extra_body = resolved.setdefault("extra_body", {})
+        chat_template_kwargs = extra_body.setdefault("chat_template_kwargs", {})
+        chat_template_kwargs["enable_thinking"] = False
+
+    return resolved
+
+
+def _resolve_output_type(config: ExtractionConfig) -> object:
+    if config.implementation_family == "deepinfra-provider-json-schema":
+        return NativeOutput(ExtractionResult, strict=True)
+    return ExtractionResult
 
 
 def _get_gemini_api_key() -> str:
@@ -116,11 +132,12 @@ def build_extraction_agent(
     prompt_ref: PromptRef | None = None,
 ) -> Agent[None, ExtractionResult]:
     resolved_prompt_ref = prompt_ref or get_extraction_prompt_ref(config)
+    resolved_model_settings = _resolve_model_settings(config)
     agent = Agent(  # ty: ignore[no-matching-overload]
         _build_model(config),
-        output_type=ExtractionResult,
+        output_type=_resolve_output_type(config),
         instructions=resolved_prompt_ref.content,
-        model_settings=_resolve_model_settings(config),
+        model_settings=resolved_model_settings,
     )
     return cast("Agent[None, ExtractionResult]", agent)
 

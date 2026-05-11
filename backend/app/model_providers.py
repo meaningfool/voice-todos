@@ -10,6 +10,8 @@ from pydantic_ai.providers.google import GoogleProvider
 _DEEPINFRA_BASE_URL = "https://api.deepinfra.com/v1/openai"
 _DEEPINFRA_MODEL_NAMES = frozenset(
     {
+        "Qwen/Qwen3.5-0.8B",
+        "Qwen/Qwen3.5-2B",
         "Qwen/Qwen3.5-9B",
         "Qwen/Qwen3.5-4B",
     }

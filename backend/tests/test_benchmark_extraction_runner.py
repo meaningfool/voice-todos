@@ -21,6 +21,27 @@ def test_extraction_benchmark_entry_resolves_current_runner_contract():
     assert resolved.prompt_version == "v1"
 
 
+def test_extraction_benchmark_entry_resolves_deepinfra_family_contract():
+    benchmark = load_benchmark_by_id("todo_extraction_bench_v1")
+    entry = next(
+        candidate
+        for candidate in benchmark.entries
+        if candidate.id == "deepinfra_qwen35_4b_provider_json_schema"
+    )
+    resolved = resolve_entry_config(benchmark=benchmark, entry=entry)
+
+    assert resolved.suite == "extraction_quality"
+    assert resolved.provider == "deepinfra"
+    assert resolved.model_name == "Qwen/Qwen3.5-4B"
+    assert resolved.prompt_version == "v1"
+    assert resolved.implementation_family == "deepinfra-provider-json-schema"
+    assert resolved.model_settings == {
+        "temperature": 0,
+        "max_tokens": 512,
+        "extra_body": {"chat_template_kwargs": {"enable_thinking": False}},
+    }
+
+
 def test_extraction_runner_passes_entry_context_without_benchmark_leakage(
     monkeypatch, tmp_path
 ):

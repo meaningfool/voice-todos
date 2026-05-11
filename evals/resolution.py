@@ -27,6 +27,7 @@ def resolve_entry_config(
     entry: BenchmarkEntry,
 ) -> ResolvedEntryConfig:
     dataset_family = benchmark.dataset_family
+    implementation = entry.config.get("implementation", {})
 
     return ResolvedEntryConfig(
         suite=(
@@ -38,6 +39,7 @@ def resolve_entry_config(
         provider=entry.config["provider"],
         model_name=entry.config["model"],
         prompt_version=entry.config["prompt_version"],
+        implementation_family=implementation.get("family"),
         model_settings=entry.config.get("model_settings", {}),
     )
 
@@ -55,6 +57,7 @@ def build_entry_query_selector(
         provider=resolved.provider,
         model_name=resolved.model_name,
         prompt_version=resolved.prompt_version,
+        implementation_family=resolved.implementation_family,
         model_settings=resolved.model_settings,
     )
     prompt_sha = get_extraction_prompt_ref(experiment.extraction_config).sha256
@@ -70,6 +73,7 @@ def build_entry_query_selector(
         config_fingerprint=config_fingerprint(
             {
                 "provider": experiment.provider,
+                "implementation_family": experiment.implementation_family,
                 "thinking_mode": experiment.thinking_mode,
                 "model_settings": experiment.extraction_config.model_settings,
                 "prompt_version": experiment.extraction_config.prompt_version,

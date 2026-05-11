@@ -45,6 +45,7 @@ class ExperimentDefinition:
     extraction_config: ExtractionConfig
     provider: str
     thinking_mode: str
+    implementation_family: str | None = None
 
     @property
     def prompt_metadata(self) -> dict[str, str]:
@@ -169,6 +170,7 @@ def experiment_definition_from_entry_config(
     provider: str,
     model_name: str,
     prompt_version: str,
+    implementation_family: str | None = None,
     model_settings: dict[str, object] | None = None,
 ) -> ExperimentDefinition:
     legacy = EXPERIMENTS.get(experiment_name_hint)
@@ -177,6 +179,7 @@ def experiment_definition_from_entry_config(
             legacy.provider == provider
             and legacy.extraction_config.model_name == model_name
             and legacy.extraction_config.prompt_version == prompt_version
+            and legacy.implementation_family == implementation_family
             and legacy.extraction_config.model_settings == (model_settings or {})
         )
         if same_config:
@@ -204,7 +207,9 @@ def experiment_definition_from_entry_config(
             provider=extraction_provider,
             model_settings=resolved_model_settings,
             prompt_version=prompt_version,
+            implementation_family=implementation_family,
         ),
         provider=provider,
         thinking_mode=thinking_mode,
+        implementation_family=implementation_family,
     )
