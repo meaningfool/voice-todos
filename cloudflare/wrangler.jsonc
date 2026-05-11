@@ -4,7 +4,12 @@
   "compatibility_date": "2026-05-05",
   "compatibility_flags": ["python_workers"],
   "secrets": {
-    "required": ["SONIOX_API_KEY", "SESSION_CAP_MS", "GEMINI_API_KEY"]
+    "required": [
+      "SONIOX_API_KEY",
+      "MISTRAL_API_KEY",
+      "SESSION_CAP_MS",
+      "GEMINI_API_KEY"
+    ]
   },
   "durable_objects": {
     "bindings": [

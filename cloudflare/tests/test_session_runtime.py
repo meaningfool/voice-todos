@@ -486,6 +486,211 @@ async def test_hosted_session_stop_sends_todos_before_stopped(
 
 
 @pytest.mark.asyncio
+async def test_hosted_mistral_session_streams_and_stops_with_final_done_text(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(
+        start=AsyncMock(),
+        stop=AsyncMock(
+            return_value=SimpleNamespace(
+                transcript_text="By oat milk tonight. Zen email Sarah the revised budget.",
+                timed_out=False,
+            )
+        ),
+        close=AsyncMock(),
+        transcript=object(),
+    )
+    controller_cls = Mock(return_value=controller)
+    monkeypatch.setattr(session_runtime, "LiveSessionController", controller_cls)
+    monkeypatch.setattr(session_runtime, "extract_todos", AsyncMock(), raising=False)
+    monkeypatch.setattr(session_runtime, "TOKEN_THRESHOLD", 3, raising=False)
+    loop = Mock()
+    loop.cancel = Mock()
+    loop.on_endpoint = AsyncMock()
+    loop.on_transcript_changed = Mock()
+    loop.on_stop = AsyncMock(return_value=_todo_stop_outcome())
+    monkeypatch.setattr(
+        session_runtime,
+        "ExtractionLoop",
+        Mock(return_value=loop),
+        raising=False,
+    )
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        settings=SimpleNamespace(stt_provider="mistral", stop_timeout_seconds=1.5),
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+    on_update = controller_cls.call_args.kwargs["on_update"]
+    await on_update(
+        SimpleNamespace(
+            tokens=[{"text": "By oat milk tonight. ", "is_final": True}],
+            has_endpoint=False,
+            transcript_changed=True,
+        )
+    )
+    await session.on_text(json.dumps({"type": "stop"}))
+
+    assert browser_ws.json_messages == [
+        {"type": "started"},
+        {
+            "type": "transcript",
+            "tokens": [{"text": "By oat milk tonight. ", "is_final": True}],
+        },
+        {"type": "todos", "items": []},
+        {
+            "type": "stopped",
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+        },
+    ]
+
+
+@pytest.mark.asyncio
+async def test_hosted_mistral_transcript_state_acceptance(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(start=AsyncMock(), close=AsyncMock(), transcript=object())
+    controller_cls = Mock(return_value=controller)
+    monkeypatch.setattr(session_runtime, "LiveSessionController", controller_cls)
+    loop = Mock()
+    loop.cancel = Mock()
+    loop.on_endpoint = AsyncMock()
+    loop.on_transcript_changed = Mock()
+    monkeypatch.setattr(
+        session_runtime,
+        "ExtractionLoop",
+        Mock(return_value=loop),
+        raising=False,
+    )
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        settings=SimpleNamespace(stt_provider="mistral"),
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+    on_update = controller_cls.call_args.kwargs["on_update"]
+    await on_update(
+        SimpleNamespace(
+            tokens=[{"text": "Buy oat milk", "is_final": True}],
+            has_endpoint=False,
+            transcript_changed=True,
+        )
+    )
+
+    loop.on_transcript_changed.assert_called_once_with()
+    loop.on_endpoint.assert_not_called()
+    assert browser_ws.json_messages == [
+        {"type": "started"},
+        {
+            "type": "transcript",
+            "tokens": [{"text": "Buy oat milk", "is_final": True}],
+        },
+    ]
+
+
+@pytest.mark.asyncio
+async def test_hosted_mistral_stop_uses_finalized_transcript_for_final_pass(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(
+        start=AsyncMock(),
+        stop=AsyncMock(
+            return_value=SimpleNamespace(
+                transcript_text="Buy oat milk tonight",
+                timed_out=False,
+            )
+        ),
+        close=AsyncMock(),
+        transcript=object(),
+    )
+    controller_cls = Mock(return_value=controller)
+    monkeypatch.setattr(session_runtime, "LiveSessionController", controller_cls)
+    monkeypatch.setattr(session_runtime, "extract_todos", AsyncMock(), raising=False)
+    monkeypatch.setattr(session_runtime, "TOKEN_THRESHOLD", 3, raising=False)
+    loop = Mock()
+    loop.cancel = Mock()
+    loop.on_endpoint = AsyncMock()
+    loop.on_transcript_changed = Mock()
+    loop.on_stop = AsyncMock(
+        return_value=_todo_stop_outcome(items=[{"text": "Buy oat milk tonight"}])
+    )
+    monkeypatch.setattr(
+        session_runtime,
+        "ExtractionLoop",
+        Mock(return_value=loop),
+        raising=False,
+    )
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        settings=SimpleNamespace(stt_provider="mistral", stop_timeout_seconds=1.5),
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+    await session.on_text(json.dumps({"type": "stop"}))
+
+    loop.on_stop.assert_awaited_once_with(
+        final_transcript_text="Buy oat milk tonight",
+        transcript_timed_out=False,
+    )
+    assert browser_ws.json_messages == [
+        {"type": "started"},
+        {"type": "todos", "items": [{"text": "Buy oat milk tonight"}]},
+        {"type": "stopped", "transcript": "Buy oat milk tonight"},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_hosted_mistral_stop_sends_todos_before_stopped(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    browser_ws = _FakeBrowserSocket()
+    controller = SimpleNamespace(
+        start=AsyncMock(),
+        stop=AsyncMock(
+            return_value=SimpleNamespace(
+                transcript_text="Buy oat milk tonight",
+                timed_out=False,
+            )
+        ),
+        close=AsyncMock(),
+        transcript=object(),
+    )
+    controller_cls = Mock(return_value=controller)
+    monkeypatch.setattr(session_runtime, "LiveSessionController", controller_cls)
+    monkeypatch.setattr(session_runtime, "extract_todos", AsyncMock(), raising=False)
+    monkeypatch.setattr(session_runtime, "TOKEN_THRESHOLD", 3, raising=False)
+    loop = Mock()
+    loop.cancel = Mock()
+    loop.on_endpoint = AsyncMock()
+    loop.on_transcript_changed = Mock()
+    loop.on_stop = AsyncMock(
+        return_value=_todo_stop_outcome(items=[{"text": "Buy oat milk tonight"}])
+    )
+    monkeypatch.setattr(
+        session_runtime,
+        "ExtractionLoop",
+        Mock(return_value=loop),
+        raising=False,
+    )
+    session = HostedSessionActor(
+        browser_ws=browser_ws,
+        settings=SimpleNamespace(stt_provider="mistral", stop_timeout_seconds=1.5),
+    )
+
+    await session.on_text(json.dumps({"type": "start"}))
+    await session.on_text(json.dumps({"type": "stop"}))
+
+    assert [message["type"] for message in browser_ws.json_messages] == [
+        "started",
+        "todos",
+        "stopped",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_hosted_session_cap_expiry_sends_terminal_message_once():
     browser_ws = _FakeBrowserSocket()
     controller = SimpleNamespace(

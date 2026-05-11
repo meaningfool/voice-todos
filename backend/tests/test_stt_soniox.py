@@ -1,7 +1,9 @@
 from unittest.mock import AsyncMock
 
+from shared.stt_soniox_shared import build_soniox_config, translate_soniox_event
+
 from app.stt import BoundaryState
-from app.stt_soniox import SonioxSession, build_soniox_config, translate_soniox_event
+from app.stt_soniox import SonioxSession
 
 
 def test_build_soniox_config_matches_current_production_defaults():

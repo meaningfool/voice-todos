@@ -2,9 +2,9 @@ import asyncio
 from unittest.mock import AsyncMock
 
 import pytest
+from shared.stt_mistral_shared import MistralSession, translate_mistral_event
 
 from app.stt import BoundaryState
-from app.stt_mistral import MistralSession, translate_mistral_event
 
 
 def test_translate_mistral_text_delta_emits_additive_final_token():
@@ -98,9 +98,9 @@ async def test_mistral_session_records_raw_events_through_callback():
     [event async for event in session]
 
     assert recorded == [
-        {"type": "session.created"},
-        {"type": "transcription.text.delta", "text": "Buy milk"},
-        {"type": "transcription.done", "text": "Buy milk tomorrow"},
+        '{"type": "session.created"}',
+        '{"type": "transcription.text.delta", "text": "Buy milk"}',
+        '{"type": "transcription.done", "text": "Buy milk tomorrow"}',
     ]
 
 
