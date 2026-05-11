@@ -10,9 +10,6 @@ class CloudflareSettings:
     stt_provider: str = "soniox"
     soniox_api_key: str | None = None
     gemini_api_key: str | None = None
-    mistral_api_key: str | None = None
-    deepinfra_api_key: str | None = None
-    google_cloud_project_id: str | None = None
     stop_timeout_seconds: float = 30.0
 
 
@@ -28,9 +25,6 @@ def _mirror_runtime_env_to_process(env) -> None:
     for name in (
         "SONIOX_API_KEY",
         "GEMINI_API_KEY",
-        "MISTRAL_API_KEY",
-        "DEEPINFRA_API_KEY",
-        "GOOGLE_CLOUD_PROJECT_ID",
     ):
         value = _get_runtime_value(env, name)
         if value is not None:
@@ -44,9 +38,6 @@ def get_settings(env=None) -> CloudflareSettings:
         stt_provider=_get_runtime_value(env, "STT_PROVIDER") or "soniox",
         soniox_api_key=_get_runtime_value(env, "SONIOX_API_KEY"),
         gemini_api_key=_get_runtime_value(env, "GEMINI_API_KEY"),
-        mistral_api_key=_get_runtime_value(env, "MISTRAL_API_KEY"),
-        deepinfra_api_key=_get_runtime_value(env, "DEEPINFRA_API_KEY"),
-        google_cloud_project_id=_get_runtime_value(env, "GOOGLE_CLOUD_PROJECT_ID"),
         stop_timeout_seconds=float(
             _get_runtime_value(env, "STOP_TIMEOUT_SECONDS") or "30.0"
         ),

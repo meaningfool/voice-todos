@@ -3,7 +3,7 @@
 ## Source
 
 - Slice `V2` from
-  [030_shaping_cloudflare-public-deploy.md](/Users/josselinperrus/conductor/workspaces/voice-todos/kingston/docs/meanpowers/03_cloudflare-public-deploy/030_shaping_cloudflare-public-deploy.md:1)
+  [030_shaping_cloudflare-public-deploy.md](030_shaping_cloudflare-public-deploy.md)
 - Follows `V1`, which establishes the same-origin Cloudflare app boundary
   locally
 
@@ -24,9 +24,9 @@ But the public deployment path is still incomplete:
 - recovery and diagnosis rules are not yet part of the deployment workflow
 
 The current Cloudflare config surface also mixes secrets and non-secret runtime
-values. For example, [cloudflare/wrangler.jsonc](/Users/josselinperrus/conductor/workspaces/voice-todos/kingston/cloudflare/wrangler.jsonc:1)
-currently treats `SESSION_CAP_MS` as required secret-like config even though it
-is a non-secret runtime value.
+values. For example, `cloudflare/wrangler.jsonc` currently treats
+`SESSION_CAP_MS` as required secret-like config even though it is a non-secret
+runtime value.
 
 ## Target System
 

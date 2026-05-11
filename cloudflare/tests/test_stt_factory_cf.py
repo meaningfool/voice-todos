@@ -9,15 +9,14 @@ from stt_factory_cf import create_stt_session
 
 
 @pytest.mark.asyncio
-async def test_create_stt_session_routes_mistral_provider_to_hosted_connector() -> None:
+async def test_create_stt_session_routes_soniox_provider_to_hosted_connector() -> None:
     settings = SimpleNamespace(
-        stt_provider="mistral",
-        mistral_api_key="mistral-test-key",
-        soniox_api_key="unused",
+        stt_provider="soniox",
+        soniox_api_key="soniox-test-key",
     )
     fake_session = object()
-    connect_soniox = AsyncMock()
-    connect_mistral = AsyncMock(return_value=fake_session)
+    connect_soniox = AsyncMock(return_value=fake_session)
+    connect_mistral = AsyncMock()
 
     session = await create_stt_session(
         settings,
@@ -26,20 +25,26 @@ async def test_create_stt_session_routes_mistral_provider_to_hosted_connector() 
     )
 
     assert session is fake_session
-    connect_mistral.assert_awaited_once_with(
-        "mistral-test-key",
-        raw_event_callback=None,
+    connect_soniox.assert_awaited_once_with(
+        "soniox-test-key",
+        raw_message_callback=None,
     )
-    connect_soniox.assert_not_called()
+    connect_mistral.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_create_stt_session_rejects_mistral_without_api_key() -> None:
+async def test_create_stt_session_rejects_mistral_for_free_tier_public_bundle() -> None:
     settings = SimpleNamespace(
         stt_provider="mistral",
-        mistral_api_key=None,
+        mistral_api_key="mistral-test-key",
         soniox_api_key="unused",
     )
+    connect_mistral = AsyncMock()
 
-    with pytest.raises(ValueError, match="Mistral API key is required"):
-        await create_stt_session(settings, connect_mistral_fn=AsyncMock())
+    with pytest.raises(
+        ValueError,
+        match="Hosted Mistral is deferred from the free-tier public Cloudflare bundle",
+    ):
+        await create_stt_session(settings, connect_mistral_fn=connect_mistral)
+
+    connect_mistral.assert_not_called()

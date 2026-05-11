@@ -4,8 +4,6 @@ version = "0.1.0"
 description = "Cloudflare hosted runtime for voice-todos"
 requires-python = ">=3.12"
 dependencies = [
-    "logfire>=4.29.0",
-    "mistralai>=1.9.11,<2",
 ]
 
 [tool.pytest.ini_options]
