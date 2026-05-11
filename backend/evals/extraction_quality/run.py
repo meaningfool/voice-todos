@@ -248,6 +248,7 @@ async def launch_experiments_for_definitions(
             batch_id=batch_id,
             full_config={
                 "provider": experiment.provider,
+                "implementation_family": experiment.implementation_family,
                 "thinking_mode": experiment.thinking_mode,
                 "model_settings": experiment.extraction_config.model_settings,
                 "prompt_version": experiment.extraction_config.prompt_version,
@@ -295,6 +296,7 @@ async def launch_extraction_entry(
         provider=resolved_config.provider,
         model_name=resolved_config.model_name,
         prompt_version=resolved_config.prompt_version,
+        implementation_family=resolved_config.implementation_family,
         model_settings=resolved_config.model_settings,
     )
     result = await launch_experiments_for_definitions(

@@ -107,6 +107,7 @@ async def test_run_uses_batch_metadata_and_dataset_override(monkeypatch, tmp_pat
             name="fake-experiment-a",
             provider="provider-a",
             thinking_mode="default",
+            implementation_family=None,
             extraction_config=SimpleNamespace(
                 model_name="model-a",
                 model_settings={"temperature": 0},
@@ -119,6 +120,7 @@ async def test_run_uses_batch_metadata_and_dataset_override(monkeypatch, tmp_pat
             name="fake-experiment-b",
             provider="provider-b",
             thinking_mode="minimal",
+            implementation_family=None,
             extraction_config=SimpleNamespace(
                 model_name="model-b",
                 model_settings={"temperature": 1},
@@ -199,6 +201,7 @@ async def test_launch_experiments_returns_batch_and_attached_refs(
             name="fake-experiment-a",
             provider="provider-a",
             thinking_mode="default",
+            implementation_family=None,
             extraction_config=SimpleNamespace(
                 model_name="model-a",
                 model_settings={"temperature": 0},
@@ -211,6 +214,7 @@ async def test_launch_experiments_returns_batch_and_attached_refs(
             name="fake-experiment-b",
             provider="provider-b",
             thinking_mode="minimal",
+            implementation_family=None,
             extraction_config=SimpleNamespace(
                 model_name="model-b",
                 model_settings={"temperature": 1},
@@ -293,6 +297,7 @@ async def test_run_resolves_default_dataset_from_benchmark_lock(
             name="fake-experiment-a",
             provider="provider-a",
             thinking_mode="default",
+            implementation_family=None,
             extraction_config=SimpleNamespace(
                 model_name="model-a",
                 model_settings={"temperature": 0},
@@ -336,3 +341,74 @@ async def test_run_resolves_default_dataset_from_benchmark_lock(
     assert exit_code == 0
     assert load_calls == [lock_path]
     assert evaluate_calls[0]["metadata"]["dataset_name"] == "locked-dataset"
+
+
+@pytest.mark.asyncio
+async def test_launch_experiments_separates_same_model_by_implementation_family(
+    monkeypatch, tmp_path
+):
+    import evals.extraction_quality.run as runner
+
+    dataset_override = tmp_path / "dataset.json"
+    dataset_override.write_text('{"dataset":"override"}')
+
+    evaluate_calls: list[dict[str, object]] = []
+
+    experiments = [
+        SimpleNamespace(
+            name="same-model-output-tool",
+            provider="deepinfra",
+            thinking_mode="default",
+            implementation_family="deepinfra-output-tool",
+            extraction_config=SimpleNamespace(
+                model_name="Qwen/Qwen3.5-4B",
+                model_settings={"temperature": 0, "max_tokens": 512},
+                prompt_version="v1",
+            ),
+            prompt_metadata={"prompt_sha": "prompt-sha"},
+            unavailable_reason=lambda: None,
+        ),
+        SimpleNamespace(
+            name="same-model-provider-json",
+            provider="deepinfra",
+            thinking_mode="default",
+            implementation_family="deepinfra-provider-json-schema",
+            extraction_config=SimpleNamespace(
+                model_name="Qwen/Qwen3.5-4B",
+                model_settings={"temperature": 0, "max_tokens": 512},
+                prompt_version="v1",
+            ),
+            prompt_metadata={"prompt_sha": "prompt-sha"},
+            unavailable_reason=lambda: None,
+        ),
+    ]
+
+    class FakeReport:
+        def print(self, include_metadata: bool) -> None:
+            assert include_metadata is True
+
+    async def fake_evaluate(self, task, **kwargs):
+        evaluate_calls.append(kwargs)
+        return FakeReport()
+
+    monkeypatch.setattr(runner, "has_logfire_write_credentials", lambda: True)
+    monkeypatch.setattr(runner, "configure_logfire", lambda **kwargs: None)
+    monkeypatch.setattr(
+        runner,
+        "load_extraction_quality_dataset",
+        lambda path=None: SimpleNamespace(name="override-dataset", cases=[]),
+    )
+    monkeypatch.setattr(runner.Dataset, "evaluate", fake_evaluate)
+
+    await runner.launch_experiments_for_definitions(
+        experiments=experiments,
+        dataset_path=dataset_override,
+        repeat=1,
+        task_retries=0,
+        max_concurrency=1,
+        allow_untracked=False,
+    )
+
+    fingerprints = [call["metadata"]["config_fingerprint"] for call in evaluate_calls]
+    assert len(fingerprints) == 2
+    assert fingerprints[0] != fingerprints[1]

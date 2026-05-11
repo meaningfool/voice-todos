@@ -1,9 +1,11 @@
 """Benchmark report contract tests."""
 
 import json
+from pathlib import Path
 
 import pytest
 
+from evals.models import BenchmarkDefinition, BenchmarkEntry
 from evals.report import build_benchmark_report, render_terminal_report, report_benchmark
 from evals.resolution import build_entry_query_selector
 from evals.storage import load_benchmark_by_id
@@ -120,7 +122,69 @@ def test_benchmark_report_marks_missing_entries_instead_of_omitting_them():
         query_client=FakeBenchmarkQueryClient(rows=[]),
     )
 
-    assert "deepinfra_qwen35_9b_default" in report.missing_entry_ids
+    assert "deepinfra_qwen35_0_8b_output_tool" in report.missing_entry_ids
+
+
+def test_build_entry_query_selector_changes_when_only_implementation_family_changes(
+    monkeypatch, tmp_path
+):
+    benchmark = BenchmarkDefinition(
+        benchmark_id="synthetic_bench",
+        hosted_dataset="synthetic-dataset",
+        dataset_family="extraction",
+        focus="model",
+        headline_metric="todo_count_match",
+        repeat=1,
+        task_retries=1,
+        max_concurrency=1,
+        entries=[],
+    )
+    output_entry = BenchmarkEntry(
+        id="same-model-output-tool",
+        label="Same model / output tool",
+        config={
+            "provider": "deepinfra",
+            "model": "Qwen/Qwen3.5-4B",
+            "prompt_version": "v1",
+            "implementation": {"family": "deepinfra-output-tool"},
+            "model_settings": {"temperature": 0, "max_tokens": 512},
+        },
+    )
+    provider_entry = BenchmarkEntry(
+        id="same-model-provider-json",
+        label="Same model / provider json schema",
+        config={
+            "provider": "deepinfra",
+            "model": "Qwen/Qwen3.5-4B",
+            "prompt_version": "v1",
+            "implementation": {"family": "deepinfra-provider-json-schema"},
+            "model_settings": {"temperature": 0, "max_tokens": 512},
+        },
+    )
+    evaluator_path = tmp_path / "evaluators.py"
+    evaluator_path.write_text("EVALUATORS = []\n")
+
+    monkeypatch.setattr("evals.resolution._selector_dataset_bytes", lambda _: b"dataset")
+    monkeypatch.setattr(
+        "evals.resolution._evaluator_path_for_suite",
+        lambda suite: evaluator_path,
+    )
+    monkeypatch.setattr(
+        "evals.resolution.get_extraction_prompt_ref",
+        lambda config: type("PromptRef", (), {"sha256": "prompt-sha"})(),
+    )
+
+    output_selector = build_entry_query_selector(
+        benchmark=benchmark,
+        entry=output_entry,
+    )
+    provider_selector = build_entry_query_selector(
+        benchmark=benchmark,
+        entry=provider_entry,
+    )
+
+    assert output_selector.model_name == provider_selector.model_name
+    assert output_selector.config_fingerprint != provider_selector.config_fingerprint
 
 
 def test_benchmark_report_uses_latest_compatible_result_per_entry():

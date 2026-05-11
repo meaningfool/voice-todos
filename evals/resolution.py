@@ -57,6 +57,7 @@ def build_entry_query_selector(
         provider=resolved.provider,
         model_name=resolved.model_name,
         prompt_version=resolved.prompt_version,
+        implementation_family=resolved.implementation_family,
         model_settings=resolved.model_settings,
     )
     prompt_sha = get_extraction_prompt_ref(experiment.extraction_config).sha256
@@ -72,6 +73,7 @@ def build_entry_query_selector(
         config_fingerprint=config_fingerprint(
             {
                 "provider": experiment.provider,
+                "implementation_family": experiment.implementation_family,
                 "thinking_mode": experiment.thinking_mode,
                 "model_settings": experiment.extraction_config.model_settings,
                 "prompt_version": experiment.extraction_config.prompt_version,
