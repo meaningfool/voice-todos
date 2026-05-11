@@ -181,7 +181,7 @@ class HostedSessionActor:
     def _stop_timeout_seconds(self) -> float:
         if hasattr(self._settings, "stop_timeout_seconds"):
             return float(self._settings.stop_timeout_seconds)
-        return float(getattr(self._settings, "soniox_stop_timeout_seconds", 15.0))
+        return float(getattr(self._settings, "soniox_stop_timeout_seconds", 30.0))
 
     async def close(self) -> None:
         await self._cleanup(close_socket=False, close_code=1000, close_reason="")

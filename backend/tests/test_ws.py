@@ -19,7 +19,7 @@ def _settings(**overrides):
         "soniox_api_key": "soniox-test-key",
         "mistral_api_key": None,
         "record_sessions": False,
-        "soniox_stop_timeout_seconds": 30.0,
+        "stop_timeout_seconds": 30.0,
     }
     base.update(overrides)
     return SimpleNamespace(**base)
@@ -762,7 +762,7 @@ def test_ws_stop_uses_controller_stop_result_for_warning_and_transcript():
     with (
         patch(
             "app.ws.get_settings",
-            return_value=_settings(soniox_stop_timeout_seconds=0.01),
+            return_value=_settings(stop_timeout_seconds=0.01),
         ),
         patch(
             "app.ws.create_stt_session",
@@ -1328,7 +1328,7 @@ def test_ws_stop_timeout_skips_extraction_and_surfaces_warning():
     with (
         patch(
             "app.ws.get_settings",
-            return_value=_settings(soniox_stop_timeout_seconds=0.01),
+            return_value=_settings(stop_timeout_seconds=0.01),
         ),
         patch(
             "app.ws.create_stt_session",

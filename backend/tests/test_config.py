@@ -16,6 +16,7 @@ def test_settings_loads_from_env(monkeypatch, tmp_path):
     monkeypatch.setenv("SONIOX_API_KEY", "test-key-123")
     monkeypatch.setenv("GEMINI_API_KEY", "gemini-key-456")
     monkeypatch.delenv("RECORD_SESSIONS", raising=False)
+    monkeypatch.delenv("STOP_TIMEOUT_SECONDS", raising=False)
     monkeypatch.delenv("SONIOX_STOP_TIMEOUT_SECONDS", raising=False)
 
     # Point to an empty .env so local developer settings do not affect the test.
@@ -28,7 +29,35 @@ def test_settings_loads_from_env(monkeypatch, tmp_path):
     assert s.soniox_api_key == "test-key-123"
     assert s.gemini_api_key == "gemini-key-456"
     assert s.record_sessions is False
-    assert s.soniox_stop_timeout_seconds == 30.0
+    assert s.stop_timeout_seconds == 30.0
+
+
+def test_settings_accepts_canonical_stop_timeout_seconds_env(monkeypatch, tmp_path):
+    monkeypatch.setenv("SONIOX_API_KEY", "test-key-123")
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-key-456")
+    monkeypatch.setenv("STOP_TIMEOUT_SECONDS", "12.5")
+    monkeypatch.delenv("SONIOX_STOP_TIMEOUT_SECONDS", raising=False)
+    env_file = tmp_path / ".env"
+    env_file.write_text("")
+
+    from app.config import Settings
+
+    s = Settings(_env_file=str(env_file))
+    assert s.stop_timeout_seconds == 12.5
+
+
+def test_settings_accepts_legacy_soniox_stop_timeout_seconds_env(monkeypatch, tmp_path):
+    monkeypatch.setenv("SONIOX_API_KEY", "test-key-123")
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-key-456")
+    monkeypatch.delenv("STOP_TIMEOUT_SECONDS", raising=False)
+    monkeypatch.setenv("SONIOX_STOP_TIMEOUT_SECONDS", "7.5")
+    env_file = tmp_path / ".env"
+    env_file.write_text("")
+
+    from app.config import Settings
+
+    s = Settings(_env_file=str(env_file))
+    assert s.stop_timeout_seconds == 7.5
 
 
 def test_settings_requires_api_key(monkeypatch, tmp_path):
@@ -50,6 +79,7 @@ def test_settings_loads_gemini_key(monkeypatch, tmp_path):
     monkeypatch.setenv("SONIOX_API_KEY", "soniox-test")
     monkeypatch.setenv("GEMINI_API_KEY", "gemini-test-key")
     monkeypatch.delenv("RECORD_SESSIONS", raising=False)
+    monkeypatch.delenv("STOP_TIMEOUT_SECONDS", raising=False)
     monkeypatch.delenv("SONIOX_STOP_TIMEOUT_SECONDS", raising=False)
     env_file = tmp_path / ".env"
     env_file.write_text("")
@@ -92,6 +122,7 @@ def test_settings_ignores_unrelated_env_file_keys(monkeypatch, tmp_path):
     monkeypatch.delenv("SONIOX_API_KEY", raising=False)
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     monkeypatch.delenv("RECORD_SESSIONS", raising=False)
+    monkeypatch.delenv("STOP_TIMEOUT_SECONDS", raising=False)
     monkeypatch.delenv("SONIOX_STOP_TIMEOUT_SECONDS", raising=False)
     monkeypatch.delenv("LOGFIRE_READ_TOKEN", raising=False)
     monkeypatch.delenv("DEEPINFRA_API_KEY", raising=False)

@@ -49,7 +49,7 @@ def build_smoke_settings(
         soniox_api_key=api_key if provider == "soniox" else "unused",
         mistral_api_key=api_key if provider == "mistral" else None,
         record_sessions=False,
-        soniox_stop_timeout_seconds=stop_timeout_seconds,
+        stop_timeout_seconds=stop_timeout_seconds,
     )
 
 
