@@ -1097,7 +1097,7 @@
   "failure_counts_by_category": {},
   "failures": [],
   "git": {
-    "branch": "meaningfool/retry-exp-audit",
+    "branch": "sample/reference-artifacts",
     "commit_sha": "4f87845fadd19f76f3a07c27df8fcd7040efcb01"
   },
   "max_concurrency": 1,

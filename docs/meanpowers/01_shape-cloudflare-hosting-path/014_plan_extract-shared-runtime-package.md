@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED HANDOFF: use `superpowers:executing-plans` to implement this plan task-by-task. `superpowers:subagent-driven-development` is also acceptable if the environment supports it well. Steps use checkbox syntax for tracking.
 
-**Spec:** [014_spec_extract-shared-runtime-package.md](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/docs/meanpowers/01_shape-cloudflare-hosting-path/014_spec_extract-shared-runtime-package.md)
+**Spec:** [014_spec_extract-shared-runtime-package.md](014_spec_extract-shared-runtime-package.md)
 
 **Goal:** Move the runtime-neutral live-session, transcript, todo, extraction, model, and prompt code into one real top-level `shared/` package; make both the local FastAPI adapter and the hosted Cloudflare runtime import that package directly; remove the `cloudflare/src/app/` mirror; and prove no browser-visible `/ws` regression in either runtime.
 
-**Architecture:** Make `shared/` the single source of truth for runtime-neutral modules. Keep `backend/app/` and `cloudflare/src/` responsible only for runtime-specific transport, bootstrap, and entry concerns. Use thin compatibility wrappers inside `backend/app/` only where they avoid broad unrelated churn. Rewire [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py) and [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py) to import `shared` directly. Remove `cloudflare/src/app/` completely.
+**Architecture:** Make `shared/` the single source of truth for runtime-neutral modules. Keep `backend/app/` and `cloudflare/src/` responsible only for runtime-specific transport, bootstrap, and entry concerns. Use thin compatibility wrappers inside `backend/app/` only where they avoid broad unrelated churn. Rewire [backend/app/ws.py](../../../backend/app/ws.py) and [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py) to import `shared` directly. Remove `cloudflare/src/app/` completely.
 
 **Tech Stack:** Python 3.12+, FastAPI websocket flow, Cloudflare workers-py / workers-runtime-sdk / pywrangler, pytest, pytest-asyncio, ruff, ty
 
@@ -120,7 +120,7 @@ This is the actual refactor outcome. If the repo still depends on `backend/app/`
   - verify the moved runtime-neutral modules exist under `shared/`
   - verify `cloudflare/src/app/` does not exist
 - **Import proof**
-  - inspect [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py) and [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py)
+  - inspect [backend/app/ws.py](../../../backend/app/ws.py) and [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py)
   - assert both import shared runtime modules from `shared/`
 - **Neutrality proof**
   - inspect modules under `shared/`
@@ -208,7 +208,7 @@ Expected:
 Evidence to collect:
 
 - the `rg --files shared` output
-- the `shared` import lines from [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py) and [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py)
+- the `shared` import lines from [backend/app/ws.py](../../../backend/app/ws.py) and [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py)
 - the absence of forbidden runtime imports under `shared/`
 
 ### Behavioral proof for `No Browser-Visible Runtime Regression Is Introduced`
@@ -448,7 +448,7 @@ Move the implementations into:
 
 Convert the `backend/app/...` copies into thin compatibility re-exports.
 
-Update [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py) to import the shared controller/contracts directly instead of importing them back through `app.*`.
+Update [backend/app/ws.py](../../../backend/app/ws.py) to import the shared controller/contracts directly instead of importing them back through `app.*`.
 
 - [ ] **Step 4: Run the focused shared-core suites**
 
@@ -520,7 +520,7 @@ Expected: FAIL because the extraction/todo/model modules have not been moved yet
 
 - [ ] **Step 3: Move the extraction/todo/model source of truth**
 
-Move the implementations into the `shared/` package and convert the corresponding `backend/app/...` modules into compatibility re-exports. Update [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py) to import shared todo/extraction modules directly.
+Move the implementations into the `shared/` package and convert the corresponding `backend/app/...` modules into compatibility re-exports. Update [backend/app/ws.py](../../../backend/app/ws.py) to import shared todo/extraction modules directly.
 
 - [ ] **Step 4: Run the local shared-stack and acceptance checks**
 
@@ -586,7 +586,7 @@ Expected: FAIL because hosted code still imports the mirror under `cloudflare/sr
 
 - [ ] **Step 3: Rewire hosted imports and remove `cloudflare/src/app/`**
 
-Update [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py) and any remaining hosted runtime modules to import from `shared/` directly, then delete `cloudflare/src/app/`.
+Update [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py) and any remaining hosted runtime modules to import from `shared/` directly, then delete `cloudflare/src/app/`.
 
 - [ ] **Step 4: Run both acceptance gates**
 
@@ -628,7 +628,7 @@ git commit -m "refactor: remove cloudflare shared mirror"
 
 ## Checkpoint
 
-Do not begin [015_plan_hosted-stt-provider-parity.md](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/docs/meanpowers/01_shape-cloudflare-hosting-path/015_plan_hosted-stt-provider-parity.md) until both `V4a` acceptance gates pass and their expected evidence has been collected.
+Do not begin [015_plan_hosted-stt-provider-parity.md](015_plan_hosted-stt-provider-parity.md) until both `V4a` acceptance gates pass and their expected evidence has been collected.
 
 ---
 

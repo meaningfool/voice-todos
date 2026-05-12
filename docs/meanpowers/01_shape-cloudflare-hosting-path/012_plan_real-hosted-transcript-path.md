@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED HANDOFF: use `superpowers:executing-plans` to implement this plan task-by-task. `superpowers:subagent-driven-development` is also acceptable if the environment supports it well. Steps use checkbox syntax for tracking.
 
-**Spec:** [012_spec_real-hosted-transcript-path.md](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/docs/meanpowers/01_shape-cloudflare-hosting-path/012_spec_real-hosted-transcript-path.md)
+**Spec:** [012_spec_real-hosted-transcript-path.md](012_spec_real-hosted-transcript-path.md)
 
 **Goal:** Add the first real Cloudflare Worker + Durable Object hosted transcript path, reusing the `V1` shared session core, preserving the browser `/ws` transcript protocol, and proving real Soniox stop/finalization behavior plus hosted session-cap teardown.
 

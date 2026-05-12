@@ -638,9 +638,9 @@ number.
 - `docs/superpowers/specs/2026-04-13-item7.5-logfire-hosted-dataset-locking-design.md`
 - `docs/superpowers/specs/2026-04-10-item8-stt-provider-abstraction-design.md`
 - `docs/superpowers/specs/2026-04-13-item9.1-voxtral-adapter-design.md`
-- `docs/references/2026-04-13-item9-voxtral-realtime-spike-findings.md`
-- `docs/references/2026-04-13-acceptance-tests-and-verification-policy.md`
-- `docs/references/2026-04-13-phased-spec-plan-acceptance-gates.md`
+- `research/notes/2026-04-13-item9-voxtral-realtime-spike-findings.md`
+- `docs/references/acceptance-tests-and-verification-policy.md`
+- `docs/references/acceptance-tests-and-verification-policy.md`
 - `backend/app/stt.py`
 - `backend/app/stt_soniox.py`
 - `backend/app/stt_mistral.py`

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` or `superpowers:subagent-driven-development` to implement this plan task-by-task.
 
-**Spec:** [022_spec_modal-outlines-extraction-family.md](/Users/josselinperrus/conductor/workspaces/voice-todos/douala/docs/meanpowers/02_qwen-constrained-evals/022_spec_modal-outlines-extraction-family.md)
+**Spec:** [022_spec_modal-outlines-extraction-family.md](022_spec_modal-outlines-extraction-family.md)
 
 **Goal:** Extend the merged DeepInfra benchmark baseline with a third managed `modal-outlines` family, while keeping the `021` two-family DeepInfra contract intact.
 

@@ -16,8 +16,8 @@
 
 This plan follows:
 
-- `docs/references/2026-04-13-phased-spec-plan-acceptance-gates.md`
-- `docs/references/2026-04-13-acceptance-tests-and-verification-policy.md`
+- `docs/references/acceptance-tests-and-verification-policy.md`
+- `docs/references/acceptance-tests-and-verification-policy.md`
 
 Those documents take precedence over the default superpowers plan-writing
 guidance for phase shape, acceptance tests, supporting verification, and

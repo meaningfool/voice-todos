@@ -39,7 +39,7 @@ Out of scope for this plan:
 | `backend/tests/test_stt_mistral_probe.py` | Unit tests for trace formatting, stop-summary logic, and fixture/output path resolution |
 | `scripts/mistral_realtime_probe.py` | CLI entrypoint that streams fixture audio to Voxtral and writes raw JSONL traces |
 | `backend/tests/fixtures/<fixture>/mistral/trace.jsonl` | Provider-native trace artifact for each probed fixture |
-| `docs/references/2026-04-13-item9-voxtral-realtime-spike-findings.md` | Short findings note and seam-mapping table |
+| `research/notes/2026-04-13-item9-voxtral-realtime-spike-findings.md` | Short findings note and seam-mapping table |
 
 Notes:
 
@@ -301,7 +301,7 @@ git commit -m "test: capture voxtral realtime trace fixtures"
 ## Task 4: Write the findings note
 
 **Files:**
-- Create: `docs/references/2026-04-13-item9-voxtral-realtime-spike-findings.md`
+- Create: `research/notes/2026-04-13-item9-voxtral-realtime-spike-findings.md`
 
 The findings note should be short. It should answer the spec's questions, not
 retell the whole investigation.
@@ -335,7 +335,7 @@ Expected: no TODOs, placeholders, or uncategorized behaviors remain
 - [ ] **Step 3: Commit**
 
 ```bash
-git add docs/references/2026-04-13-item9-voxtral-realtime-spike-findings.md
+git add research/notes/2026-04-13-item9-voxtral-realtime-spike-findings.md
 git commit -m "docs: record voxtral spike findings"
 ```
 

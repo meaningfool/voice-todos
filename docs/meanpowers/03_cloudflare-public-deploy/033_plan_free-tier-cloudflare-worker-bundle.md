@@ -32,7 +32,7 @@ Out of scope for this plan:
 - no Cloudflare-side Logfire parity work
 - no new live Mistral public acceptance surface
 
-This plan assumes the `032` deploy entrypoint already exists and that the intended public hostname remains `voice-todos.meaningfool.net` unless the operator explicitly changes it before execution.
+This plan assumes the `032` deploy entrypoint already exists and that the intended public hostname remains `your-public-domain.example.com` unless the operator explicitly changes it before execution.
 
 ---
 
@@ -42,7 +42,7 @@ Before any real Cloudflare publish attempt for this slice, the implementing
 agent must explicitly confirm the current operator-owned prerequisites:
 
 1. Public hostname
-   - default expected value for this workspace: `voice-todos.meaningfool.net`
+   - default expected value for this workspace: `your-public-domain.example.com`
    - if the target hostname changed, stop and update the execution inputs first
 2. Cloudflare authentication
    - confirm `cd cloudflare && uv run pywrangler whoami` succeeds
@@ -88,7 +88,7 @@ This coordination step is not a TDD task.
 | `cloudflare/tests/test_session_runtime.py` | Keeps the hosted runtime acceptance surface current; should stop implying hosted Mistral is part of the accepted public production path |
 | `cloudflare/src/stt_mistral_cf.py` | May remain as deferred in-repo code only if it is no longer part of the routed public production contract |
 | `cloudflare/tests/test_stt_mistral_cf.py` | Optional focused verification for deferred adapter code if that source remains in-repo after the contract narrowing |
-| `docs/references/2026-05-07-mistral-live-validation-findings.md` | Existing findings note that should remain linked as context for the deferred capability rather than being promoted back into the public acceptance surface |
+| `research/notes/2026-05-07-mistral-live-validation-findings.md` | Existing findings note that should remain linked as context for the deferred capability rather than being promoted back into the public acceptance surface |
 
 ### Operator runbook and smoke surface
 
@@ -234,7 +234,7 @@ previously failed:
 
 ```bash
 cd cloudflare && uv run python scripts/deploy_public_app.py \
-  --public-domain voice-todos.meaningfool.net
+  --public-domain your-public-domain.example.com
 ```
 
 Expected:
@@ -287,7 +287,7 @@ Run the required deployed-path smoke after the real publish succeeds:
 
 ```bash
 ./scripts/browser_ui_smoke.sh \
-  "https://voice-todos.meaningfool.net" \
+  "https://your-public-domain.example.com" \
   while-speaking-two-todos
 ```
 

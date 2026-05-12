@@ -43,7 +43,7 @@ The original roadmap framed item 4 as tentative vs confirmed todos. That is no l
 
 The user-provided HTML is the canonical visual reference for this item. It is checked into the repo at:
 
-- `docs/references/2026-03-24-item4-motion-light-reference.html`
+- `research/design/2026-03-24-item4-motion-light-reference.html`
 
 Implementation and planning must open that file directly and treat it as the source of truth for layout, hierarchy, spacing intent, labels, and motion cues. This item is not a loose interpretation exercise.
 

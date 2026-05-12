@@ -32,8 +32,8 @@ Repo evidence:
 
 Relevant code:
 
-- [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/ws.py:92)
-- [backend/app/extraction_loop.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/extraction_loop.py:15)
+- [backend/app/ws.py](../../../backend/app/ws.py)
+- [backend/app/extraction_loop.py](../../../backend/app/extraction_loop.py)
 
 Impact:
 
@@ -50,8 +50,8 @@ Repo evidence:
 
 Relevant code:
 
-- [backend/app/stt_soniox.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/stt_soniox.py:74)
-- [backend/app/stt_soniox.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/stt_soniox.py:122)
+- [backend/app/stt_soniox.py](../../../backend/app/stt_soniox.py)
+- [backend/app/stt_soniox.py](../../../backend/app/stt_soniox.py)
 
 Cloudflare evidence:
 
@@ -85,8 +85,8 @@ Repo evidence:
 
 Relevant code:
 
-- [backend/app/main.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/main.py:25)
-- [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/ws.py:92)
+- [backend/app/main.py](../../../backend/app/main.py)
+- [backend/app/ws.py](../../../backend/app/ws.py)
 
 Cloudflare evidence:
 
@@ -121,10 +121,10 @@ Repo evidence:
 
 Relevant code and lock data:
 
-- [backend/pyproject.toml](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/pyproject.toml:7)
-- [backend/uv.lock](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/uv.lock:927)
-- [backend/uv.lock](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/uv.lock:986)
-- [backend/uv.lock](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/uv.lock:2080)
+- [backend/pyproject.toml](../../../backend/pyproject.toml)
+- [backend/uv.lock](../../../backend/uv.lock)
+- [backend/uv.lock](../../../backend/uv.lock)
+- [backend/uv.lock](../../../backend/uv.lock)
 
 Cloudflare evidence:
 
@@ -164,8 +164,8 @@ Repo evidence:
 
 Relevant code:
 
-- [backend/pyproject.toml](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/pyproject.toml:7)
-- [backend/app/session_recorder.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/session_recorder.py:23)
+- [backend/pyproject.toml](../../../backend/pyproject.toml)
+- [backend/app/session_recorder.py](../../../backend/app/session_recorder.py)
 
 Impact:
 

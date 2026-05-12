@@ -9,7 +9,7 @@ def test_benchmark_report_skip_reason_reads_shared_files(monkeypatch, tmp_path):
     credentials_dir = tmp_path / ".logfire"
     credentials_dir.mkdir()
     (credentials_dir / "logfire_credentials.json").write_text(
-        json.dumps({"project_name": "meaningfool/voice-todos"})
+        json.dumps({"project_name": "acme/voice-todos"})
     )
 
     monkeypatch.setattr(backend_env, "BACKEND_ENV_PATH", env_file)
@@ -31,7 +31,7 @@ def test_benchmark_run_skip_reason_requires_explicit_opt_in(monkeypatch, tmp_pat
     (credentials_dir / "logfire_credentials.json").write_text(
         json.dumps(
             {
-                "project_name": "meaningfool/voice-todos",
+                "project_name": "acme/voice-todos",
                 "token": "logfire-write-token",
             }
         )
@@ -60,7 +60,7 @@ def test_benchmark_run_skip_reason_accepts_shared_env_and_logfire_credentials(
     (credentials_dir / "logfire_credentials.json").write_text(
         json.dumps(
             {
-                "project_name": "meaningfool/voice-todos",
+                "project_name": "acme/voice-todos",
                 "token": "logfire-write-token",
             }
         )
@@ -83,7 +83,7 @@ def test_benchmark_run_skip_reason_falls_back_to_repo_env_dev(monkeypatch, tmp_p
     (credentials_dir / "logfire_credentials.json").write_text(
         json.dumps(
             {
-                "project_name": "meaningfool/voice-todos",
+                "project_name": "acme/voice-todos",
                 "token": "logfire-write-token",
             }
         )
@@ -111,7 +111,7 @@ def test_exported_benchmark_live_smoke_flag_overrides_repo_env_dev(
     (credentials_dir / "logfire_credentials.json").write_text(
         json.dumps(
             {
-                "project_name": "meaningfool/voice-todos",
+                "project_name": "acme/voice-todos",
                 "token": "logfire-write-token",
             }
         )
@@ -142,7 +142,7 @@ def test_hosted_dataset_locking_validation_warning_requires_tracked_run_prereqs(
     credentials_dir = tmp_path / ".logfire"
     credentials_dir.mkdir()
     (credentials_dir / "logfire_credentials.json").write_text(
-        json.dumps({"project_name": "meaningfool/voice-todos"})
+        json.dumps({"project_name": "acme/voice-todos"})
     )
 
     monkeypatch.setattr(backend_env, "BACKEND_ENV_PATH", env_file)
@@ -164,7 +164,7 @@ def test_stale_benchmark_detection_validation_warning_requires_dataset_token(
     credentials_dir = tmp_path / ".logfire"
     credentials_dir.mkdir()
     (credentials_dir / "logfire_credentials.json").write_text(
-        json.dumps({"project_name": "meaningfool/voice-todos"})
+        json.dumps({"project_name": "acme/voice-todos"})
     )
 
     monkeypatch.setattr(backend_env, "BACKEND_ENV_PATH", env_file)
@@ -190,7 +190,7 @@ def test_benchmark_run_report_smoke_validation_warning_requires_dataset_token(
     (credentials_dir / "logfire_credentials.json").write_text(
         json.dumps(
             {
-                "project_name": "meaningfool/voice-todos",
+                "project_name": "acme/voice-todos",
                 "token": "logfire-write-token",
             }
         )
@@ -221,7 +221,7 @@ def test_stale_benchmark_actions_validation_warning_accepts_full_shared_setup(
     (credentials_dir / "logfire_credentials.json").write_text(
         json.dumps(
             {
-                "project_name": "meaningfool/voice-todos",
+                "project_name": "acme/voice-todos",
                 "token": "logfire-write-token",
             }
         )
@@ -248,7 +248,7 @@ def test_benchmark_run_report_smoke_validation_warning_accepts_full_shared_setup
     (credentials_dir / "logfire_credentials.json").write_text(
         json.dumps(
             {
-                "project_name": "meaningfool/voice-todos",
+                "project_name": "acme/voice-todos",
                 "token": "logfire-write-token",
             }
         )

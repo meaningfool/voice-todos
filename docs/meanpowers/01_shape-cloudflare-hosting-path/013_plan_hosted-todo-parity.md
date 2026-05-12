@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED HANDOFF: use `superpowers:executing-plans` to implement this plan task-by-task. `superpowers:subagent-driven-development` is also acceptable if the environment supports it well. Steps use checkbox syntax for tracking.
 
-**Spec:** [013_spec_hosted-todo-parity.md](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/docs/meanpowers/01_shape-cloudflare-hosting-path/013_spec_hosted-todo-parity.md)
+**Spec:** [013_spec_hosted-todo-parity.md](013_spec_hosted-todo-parity.md)
 
 **Goal:** Move todo extraction behavior behind a shared coordinator so the local FastAPI `/ws` path and the hosted Cloudflare `/ws` path produce the same live todo updates, final-stop todo handling, fallback resend behavior, warning behavior, and `todos` before `stopped` ordering.
 
@@ -179,7 +179,7 @@ Evidence to collect:
 - local acceptance output
 - hosted acceptance output
 - hosted smoke output from `scripts/ws_smoke.py`
-- code references to [backend/app/extraction_loop.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/extraction_loop.py), [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py), and [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py)
+- code references to [backend/app/extraction_loop.py](../../../backend/app/extraction_loop.py), [backend/app/ws.py](../../../backend/app/ws.py), and [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py)
 
 ---
 

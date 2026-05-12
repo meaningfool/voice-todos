@@ -494,8 +494,8 @@ is the preserved behavior proof plus the cleaned-up permanent test surface.
 
 ## References
 
-- `docs/references/2026-04-13-acceptance-tests-and-verification-policy.md`
-- `docs/references/2026-04-13-phased-spec-plan-acceptance-gates.md`
+- `docs/references/acceptance-tests-and-verification-policy.md`
+- `docs/references/acceptance-tests-and-verification-policy.md`
 - `backend/tests/`
 - `tests/live/benchmarks/`
 - `scripts/test_audio_pipeline.sh`

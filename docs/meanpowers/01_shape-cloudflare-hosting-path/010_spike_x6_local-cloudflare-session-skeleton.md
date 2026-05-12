@@ -34,7 +34,7 @@ Durable Object prototype:
 
 ## Implementation Artifact
 
-- Prototype project: [research/x6-cloudflare-session-skeleton](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/research/x6-cloudflare-session-skeleton/README.md)
+- Prototype project: [research/x6-cloudflare-session-skeleton](../../../research/x6-cloudflare-session-skeleton/README.md)
 
 ## Findings
 
@@ -117,7 +117,7 @@ This spike does not reduce the main provider-side risk.
 Evidence:
 
 - The prototype used no outbound Soniox connection.
-- The current backend still depends on `websockets.connect` in [backend/app/stt_soniox.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/stt_soniox.py:1).
+- The current backend still depends on `websockets.connect` in [backend/app/stt_soniox.py](../../../backend/app/stt_soniox.py).
 
 Impact:
 

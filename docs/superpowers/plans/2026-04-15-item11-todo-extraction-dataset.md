@@ -10,7 +10,7 @@
 
 **Tech Stack:** JSON dataset assets, Pydantic Evals dataset loader, Logfire hosted datasets, benchmark CLI, pytest
 
-**Reference:** `docs/references/2026-04-16-logfire-query-api-notes.md`
+**Reference:** `research/notes/2026-04-16-logfire-query-api-notes.md`
 
 ---
 

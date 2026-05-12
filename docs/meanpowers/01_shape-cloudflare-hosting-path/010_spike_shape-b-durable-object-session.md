@@ -29,8 +29,8 @@ Repo evidence:
 
 Relevant code:
 
-- [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/ws.py:92)
-- [backend/app/extraction_loop.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/extraction_loop.py:15)
+- [backend/app/ws.py](../../../backend/app/ws.py)
+- [backend/app/extraction_loop.py](../../../backend/app/extraction_loop.py)
 
 Cloudflare evidence:
 

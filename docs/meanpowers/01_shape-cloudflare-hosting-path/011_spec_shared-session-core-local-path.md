@@ -8,15 +8,15 @@
 
 ## Baseline
 
-The current local app runs the live voice-todo session through [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py). That route currently accepts the browser WebSocket, parses `start` and `stop`, opens the STT session, forwards audio, relays transcript events, coordinates stop finalization, runs todo extraction, sends todo snapshots, and performs cleanup.
+The current local app runs the live voice-todo session through [backend/app/ws.py](../../../backend/app/ws.py). That route currently accepts the browser WebSocket, parses `start` and `stop`, opens the STT session, forwards audio, relays transcript events, coordinates stop finalization, runs todo extraction, sends todo snapshots, and performs cleanup.
 
-The browser contract is consumed by [frontend/src/hooks/useTranscript.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/frontend/src/hooks/useTranscript.ts) and expects `started`, `transcript`, `todos`, `stopped`, and `error` messages over `/ws`.
+The browser contract is consumed by [frontend/src/hooks/useTranscript.ts](../../../frontend/src/hooks/useTranscript.ts) and expects `started`, `transcript`, `todos`, `stopped`, and `error` messages over `/ws`.
 
 Some core pieces are already runtime-neutral:
 
-- [backend/app/stt.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/stt.py)
-- [backend/app/transcript_accumulator.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/transcript_accumulator.py)
-- [backend/app/extraction_loop.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/extraction_loop.py)
+- [backend/app/stt.py](../../../backend/app/stt.py)
+- [backend/app/transcript_accumulator.py](../../../backend/app/transcript_accumulator.py)
+- [backend/app/extraction_loop.py](../../../backend/app/extraction_loop.py)
 
 But the current session lifecycle is still centered in the FastAPI adapter, which leaves no clean shared seam for the later Cloudflare runtime.
 
@@ -44,7 +44,7 @@ The local browser-visible contract stays unchanged. The frontend still connects 
 
 ## Architecture
 
-The new boundary is a shared live session controller extracted from [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py).
+The new boundary is a shared live session controller extracted from [backend/app/ws.py](../../../backend/app/ws.py).
 
 The controller is runtime-neutral and depends on the existing provider seam:
 
@@ -131,7 +131,7 @@ The intended externally visible change is none. The intended internal change is 
 
 ## Design And Implementation Constraints
 
-- Preserve the `/ws` contract consumed by [frontend/src/hooks/useTranscript.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/frontend/src/hooks/useTranscript.ts).
+- Preserve the `/ws` contract consumed by [frontend/src/hooks/useTranscript.ts](../../../frontend/src/hooks/useTranscript.ts).
 - Preserve current stop semantics, including finalize-before-EOS ordering.
 - Preserve use of provider-supplied `final_transcript_text` when available.
 - Keep the shared controller free of FastAPI, browser WebSocket, and local todo/recording dependencies.

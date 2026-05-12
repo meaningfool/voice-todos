@@ -53,9 +53,9 @@ Repo evidence:
 
 Relevant code:
 
-- [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/ws.py:92)
-- [backend/app/transcript_accumulator.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/transcript_accumulator.py:18)
-- [backend/app/extraction_loop.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/extraction_loop.py:15)
+- [backend/app/ws.py](../../../backend/app/ws.py)
+- [backend/app/transcript_accumulator.py](../../../backend/app/transcript_accumulator.py)
+- [backend/app/extraction_loop.py](../../../backend/app/extraction_loop.py)
 
 Impact:
 
@@ -98,8 +98,8 @@ Repo evidence:
 
 Relevant code:
 
-- [frontend/package.json](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/frontend/package.json)
-- [backend/pyproject.toml](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/pyproject.toml)
+- [frontend/package.json](../../../frontend/package.json)
+- [backend/pyproject.toml](../../../backend/pyproject.toml)
 
 Cloudflare evidence:
 

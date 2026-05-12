@@ -1,362 +1,195 @@
-# Architecture Walkthrough: Decisions, Revisions, and Gotchas
+# Architecture Walkthrough
 
-This is the high-level walkthrough for the current `voice-todos` architecture.
+This is the durable overview of how the current `voice-todos` app is put
+together.
 
-It is not a file-by-file code tour. It focuses on the places where the original plan turned out to be incomplete, where implementation reality forced a change, and where future work is most likely to go wrong if you miss an architectural assumption.
+It is intentionally about stable boundaries and invariants, not about old item
+numbers or branch history.
 
-## Why this document exists
+## System Shape
 
-There are two stories in this repo:
+The user-facing flow is:
 
-1. the planned architecture in the item specs and plans
-2. the corrected architecture we arrived at after debugging real Soniox behavior, hardening the runtime, and revising the product direction
+`browser mic -> same-origin /ws -> runtime adapter -> STT session -> transcript state -> todo extraction -> todo snapshots -> browser UI`
 
-The tricky parts live in the gap between those two stories.
+Two runtime adapters implement that flow:
 
-## The System In One Page
+- local FastAPI in [backend/app/ws.py](../../backend/app/ws.py)
+- hosted Cloudflare Worker + Durable Object in
+  [cloudflare/src/entry.py](../../cloudflare/src/entry.py) and
+  [cloudflare/src/session_runtime.py](../../cloudflare/src/session_runtime.py)
 
-The current runtime shape is:
+The frontend stays runtime-agnostic and always talks to same-origin `/ws`
+through [frontend/src/hooks/useTranscript.ts](../../frontend/src/hooks/useTranscript.ts).
 
-`browser mic -> frontend WebSocket -> FastAPI -> Soniox RT -> TranscriptAccumulator -> ExtractionLoop -> Gemini -> todos snapshots -> frontend`
+## Browser Contract
 
-The important thing is not the boxes. It is the ownership boundaries:
+The browser protocol is small and stable.
 
-- Soniox owns streaming speech recognition
-- the backend owns transcript assembly and stop-time correctness
-- Gemini owns todo extraction from transcript snapshots
-- the frontend owns presentation and session lifecycle, but not canonical transcript truth
+Control messages sent by the browser:
 
-If you keep those boundaries clear, the rest of the codebase makes sense.
+- `start`
+- `stop`
+- binary audio frames
 
-## Read In This Order
+Messages sent back by the runtime:
 
-If you are onboarding or revisiting the architecture, read these first:
+- `started`
+- `transcript`
+- `todos`
+- `stopped`
+- `error`
 
-1. `docs/references/soniox.md`
-2. `learnings.md`
-3. `docs/superpowers/specs/2026-03-24-item2.5-reliability-hardening-design.md`
-4. `docs/superpowers/specs/2026-03-24-item3-todos-while-speaking-design.md`
-5. `docs/superpowers/specs/2026-03-24-item4-ui-redesign-design.md`
-6. `backend/app/transcript_accumulator.py`
-7. `backend/app/extraction_loop.py`
-8. `backend/app/ws.py`
-9. `frontend/src/hooks/useTranscript.ts`
+That contract is the seam that lets the same frontend work against both the
+local FastAPI path and the hosted Cloudflare path.
 
-That sequence gives the design intent, the debugging lessons, and then the runtime seams.
+## Runtime Adapters
 
-## The Architectural Choices That Actually Matter
+The adapters own transport concerns, not the core session semantics.
 
-### 1. Stop correctness is a Soniox protocol problem, not a browser flush problem
+### Local FastAPI
 
-This was the biggest design correction.
+[backend/app/ws.py](../../backend/app/ws.py) accepts the browser WebSocket and
+wires together:
 
-The first assumption was: if trailing words are missing, audio is probably being lost between the browser and the backend during stop. That led to stop-delay experiments and a now-removed 300ms flush idea.
+- settings
+- STT session creation
+- the live-session controller
+- the extraction loop
+- optional session recording
 
-What we learned instead:
+### Hosted Cloudflare
 
-- Soniox `b""` means "no more audio"
-- it does not mean "finalize pending interim tokens"
-- Soniox needs an explicit `{"type": "finalize"}` control message before the stream is ended
+[cloudflare/src/entry.py](../../cloudflare/src/entry.py) routes `/ws` upgrades
+to a Durable Object. [cloudflare/src/session_runtime.py](../../cloudflare/src/session_runtime.py)
+owns the hosted session actor, session-cap handling, and browser socket
+adaptation.
 
-That distinction is the reason the trailing-word bug existed.
+The hosted runtime also supports a deterministic smoke-fixture path so browser
+validation can exercise the real app boundary without a live microphone.
 
-The key invariant is:
+## Session Core
 
-- do not treat stop as complete until the backend has allowed Soniox finalization to flow through the relay path
+The main runtime-neutral session lifecycle lives in
+[backend/app/live_session.py](../../backend/app/live_session.py).
 
-Two related gotchas:
+`LiveSessionController` owns:
 
-- `<fin>` is a protocol marker, not transcript text, so it must be filtered
-- after `<fin>`, previously tracked interim text is stale and must be cleared or you can duplicate transcript text
+- opening the provider session
+- relaying provider events
+- feeding transcript updates into the accumulator
+- stop-time finalization and timeout handling
+- closing provider resources cleanly
 
-Important nuance:
+The important point is that transcript correctness and stop semantics live on
+the server side, not in the browser.
 
-- the current frontend still has a 200ms mic-tail delay
-- that is not the root transcript fix
-- the root transcript fix is manual finalization
+## Transcript Ownership
 
-If someone "optimizes" stop handling without understanding this, trailing words will come back as a bug.
+[backend/app/transcript_accumulator.py](../../backend/app/transcript_accumulator.py)
+is the canonical transcript seam.
 
-### 2. The backend owns the canonical final transcript
+It translates provider events into:
 
-Originally the frontend reconstructed transcript state from streaming token events and tried to preserve the tail on stop.
+- stable transcript text
+- provisional transcript text
+- full transcript text
+- boundary observations such as finalization or endpoint markers
 
-That turned out to be the wrong ownership model for session completion.
+Durable invariants:
 
-The current design is:
+- protocol markers such as `<fin>` and `<end>` are not transcript text
+- the runtime owns the canonical final transcript
+- the `stopped` payload is the source of truth for the final transcript shown
+  to the user
 
-- live token messages are for responsive UI updates
-- the backend-assembled transcript sent in `stopped` is the source of truth for the final session result
+If transcript behavior changes, start here rather than in the React hook.
 
-Why this matters:
+## STT Abstraction
 
-- the backend sees the full Soniox stream, including finalize semantics
-- the backend owns `TranscriptAccumulator`
-- the frontend should not have to reverse-engineer stop-time transcript correctness from UI timing
+[backend/app/stt.py](../../backend/app/stt.py) defines the `SttSession`
+protocol plus capability flags. That protocol hides provider-specific transport
+details behind a common interface:
 
-This choice prevents a whole class of "the UI lost text but the backend had it" bugs.
+- `send_audio`
+- `request_final_transcript`
+- `end_stream`
+- `wait_for_final_transcript`
+- `close`
+- async iteration over normalized `SttEvent`s
 
-Rule of thumb:
+Provider-specific normalization is shared under [shared/](../../shared):
 
-- if you are changing final transcript behavior, start in the backend, not the React hook
+- [shared/stt_soniox_shared.py](../../shared/stt_soniox_shared.py)
+- [shared/stt_mistral_shared.py](../../shared/stt_mistral_shared.py)
 
-### 3. `TranscriptAccumulator` is a core seam, not a helper
+Important provider differences:
 
-`backend/app/transcript_accumulator.py` looks small, but architecturally it is one of the most important files in the repo.
+- Soniox exposes explicit finalization and endpoint boundaries
+- Mistral does not expose those boundaries in the same way and instead yields a
+  final transcript on `transcription.done`
+- the public hosted Cloudflare bundle intentionally supports only Soniox today
 
-It centralizes:
+## Todo Extraction Model
 
-- final token accumulation
-- interim token replacement
-- `<fin>` handling
-- `<end>` filtering and detection
-- stop-time full transcript assembly
+[backend/app/extraction_loop.py](../../backend/app/extraction_loop.py) owns
+when extraction runs.
 
-The important design choice here was to stop duplicating transcript logic in tests and runtime.
+It triggers background extraction when:
 
-That is why replay tests now run through production accumulation behavior instead of a test-only reconstruction path. Without that change, we could have green tests that blessed the wrong algorithm.
+- the provider exposes an endpoint boundary, or
+- transcript growth crosses the configured token threshold
 
-Rule of thumb:
+It also owns stop-time behavior:
 
-- if transcript semantics change, update `TranscriptAccumulator` first and make tests use that path
+- wait for any in-flight extraction
+- run one final extraction only if the final transcript changed
+- resend the last successful todo snapshot on transcript timeout or extraction
+  failure
 
-### 4. Todo extraction is snapshot-based, not patch-based
+The extraction result is snapshot-based, not patch-based. Each update is the
+current best full todo list, not a stream of incremental todo mutations.
 
-This is the second major architectural shift after Soniox finalization.
+## Extraction Engine
 
-The tempting design would have been:
+[backend/app/extract.py](../../backend/app/extract.py) is the typed extraction
+layer. It turns transcript text plus optional `previous_todos` into structured
+`Todo` items.
 
-- give todos stable IDs
-- send incremental patches
-- mark items as tentative vs confirmed
+The local runtime uses the main backend extraction path directly. The hosted
+runtime keeps a small worker-specific `app.*` compatibility layer under
+[cloudflare/src/app/](../../cloudflare/src/app) where the worker runtime needs
+different settings, models, or extraction implementation details.
 
-That is not how the current system actually works.
+That split is a code-layout detail worth knowing:
 
-The current design is:
+- most core session logic still comes from `backend/app`
+- Cloudflare bootstraps `backend/` imports through
+  [cloudflare/src/repo_bootstrap.py](../../cloudflare/src/repo_bootstrap.py)
+- `cloudflare/src/app/*` exists only for the worker-specific overrides
 
-- Gemini receives the full current transcript
-- optionally receives `previous_todos`
-- returns the updated complete todo list
-- the backend sends the full list snapshot
-- the frontend replaces its rendered todo list with the latest snapshot
+## Stop-Time Invariants
 
-This matters because later speech can:
+These are the easiest invariants to accidentally break:
 
-- refine an earlier todo
-- merge two earlier todos
-- remove a mistaken earlier todo
-- reorder the list slightly
+- stop is a protocol boundary, not just a UI event
+- the runtime must request provider finalization before ending the stream
+- final transcript correctness is more important than immediate shutdown
+- if finalization times out, the runtime should surface a warning and keep the
+  last known todo snapshot rather than fabricate certainty
 
-In other words, the extraction model is "current best understanding," not append-only event sourcing.
+Any refactor that touches stop handling should be checked against
+[docs/references/soniox.md](./soniox.md).
 
-Important consequence:
+## Read This Next
 
-- the frontend must not assume item identity is stable across snapshots
+If you are orienting in the codebase, read in this order:
 
-That is also why item 4 changed direction. Tentative-vs-confirmed UI was the wrong abstraction for a system whose real behavior is repeated snapshot replacement with best-effort refinement.
-
-### 5. `ExtractionLoop` is intentionally collapse-based, not queue-based
-
-`backend/app/extraction_loop.py` is where the repo makes its main concurrency tradeoff.
-
-The choice was:
-
-- do not queue every trigger
-- do not run overlapping extractions
-- use a dirty flag to collapse multiple triggers into one rerun
-
-Why this is the right shape:
-
-- extraction is expensive
-- the transcript can change while an extraction is in flight
-- the user cares about the latest good snapshot, not every intermediate snapshot
-
-So the loop behaves like this:
-
-- endpoint or token-threshold trigger starts extraction
-- if another trigger arrives while extraction is running, mark the loop dirty
-- when the current extraction finishes, run again once with the latest transcript
-
-That keeps the system current without spawning redundant LLM work.
-
-One more implementation detail matters here:
-
-- the original item 3 design started with a 30-token fallback threshold
-- the current runtime in `backend/app/ws.py` is tuned to `TOKEN_THRESHOLD = 10`
-- Soniox endpoint detection is enabled with `max_endpoint_delay_ms = 1000`
-
-Treat those numbers as runtime tuning knobs, not as fixed product semantics.
-
-### 6. Stop is special: it must produce one final pass from finalized transcript state
-
-The stop path is not just "another trigger."
-
-This is a real architectural rule:
-
-- if an extraction is already running when stop is requested, let it finish
-- then run exactly one final extraction pass from the finalized transcript
-- only then send `stopped`
-
-That guarantees the session ends from finalized transcript state rather than from an arbitrary mid-stream snapshot.
-
-There is also an important protocol guarantee in `backend/app/ws.py`:
-
-- the session should still emit `todos` before `stopped`
-
-Even in degraded cases:
-
-- if final extraction times out, we send an empty or last-known `todos` snapshot plus a warning
-- if final extraction fails, we preserve the last good snapshot and still complete the stop flow
-
-This avoids silent data loss and keeps the frontend state machine simple.
-
-The gotcha to remember is that stop behavior is partly about user-facing protocol stability, not just correctness inside the backend.
-
-### 7. Relative dates need explicit runtime context
-
-This looks like a prompt detail, but it is really an architecture decision.
-
-The original extraction idea asked the model to resolve phrases like "tomorrow" or "next Friday" without a concrete reference datetime or timezone.
-
-That is under-specified.
-
-The corrected design is:
-
-- build extraction input with current local datetime, date, and timezone
-- validate `due_date` as `date`
-- validate `notification` as `datetime`
-
-Why this matters:
-
-- temporal extraction is not deterministic without grounding
-- accepting arbitrary strings makes downstream behavior look structured when it really is not
-
-If you touch extraction prompting or schema, preserve both of these safeguards:
-
-- explicit temporal context
-- typed validation at the model boundary
-
-### 8. Reliability hardening is part of the architecture, not cleanup work
-
-Item 2.5 matters because it changed what "safe enough" means in this repo.
-
-The important choices were:
-
-- session recording is opt-in, not always on
-- warnings are surfaced to the user instead of hiding degradation
-- default tests are deterministic and vendor-independent
-- live Soniox and Gemini tests are opt-in
-
-These are not just DX details. They protect privacy, keep CI stable, and make debugging meaningful.
-
-The repo is explicitly designed so that:
-
-- normal test runs do not depend on external vendors
-- when you need real-vendor confidence, you run dedicated integration or e2e checks
-- if runtime behavior degrades, the system says so instead of pretending everything is fine
-
-### 9. The UI roadmap was revised because the architecture changed underneath it
-
-The original roadmap for item 4 focused on tentative vs confirmed todos.
-
-That no longer matches the real system.
-
-After item 3, the more important truths were:
-
-- todos arrive while speaking
-- todo lists are snapshots, not stable objects
-- the product should feel todo-first, not transcript-first
-- transcript and raw recording are still valuable, but mainly as secondary debug surfaces
-
-So the revised item 4 is a UI rewrite, not a workflow rewrite.
-
-That is an important product-architecture decision:
-
-- the main shell should present evolving task output
-- debugging data should remain available without dominating the main interaction model
-
-If someone revisits the UI later, they should start from the item 4 spec, not from the older "tentative vs confirmed" framing.
-
-Also note:
-
-- the current `frontend/src/App.tsx` still reflects the pre-refresh shell
-- the item 4 spec and plan describe the intended UI direction more accurately than the current rendered surface
-
-## The Main Gotchas Future Work Can Trip Over
-
-- Do not confuse Soniox "finalize" with "finish".
-- Do not rebuild final transcript truth in the frontend.
-- Do not add a second transcript assembly path in tests.
-- Do not assume todo snapshots have stable identity.
-- Do not queue overlapping extractions unless you are intentionally changing system behavior.
-- Do not let stop skip the final extraction pass on finalized transcript state.
-- Do not add silent fallback behavior when a warning would be more honest.
-- Do not let vendor-dependent tests become the default confidence mechanism.
-- Do not reintroduce always-on session recording by accident.
-
-## Suggested Walkthroughs By Topic
-
-### If you want to understand stop-time correctness
-
-Read:
-
-- `docs/references/soniox.md`
-- `learnings.md`
-- `backend/app/transcript_accumulator.py`
-- `backend/app/ws.py`
-- `backend/tests/test_soniox_integration.py`
-- `backend/tests/test_ws.py`
-
-### If you want to understand incremental todos while speaking
-
-Read:
-
-- `docs/superpowers/specs/2026-03-24-item3-todos-while-speaking-design.md`
-- `backend/app/extraction_loop.py`
-- `backend/app/extract.py`
-- `backend/tests/test_extraction_loop.py`
-- `backend/tests/test_e2e.py`
-
-### If you want to understand why the frontend contract looks the way it does
-
-Read:
-
-- `frontend/src/hooks/useTranscript.ts`
-- `frontend/src/hooks/transcriptReducer.ts`
-- `docs/superpowers/specs/2026-03-24-item2.5-reliability-hardening-design.md`
-- `docs/superpowers/specs/2026-03-24-item4-ui-redesign-design.md`
-
-### If you want to understand the trust model of the test suite
-
-Read:
-
-- `docs/handoff-interim-text-and-testing.md`
-- `docs/superpowers/specs/2026-03-24-item2.5-reliability-hardening-design.md`
-- `backend/tests/test_replay.py`
-- `backend/tests/test_ws.py`
-- `backend/tests/test_soniox_integration.py`
-- `backend/tests/test_e2e.py`
-
-## Historical Turning Points
-
-If you want the shortest history of the key architecture corrections, these commits are the most informative:
-
-- `6561f30` - preserve transcript on stop and use interim fallback
-- `10da487` - interim-tail debugging and stop-sequence hypothesis
-- `6b1773f` - explicit Soniox finalize before end-of-stream
-- `96cb58e` - reliability hardening and shared transcript/runtime cleanup
-- `0f83d3c` - item 3 design for while-speaking snapshots
-
-The most important thing about that history is that the first fixes were locally reasonable but incomplete. The durable improvements came when we corrected the architectural assumptions, not just the symptoms.
-
-## The Mental Model To Keep
-
-If you only remember five things, remember these:
-
-1. Soniox stop correctness depends on explicit finalization semantics.
-2. Final transcript truth belongs to the backend.
-3. Incremental todos are full-list snapshots, not stable entities.
-4. Extraction concurrency is intentionally collapsed, not queued.
-5. Reliability here means explicit degradation, deterministic tests, and opt-in vendor checks.
-
-That is the real architecture of this project.
+1. [soniox.md](./soniox.md)
+2. [2026-04-13-credential-storage-and-logfire-access.md](./2026-04-13-credential-storage-and-logfire-access.md)
+3. [backend/app/live_session.py](../../backend/app/live_session.py)
+4. [backend/app/transcript_accumulator.py](../../backend/app/transcript_accumulator.py)
+5. [backend/app/extraction_loop.py](../../backend/app/extraction_loop.py)
+6. [backend/app/ws.py](../../backend/app/ws.py)
+7. [cloudflare/src/session_runtime.py](../../cloudflare/src/session_runtime.py)
+8. [frontend/src/hooks/useTranscript.ts](../../frontend/src/hooks/useTranscript.ts)

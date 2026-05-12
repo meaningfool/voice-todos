@@ -1,8 +1,7 @@
 [project]
 name = "voice-todos-backend"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "FastAPI local runtime and eval harness for the voice-todos repo"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.135.1",

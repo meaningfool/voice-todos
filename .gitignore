@@ -24,6 +24,10 @@ cloudflare/**/__pycache__/
 .idea/
 .vscode/
 *.swp
+.DS_Store
+
+# Repo-local env toggles
+.env.dev
 
 # Dev scripts
 .pid.*

@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED HANDOFF: use `superpowers:executing-plans` to implement this plan task-by-task. `superpowers:subagent-driven-development` is also acceptable if the environment supports it well. Steps use checkbox syntax for tracking.
 
-**Spec:** [016_spec_real-frontend-runtime-switching.md](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/docs/meanpowers/01_shape-cloudflare-hosting-path/016_spec_real-frontend-runtime-switching.md)
+**Spec:** [016_spec_real-frontend-runtime-switching.md](016_spec_real-frontend-runtime-switching.md)
 
 **Goal:** Make the real frontend app UI runnable against either local FastAPI or local Cloudflare without editing frontend websocket code, while preserving the existing `/ws` contract and making real-UI browser validation deterministic.
 
-**Architecture:** Keep [frontend/src/hooks/useTranscript.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/frontend/src/hooks/useTranscript.ts) runtime-agnostic and still opening `/ws`. Add explicit dev-time backend selection in [frontend/vite.config.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/frontend/vite.config.ts), make [cloudflare/src/entry.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/entry.py) accept plain `/ws`, and add a dev-only fixture-audio path in the real app UI so `agent-browser` can exercise the actual app deterministically without a live microphone.
+**Architecture:** Keep [frontend/src/hooks/useTranscript.ts](../../../frontend/src/hooks/useTranscript.ts) runtime-agnostic and still opening `/ws`. Add explicit dev-time backend selection in [frontend/vite.config.ts](../../../frontend/vite.config.ts), make [cloudflare/src/entry.py](../../../cloudflare/src/entry.py) accept plain `/ws`, and add a dev-only fixture-audio path in the real app UI so `agent-browser` can exercise the actual app deterministically without a live microphone.
 
 **Tech Stack:** React 19, Vite 8, Vitest, FastAPI, Cloudflare workers-py / pywrangler, uv, pytest, `agent-browser`
 
@@ -106,8 +106,8 @@ Even if one manual run works, the slice is incomplete if runtime switching is am
 - The Cloudflare Worker accepts plain `/ws` from the frontend instead of requiring a frontend-supplied `session` query parameter.
 
 **Proof**
-- **Config proof:** inspect [frontend/vite.config.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/frontend/vite.config.ts) and show explicit runtime-selection behavior
-- **Worker proof:** inspect [cloudflare/src/entry.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/entry.py) and show plain `/ws` compatibility for real frontend requests
+- **Config proof:** inspect [frontend/vite.config.ts](../../../frontend/vite.config.ts) and show explicit runtime-selection behavior
+- **Worker proof:** inspect [cloudflare/src/entry.py](../../../cloudflare/src/entry.py) and show plain `/ws` compatibility for real frontend requests
 - **Negative-config proof:** run the frontend with an invalid `WS_BACKEND` value and assert startup fails clearly rather than silently proxying to an unintended target
 
 **Expected evidence**
