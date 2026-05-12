@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from evals.hosted_datasets import canonical_dataset_hash, export_hosted_dataset
 from evals.models import BenchmarkRunResult
@@ -10,12 +11,11 @@ from evals.resolution import resolve_entry_config
 from evals.storage import (
     benchmark_lock_path,
     exported_dataset_matches_lock,
-    lock_from_exported_dataset,
     load_benchmark_by_id,
     load_benchmark_lock,
+    lock_from_exported_dataset,
     write_benchmark_lock,
 )
-from evals.models import LockedDatasetDefinition
 
 
 @dataclass
@@ -38,8 +38,9 @@ class BenchmarkStaleError(RuntimeError):
         self.benchmark_id = benchmark_id
         self.lock_path = lock_path
         super().__init__(
-            f"Benchmark '{benchmark_id}' is stale. Re-run with --allow-stale to keep using "
-            f"the locked snapshot at {lock_path}, or --rebase to adopt the current hosted dataset."
+            f"Benchmark '{benchmark_id}' is stale. Re-run with --allow-stale "
+            f"to keep using the locked snapshot at {lock_path}, or --rebase "
+            "to adopt the current hosted dataset."
         )
 
 
@@ -74,6 +75,18 @@ async def launch_replay_entry(**kwargs):
     return await _launch_replay_entry(**kwargs)
 
 
+async def open_managed_session(*, resolved_config):
+    from evals.managed_sessions import open_managed_session as _open_managed_session
+
+    return await _open_managed_session(resolved_config=resolved_config)
+
+
+async def close_managed_session(lease):
+    from evals.managed_sessions import close_managed_session as _close_managed_session
+
+    await _close_managed_session(lease)
+
+
 async def run_benchmark(
     *,
     benchmark_id: str,
@@ -89,7 +102,9 @@ async def run_benchmark(
     if resolved_dataset_path is None:
         lock_state = inspect_benchmark_lock_state(benchmark)
         if not lock_state.active_lock_exists:
-            resolved_dataset_path = _write_lock_from_export(benchmark, lock_state.exported_payload)
+            resolved_dataset_path = _write_lock_from_export(
+                benchmark, lock_state.exported_payload
+            )
         elif lock_state.stale:
             if rebase:
                 resolved_dataset_path = _write_lock_from_export(
@@ -107,41 +122,67 @@ async def run_benchmark(
         else:
             resolved_dataset_path = lock_state.lock_path
 
-    state = CurrentBenchmarkState() if force_all_entries else load_current_benchmark_state(benchmark)
+    state = (
+        CurrentBenchmarkState()
+        if force_all_entries
+        else load_current_benchmark_state(benchmark)
+    )
     entries = [
         entry
         for entry in benchmark.entries
         if all_entries or entry.id not in state.current_entry_ids
     ]
+    resolved_entries = [
+        (entry, resolve_entry_config(benchmark=benchmark, entry=entry))
+        for entry in entries
+    ]
 
     batch_ids: dict[str, str] = {}
-    for entry in entries:
-        resolved = resolve_entry_config(benchmark=benchmark, entry=entry)
-        if resolved.suite == "extraction_quality":
-            result = await launch_extraction_entry(
-                entry=entry,
-                resolved_config=resolved,
-                dataset_path=resolved_dataset_path,
-                repeat=benchmark.repeat,
-                task_retries=benchmark.task_retries,
-                max_concurrency=benchmark.max_concurrency,
-                allow_untracked=allow_untracked,
-            )
-        elif resolved.suite == "incremental_extraction_quality":
-            result = await launch_replay_entry(
-                entry=entry,
-                resolved_config=resolved,
-                dataset_path=resolved_dataset_path,
-                repeat=benchmark.repeat,
-                task_retries=benchmark.task_retries,
-                max_concurrency=benchmark.max_concurrency,
-                allow_untracked=allow_untracked,
-            )
-        else:
+    managed_groups: dict[tuple[Any, ...], list[tuple[Any, Any]]] = {}
+    managed_group_order: list[tuple[Any, ...]] = []
+
+    for entry, resolved in resolved_entries:
+        if _is_managed_extraction_entry(resolved):
+            group_key = _managed_group_key(resolved)
+            if group_key not in managed_groups:
+                managed_groups[group_key] = []
+                managed_group_order.append(group_key)
+            managed_groups[group_key].append((entry, resolved))
             continue
+
+        result = await _launch_resolved_entry(
+            entry=entry,
+            resolved=resolved,
+            dataset_path=resolved_dataset_path,
+            repeat=benchmark.repeat,
+            task_retries=benchmark.task_retries,
+            max_concurrency=benchmark.max_concurrency,
+            allow_untracked=allow_untracked,
+        )
         batch_id = result.get("batch_id")
         if batch_id:
             batch_ids[entry.id] = batch_id
+
+    for group_key in managed_group_order:
+        group_entries = managed_groups[group_key]
+        lease = await open_managed_session(resolved_config=group_entries[0][1])
+        try:
+            for entry, resolved in group_entries:
+                result = await _launch_resolved_entry(
+                    entry=entry,
+                    resolved=resolved,
+                    dataset_path=resolved_dataset_path,
+                    repeat=benchmark.repeat,
+                    task_retries=benchmark.task_retries,
+                    max_concurrency=benchmark.max_concurrency,
+                    allow_untracked=allow_untracked,
+                    managed_lease=lease,
+                )
+                batch_id = result.get("batch_id")
+                if batch_id:
+                    batch_ids[entry.id] = batch_id
+        finally:
+            await close_managed_session(lease)
 
     return BenchmarkRunResult(
         benchmark_id=benchmark.benchmark_id,
@@ -202,3 +243,58 @@ def _write_lock_from_export(benchmark, exported: dict | None) -> Path:
         fetched_at=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
     )
     return write_benchmark_lock(lock)
+
+
+def _is_managed_extraction_entry(resolved) -> bool:
+    return (
+        resolved.suite == "extraction_quality"
+        and getattr(resolved, "managed_session", None) is not None
+    )
+
+
+def _managed_group_key(resolved) -> tuple[Any, ...]:
+    session = resolved.managed_session
+    return (
+        resolved.provider,
+        resolved.model_name,
+        resolved.implementation_family,
+        session.stack,
+        session.host,
+        session.gpu,
+        session.context_window,
+    )
+
+
+async def _launch_resolved_entry(
+    *,
+    entry,
+    resolved,
+    dataset_path: Path | None,
+    repeat: int,
+    task_retries: int,
+    max_concurrency: int,
+    allow_untracked: bool,
+    managed_lease=None,
+):
+    if resolved.suite == "extraction_quality":
+        return await launch_extraction_entry(
+            entry=entry,
+            resolved_config=resolved,
+            dataset_path=dataset_path,
+            repeat=repeat,
+            task_retries=task_retries,
+            max_concurrency=max_concurrency,
+            allow_untracked=allow_untracked,
+            managed_lease=managed_lease,
+        )
+    if resolved.suite == "incremental_extraction_quality":
+        return await launch_replay_entry(
+            entry=entry,
+            resolved_config=resolved,
+            dataset_path=dataset_path,
+            repeat=repeat,
+            task_retries=task_retries,
+            max_concurrency=max_concurrency,
+            allow_untracked=allow_untracked,
+        )
+    return {}

@@ -47,6 +47,7 @@ def build_deepinfra_model(
     model_name: str,
     *,
     api_key: str | None,
+    base_url: str = _DEEPINFRA_BASE_URL,
     model_cls: type[Any] | None = None,
     provider_cls: type[Any] | None = None,
 ) -> Any:
@@ -62,7 +63,7 @@ def build_deepinfra_model(
     return model_cls(
         model_name,
         provider=provider_cls(
-            base_url=_DEEPINFRA_BASE_URL,
+            base_url=base_url,
             api_key=api_key,
         ),
     )
@@ -75,6 +76,8 @@ def build_model(
     gemini_api_key_getter: Callable[[], str],
     mistral_api_key_getter: Callable[[], str | None] | None = None,
     deepinfra_api_key_getter: Callable[[], str | None] | None = None,
+    openai_base_url: str | None = None,
+    openai_api_key: str | None = None,
 ) -> Any:
     resolved_provider = provider
     if resolved_provider is None and model_name.startswith("mistral-"):
@@ -99,6 +102,14 @@ def build_model(
                 if deepinfra_api_key_getter is not None
                 else os.getenv("DEEPINFRA_API_KEY")
             ),
+        )
+    if resolved_provider == "managed-openai":
+        if openai_base_url is None:
+            raise ValueError("Managed OpenAI provider requires openai_base_url")
+        return build_deepinfra_model(
+            model_name,
+            api_key=openai_api_key,
+            base_url=openai_base_url,
         )
     if resolved_provider not in {None, "google-gla"}:
         raise ValueError(f"Unsupported model provider: {resolved_provider}")

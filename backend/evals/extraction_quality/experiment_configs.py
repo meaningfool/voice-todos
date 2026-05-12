@@ -46,6 +46,7 @@ class ExperimentDefinition:
     provider: str
     thinking_mode: str
     implementation_family: str | None = None
+    managed_session: dict[str, object] | None = None
 
     @property
     def prompt_metadata(self) -> dict[str, str]:
@@ -172,6 +173,7 @@ def experiment_definition_from_entry_config(
     prompt_version: str,
     implementation_family: str | None = None,
     model_settings: dict[str, object] | None = None,
+    managed_session: dict[str, object] | None = None,
 ) -> ExperimentDefinition:
     legacy = EXPERIMENTS.get(experiment_name_hint)
     if legacy is not None:
@@ -180,6 +182,7 @@ def experiment_definition_from_entry_config(
             and legacy.extraction_config.model_name == model_name
             and legacy.extraction_config.prompt_version == prompt_version
             and legacy.implementation_family == implementation_family
+            and legacy.managed_session == managed_session
             and legacy.extraction_config.model_settings == (model_settings or {})
         )
         if same_config:
@@ -188,9 +191,12 @@ def experiment_definition_from_entry_config(
     resolved_model_settings = dict(model_settings or {})
     if provider == "google-gla":
         extraction_provider = None
-        if resolved_model_settings.get("google_thinking_config", {}).get(
-            "thinking_level"
-        ) == "minimal":
+        if (
+            resolved_model_settings.get("google_thinking_config", {}).get(
+                "thinking_level"
+            )
+            == "minimal"
+        ):
             thinking_mode = "minimal"
         elif resolved_model_settings:
             thinking_mode = "custom"
@@ -212,4 +218,5 @@ def experiment_definition_from_entry_config(
         provider=provider,
         thinking_mode=thinking_mode,
         implementation_family=implementation_family,
+        managed_session=managed_session,
     )

@@ -3,21 +3,23 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-from app.extract import get_extraction_prompt_ref
-from evals.common.experiment_metadata import config_fingerprint
-from evals.extraction_quality.experiment_configs import (
-    experiment_definition_from_entry_config,
-)
 from evals.hosted_datasets import export_hosted_dataset
 from evals.models import (
     BenchmarkDefinition,
     BenchmarkEntry,
     EntryQuerySelector,
+    ManagedSessionConfig,
     ResolvedEntryConfig,
 )
 from evals.storage import (
     load_benchmark_lock,
     lock_from_exported_dataset,
+)
+
+from app.extract import get_extraction_prompt_ref
+from evals.common.experiment_metadata import config_fingerprint
+from evals.extraction_quality.experiment_configs import (
+    experiment_definition_from_entry_config,
 )
 
 
@@ -41,6 +43,11 @@ def resolve_entry_config(
         prompt_version=entry.config["prompt_version"],
         implementation_family=implementation.get("family"),
         model_settings=entry.config.get("model_settings", {}),
+        managed_session=(
+            ManagedSessionConfig.model_validate(entry.config["session"])
+            if "session" in entry.config
+            else None
+        ),
     )
 
 
@@ -59,6 +66,11 @@ def build_entry_query_selector(
         prompt_version=resolved.prompt_version,
         implementation_family=resolved.implementation_family,
         model_settings=resolved.model_settings,
+        managed_session=(
+            resolved.managed_session.model_dump()
+            if resolved.managed_session is not None
+            else None
+        ),
     )
     prompt_sha = get_extraction_prompt_ref(experiment.extraction_config).sha256
 
@@ -74,6 +86,11 @@ def build_entry_query_selector(
             {
                 "provider": experiment.provider,
                 "implementation_family": experiment.implementation_family,
+                "managed_session": (
+                    resolved.managed_session.model_dump()
+                    if resolved.managed_session is not None
+                    else None
+                ),
                 "thinking_mode": experiment.thinking_mode,
                 "model_settings": experiment.extraction_config.model_settings,
                 "prompt_version": experiment.extraction_config.prompt_version,
