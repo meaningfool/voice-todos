@@ -34,6 +34,9 @@ class ExtractionConfig:
     prompt_family: str = "todo_extraction"
     prompt_version: str = "v1"
     implementation_family: str | None = None
+    openai_base_url: str | None = None
+    openai_api_key: str | None = None
+    transport_headers: dict[str, str] | None = None
 
 
 _DEFAULT_MODEL_SETTINGS: dict[str, Any] = {
@@ -41,6 +44,8 @@ _DEFAULT_MODEL_SETTINGS: dict[str, Any] = {
 }
 
 _agent_cache: dict[tuple[Any, ...], Agent[None, ExtractionResult]] = {}
+
+
 def _freeze_for_cache(value: Any) -> Any:
     if isinstance(value, dict):
         return tuple(
@@ -66,8 +71,11 @@ def _config_cache_key(
         config.prompt_family,
         config.prompt_version,
         config.implementation_family,
+        config.openai_base_url,
+        config.openai_api_key,
         prompt_sha256,
         _freeze_for_cache(_resolve_model_settings(config)),
+        _freeze_for_cache(config.transport_headers),
     )
 
 
@@ -91,12 +99,18 @@ def _resolve_model_settings(config: ExtractionConfig) -> dict[str, Any]:
         extra_body = resolved.setdefault("extra_body", {})
         chat_template_kwargs = extra_body.setdefault("chat_template_kwargs", {})
         chat_template_kwargs["enable_thinking"] = False
+    if config.transport_headers:
+        extra_headers = resolved.setdefault("extra_headers", {})
+        extra_headers.update(config.transport_headers)
 
     return resolved
 
 
 def _resolve_output_type(config: ExtractionConfig) -> object:
-    if config.implementation_family == "deepinfra-provider-json-schema":
+    if config.implementation_family in {
+        "deepinfra-provider-json-schema",
+        "modal-outlines",
+    }:
         return NativeOutput(ExtractionResult, strict=True)
     return ExtractionResult
 
@@ -117,12 +131,20 @@ def _get_deepinfra_api_key() -> str | None:
 
 
 def _build_model(config: ExtractionConfig) -> Any:
+    build_kwargs: dict[str, Any] = {
+        "provider": config.provider,
+        "gemini_api_key_getter": _get_gemini_api_key,
+        "mistral_api_key_getter": _get_mistral_api_key,
+        "deepinfra_api_key_getter": _get_deepinfra_api_key,
+    }
+    if config.openai_base_url is not None:
+        build_kwargs["openai_base_url"] = config.openai_base_url
+    if config.openai_api_key is not None:
+        build_kwargs["openai_api_key"] = config.openai_api_key
+
     return build_model(
         config.model_name,
-        provider=config.provider,
-        gemini_api_key_getter=_get_gemini_api_key,
-        mistral_api_key_getter=_get_mistral_api_key,
-        deepinfra_api_key_getter=_get_deepinfra_api_key,
+        **build_kwargs,
     )
 
 

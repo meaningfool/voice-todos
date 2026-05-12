@@ -4,7 +4,7 @@
   "focus": "model",
   "headline_metric": "todo_count_match",
   "display_headline_metric": "passed / total",
-  "active_lock_path": "/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/evals/locks/todo_extraction_bench_v1.json",
+  "active_lock_path": "/Users/josselinperrus/conductor/workspaces/voice-todos/douala/evals/locks/todo_extraction_bench_v1.json",
   "locked_dataset_hash": "930324ca745c631beac0fd2add2078bffed0124f4ee4db32f3e4c2609fe06843",
   "current_hosted_dataset_hash": "4e48386c21a1486f2f63f4be7cf1b18e3b1f07db191e306743227327f0b73e18",
   "stale": false,
@@ -12,19 +12,19 @@
     {
       "entry_id": "gemini3_flash_default",
       "label": "Gemini 3 Flash / default",
-      "status": "current",
-      "selected_run_id": "2026-05-11T15-50-10Z-de68cd0f--gemini3_flash_default",
-      "selected_timestamp": "2026-05-11T15:50:10.880526Z",
-      "headline_metric_value": 1.0,
-      "total_case_count": 21,
-      "passed_case_count": 21,
+      "status": "missing",
+      "selected_run_id": null,
+      "selected_timestamp": null,
+      "headline_metric_value": null,
+      "total_case_count": 0,
+      "passed_case_count": 0,
       "incorrect_case_count": 0,
       "incomplete_case_count": 0,
-      "completed_case_count": 21,
+      "completed_case_count": 0,
       "failure_count": 0,
-      "average_case_duration_s": 2.8906544615384613,
-      "max_case_duration_s": 7.211012,
-      "cost_usd": 0.001451673076923077,
+      "average_case_duration_s": null,
+      "max_case_duration_s": null,
+      "cost_usd": null,
       "config": {
         "provider": "google-gla",
         "model": "gemini-3-flash-preview",
@@ -34,37 +34,24 @@
       "failures": [],
       "incorrect_cases": [],
       "incomplete_cases": [],
-      "slowest_cases": [
-        {
-          "case_id": "dense-run-on-four",
-          "duration_s": 7.211012
-        },
-        {
-          "case_id": "duplicate-update-and-repeat",
-          "duration_s": 3.981625
-        },
-        {
-          "case_id": "long-mixed-signal-three",
-          "duration_s": 3.826008
-        }
-      ]
+      "slowest_cases": []
     },
     {
       "entry_id": "gemini3_flash_minimal_thinking",
       "label": "Gemini 3 Flash / minimal thinking",
-      "status": "current",
-      "selected_run_id": "2026-05-11T15-51-26Z-5c3499ad--gemini3_flash_minimal_thinking",
-      "selected_timestamp": "2026-05-11T15:51:26.578795Z",
-      "headline_metric_value": 1.0,
-      "total_case_count": 26,
-      "passed_case_count": 26,
+      "status": "missing",
+      "selected_run_id": null,
+      "selected_timestamp": null,
+      "headline_metric_value": null,
+      "total_case_count": 0,
+      "passed_case_count": 0,
       "incorrect_case_count": 0,
       "incomplete_case_count": 0,
-      "completed_case_count": 26,
+      "completed_case_count": 0,
       "failure_count": 0,
-      "average_case_duration_s": 1.042396153846154,
-      "max_case_duration_s": 1.585125,
-      "cost_usd": 0.00045890384615384624,
+      "average_case_duration_s": null,
+      "max_case_duration_s": null,
+      "cost_usd": null,
       "config": {
         "provider": "google-gla",
         "model": "gemini-3-flash-preview",
@@ -78,37 +65,24 @@
       "failures": [],
       "incorrect_cases": [],
       "incomplete_cases": [],
-      "slowest_cases": [
-        {
-          "case_id": "dense-run-on-four",
-          "duration_s": 1.585125
-        },
-        {
-          "case_id": "long-mixed-signal-three",
-          "duration_s": 1.331245
-        },
-        {
-          "case_id": "noisy-two-tasks",
-          "duration_s": 1.331169
-        }
-      ]
+      "slowest_cases": []
     },
     {
       "entry_id": "gemini31_flash_lite_default",
       "label": "Gemini 3.1 Flash-Lite / default",
-      "status": "current",
-      "selected_run_id": "2026-05-11T15-51-53Z-d57af260--gemini31_flash_lite_default",
-      "selected_timestamp": "2026-05-11T15:51:53.893707Z",
-      "headline_metric_value": 0.9615384615384616,
-      "total_case_count": 26,
-      "passed_case_count": 25,
-      "incorrect_case_count": 1,
+      "status": "missing",
+      "selected_run_id": null,
+      "selected_timestamp": null,
+      "headline_metric_value": null,
+      "total_case_count": 0,
+      "passed_case_count": 0,
+      "incorrect_case_count": 0,
       "incomplete_case_count": 0,
-      "completed_case_count": 26,
+      "completed_case_count": 0,
       "failure_count": 0,
-      "average_case_duration_s": 0.7449147692307693,
-      "max_case_duration_s": 3.143972,
-      "cost_usd": 0.00021733653846153843,
+      "average_case_duration_s": null,
+      "max_case_duration_s": null,
+      "cost_usd": null,
       "config": {
         "provider": "google-gla",
         "model": "gemini-3.1-flash-lite-preview",
@@ -116,59 +90,26 @@
         "model_settings": {}
       },
       "failures": [],
-      "incorrect_cases": [
-        {
-          "case_id": "question-not-commitment",
-          "inputs": {
-            "transcript": "I was wondering, should I call David tomorrow, or is that unnecessary?",
-            "reference_dt": "2026-03-24T09:30:00+00:00",
-            "previous_todos": null
-          },
-          "expected_output": [],
-          "actual_output": [
-            {
-              "text": "Call David",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            }
-          ]
-        }
-      ],
+      "incorrect_cases": [],
       "incomplete_cases": [],
-      "slowest_cases": [
-        {
-          "case_id": "two-simple-tasks",
-          "duration_s": 3.143972
-        },
-        {
-          "case_id": "merge-instruction-simple",
-          "duration_s": 0.944141
-        },
-        {
-          "case_id": "send-contract-clear",
-          "duration_s": 0.864116
-        }
-      ]
+      "slowest_cases": []
     },
     {
       "entry_id": "gemini31_flash_lite_minimal_thinking",
       "label": "Gemini 3.1 Flash-Lite / minimal thinking",
-      "status": "current",
-      "selected_run_id": "2026-05-11T15-52-13Z-032c6e12--gemini31_flash_lite_minimal_thinking",
-      "selected_timestamp": "2026-05-11T15:52:13.503355Z",
-      "headline_metric_value": 0.9615384615384616,
-      "total_case_count": 26,
-      "passed_case_count": 25,
-      "incorrect_case_count": 1,
+      "status": "missing",
+      "selected_run_id": null,
+      "selected_timestamp": null,
+      "headline_metric_value": null,
+      "total_case_count": 0,
+      "passed_case_count": 0,
+      "incorrect_case_count": 0,
       "incomplete_case_count": 0,
-      "completed_case_count": 26,
+      "completed_case_count": 0,
       "failure_count": 0,
-      "average_case_duration_s": 0.7183453846153847,
-      "max_case_duration_s": 1.106056,
-      "cost_usd": 0.00021756730769230767,
+      "average_case_duration_s": null,
+      "max_case_duration_s": null,
+      "cost_usd": null,
       "config": {
         "provider": "google-gla",
         "model": "gemini-3.1-flash-lite-preview",
@@ -180,58 +121,25 @@
         }
       },
       "failures": [],
-      "incorrect_cases": [
-        {
-          "case_id": "question-not-commitment",
-          "inputs": {
-            "transcript": "I was wondering, should I call David tomorrow, or is that unnecessary?",
-            "reference_dt": "2026-03-24T09:30:00+00:00",
-            "previous_todos": null
-          },
-          "expected_output": [],
-          "actual_output": [
-            {
-              "text": "Call David",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            }
-          ]
-        }
-      ],
+      "incorrect_cases": [],
       "incomplete_cases": [],
-      "slowest_cases": [
-        {
-          "case_id": "parent-action-with-details",
-          "duration_s": 1.106056
-        },
-        {
-          "case_id": "one-topic-two-recipients",
-          "duration_s": 1.013646
-        },
-        {
-          "case_id": "duplicate-far-apart",
-          "duration_s": 0.983064
-        }
-      ]
+      "slowest_cases": []
     },
     {
       "entry_id": "mistral_small_4_default",
       "label": "Mistral Small 4 / default",
-      "status": "current",
-      "selected_run_id": "2026-05-11T15-52-32Z-f0ba18c5--mistral_small_4_default",
-      "selected_timestamp": "2026-05-11T15:52:32.679689Z",
-      "headline_metric_value": 1.0,
-      "total_case_count": 26,
-      "passed_case_count": 26,
+      "status": "missing",
+      "selected_run_id": null,
+      "selected_timestamp": null,
+      "headline_metric_value": null,
+      "total_case_count": 0,
+      "passed_case_count": 0,
       "incorrect_case_count": 0,
       "incomplete_case_count": 0,
-      "completed_case_count": 26,
+      "completed_case_count": 0,
       "failure_count": 0,
-      "average_case_duration_s": 0.6982890384615386,
-      "max_case_duration_s": 1.211499,
+      "average_case_duration_s": null,
+      "max_case_duration_s": null,
       "cost_usd": null,
       "config": {
         "provider": "mistral",
@@ -242,27 +150,14 @@
       "failures": [],
       "incorrect_cases": [],
       "incomplete_cases": [],
-      "slowest_cases": [
-        {
-          "case_id": "mixed-own-and-delegated",
-          "duration_s": 1.211499
-        },
-        {
-          "case_id": "dense-run-on-four",
-          "duration_s": 1.086667
-        },
-        {
-          "case_id": "vague-self-talk-long",
-          "duration_s": 1.049266
-        }
-      ]
+      "slowest_cases": []
     },
     {
       "entry_id": "deepinfra_qwen35_0_8b_output_tool",
       "label": "Qwen 3.5 0.8B / DeepInfra output tool",
       "status": "current",
-      "selected_run_id": "2026-05-11T15-52-51Z-a6708151--deepinfra_qwen35_0_8b_output_tool",
-      "selected_timestamp": "2026-05-11T15:52:51.368077Z",
+      "selected_run_id": "2026-05-11T20-24-11Z-29a3e05a--deepinfra_qwen35_0_8b_output_tool",
+      "selected_timestamp": "2026-05-11T20:24:11.980985Z",
       "headline_metric_value": 0.0,
       "total_case_count": 26,
       "passed_case_count": 0,
@@ -1638,8 +1533,8 @@
       "entry_id": "deepinfra_qwen35_2b_output_tool",
       "label": "Qwen 3.5 2B / DeepInfra output tool",
       "status": "current",
-      "selected_run_id": "2026-05-11T15-53-40Z-92a450f1--deepinfra_qwen35_2b_output_tool",
-      "selected_timestamp": "2026-05-11T15:53:40.029439Z",
+      "selected_run_id": "2026-05-11T20-24-56Z-4462a66c--deepinfra_qwen35_2b_output_tool",
+      "selected_timestamp": "2026-05-11T20:24:56.937889Z",
       "headline_metric_value": 0.0,
       "total_case_count": 26,
       "passed_case_count": 0,
@@ -3015,17 +2910,17 @@
       "entry_id": "deepinfra_qwen35_4b_output_tool",
       "label": "Qwen 3.5 4B / DeepInfra output tool",
       "status": "current",
-      "selected_run_id": "2026-05-11T15-54-09Z-fa88eb85--deepinfra_qwen35_4b_output_tool",
-      "selected_timestamp": "2026-05-11T15:54:09.697709Z",
-      "headline_metric_value": 0.6538461538461539,
+      "selected_run_id": "2026-05-11T20-25-28Z-d8801569--deepinfra_qwen35_4b_output_tool",
+      "selected_timestamp": "2026-05-11T20:25:28.009266Z",
+      "headline_metric_value": 0.6923076923076923,
       "total_case_count": 26,
-      "passed_case_count": 17,
+      "passed_case_count": 18,
       "incorrect_case_count": 0,
-      "incomplete_case_count": 9,
-      "completed_case_count": 17,
-      "failure_count": 9,
-      "average_case_duration_s": 1.7405591176470587,
-      "max_case_duration_s": 2.767047,
+      "incomplete_case_count": 8,
+      "completed_case_count": 18,
+      "failure_count": 8,
+      "average_case_duration_s": 1.5636726111111112,
+      "max_case_duration_s": 2.592521,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -3041,74 +2936,6 @@
       },
       "failures": [
         {
-          "case_id": "merge-and-keep-separate",
-          "inputs": {
-            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
-            "reference_dt": "2026-03-24T09:30:00+00:00",
-            "previous_todos": null
-          },
-          "expected_output": [
-            {
-              "text": "Do one grocery run for milk and bread",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            },
-            {
-              "text": "Call Marc",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            }
-          ],
-          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
-          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
-          "validator_feedback": null,
-          "actual_output": null
-        },
-        {
-          "case_id": "long-noisy-three-with-past",
-          "inputs": {
-            "transcript": "Uh so I already called the landlord, but I still need to book the dentist, order printer ink, and text Julia about dinner, unless I already did that, no I didn't.",
-            "reference_dt": "2026-03-24T09:30:00+00:00",
-            "previous_todos": null
-          },
-          "expected_output": [
-            {
-              "text": "Book the dentist",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            },
-            {
-              "text": "Order printer ink",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            },
-            {
-              "text": "Text Julia about dinner",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            }
-          ],
-          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
-          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
-          "validator_feedback": null,
-          "actual_output": null
-        },
-        {
           "case_id": "duplicate-update-and-repeat",
           "inputs": {
             "transcript": "I need to send the invoice to Lena, and book the train to Lyon. Later today, actually not Lena, send the invoice to Nora instead. And yeah, book the train to Lyon, don't forget.",
@@ -3300,6 +3127,36 @@
             },
             {
               "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "duplicate-far-apart",
+          "inputs": {
+            "transcript": "I need to call Marc about the quote, and also order printer ink. Anyway the meeting earlier was a bit strange. And yeah, don't let me forget to call Marc.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Marc about the quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
               "priority": null,
               "category": null,
               "due_date": null,
@@ -3346,74 +3203,6 @@
       "incorrect_cases": [],
       "incomplete_cases": [
         {
-          "case_id": "merge-and-keep-separate",
-          "inputs": {
-            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
-            "reference_dt": "2026-03-24T09:30:00+00:00",
-            "previous_todos": null
-          },
-          "expected_output": [
-            {
-              "text": "Do one grocery run for milk and bread",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            },
-            {
-              "text": "Call Marc",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            }
-          ],
-          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
-          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
-          "validator_feedback": null,
-          "actual_output": null
-        },
-        {
-          "case_id": "long-noisy-three-with-past",
-          "inputs": {
-            "transcript": "Uh so I already called the landlord, but I still need to book the dentist, order printer ink, and text Julia about dinner, unless I already did that, no I didn't.",
-            "reference_dt": "2026-03-24T09:30:00+00:00",
-            "previous_todos": null
-          },
-          "expected_output": [
-            {
-              "text": "Book the dentist",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            },
-            {
-              "text": "Order printer ink",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            },
-            {
-              "text": "Text Julia about dinner",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            }
-          ],
-          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
-          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
-          "validator_feedback": null,
-          "actual_output": null
-        },
-        {
           "case_id": "duplicate-update-and-repeat",
           "inputs": {
             "transcript": "I need to send the invoice to Lena, and book the train to Lyon. Later today, actually not Lena, send the invoice to Nora instead. And yeah, book the train to Lyon, don't forget.",
@@ -3618,6 +3407,36 @@
           "actual_output": null
         },
         {
+          "case_id": "duplicate-far-apart",
+          "inputs": {
+            "transcript": "I need to call Marc about the quote, and also order printer ink. Anyway the meeting earlier was a bit strange. And yeah, don't let me forget to call Marc.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Marc about the quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
           "case_id": "two-simple-tasks",
           "inputs": {
             "transcript": "Uh, tomorrow I need to book the dentist and send Lena the invoice.",
@@ -3650,16 +3469,16 @@
       ],
       "slowest_cases": [
         {
+          "case_id": "long-noisy-three-with-past",
+          "duration_s": 2.592521
+        },
+        {
           "case_id": "cancel-one-keep-one",
-          "duration_s": 2.767047
+          "duration_s": 2.216627
         },
         {
-          "case_id": "merge-instruction-simple",
-          "duration_s": 2.523884
-        },
-        {
-          "case_id": "duplicate-far-apart",
-          "duration_s": 2.342576
+          "case_id": "past-plus-new",
+          "duration_s": 2.0071
         }
       ]
     },
@@ -3667,17 +3486,17 @@
       "entry_id": "deepinfra_qwen35_9b_output_tool",
       "label": "Qwen 3.5 9B / DeepInfra output tool",
       "status": "current",
-      "selected_run_id": "2026-05-11T15-55-09Z-5aed91a8--deepinfra_qwen35_9b_output_tool",
-      "selected_timestamp": "2026-05-11T15:55:09.814256Z",
-      "headline_metric_value": 0.8461538461538461,
+      "selected_run_id": "2026-05-11T20-26-17Z-021779c3--deepinfra_qwen35_9b_output_tool",
+      "selected_timestamp": "2026-05-11T20:26:17.525894Z",
+      "headline_metric_value": 0.8846153846153846,
       "total_case_count": 26,
-      "passed_case_count": 22,
+      "passed_case_count": 23,
       "incorrect_case_count": 0,
-      "incomplete_case_count": 4,
-      "completed_case_count": 22,
-      "failure_count": 4,
-      "average_case_duration_s": 3.4749755909090907,
-      "max_case_duration_s": 5.57115,
+      "incomplete_case_count": 3,
+      "completed_case_count": 23,
+      "failure_count": 3,
+      "average_case_duration_s": 4.717860478260869,
+      "max_case_duration_s": 8.281688,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -3693,15 +3512,15 @@
       },
       "failures": [
         {
-          "case_id": "duplicate-update-and-repeat",
+          "case_id": "merge-and-keep-separate",
           "inputs": {
-            "transcript": "I need to send the invoice to Lena, and book the train to Lyon. Later today, actually not Lena, send the invoice to Nora instead. And yeah, book the train to Lyon, don't forget.",
+            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
             "reference_dt": "2026-03-24T09:30:00+00:00",
             "previous_todos": null
           },
           "expected_output": [
             {
-              "text": "Send the invoice to Nora",
+              "text": "Do one grocery run for milk and bread",
               "priority": null,
               "category": null,
               "due_date": null,
@@ -3709,7 +3528,7 @@
               "assign_to": null
             },
             {
-              "text": "Book the train to Lyon",
+              "text": "Call Marc",
               "priority": null,
               "category": null,
               "due_date": null,
@@ -3740,52 +3559,6 @@
             },
             {
               "text": "Email Sarah the revised budget",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            }
-          ],
-          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
-          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
-          "validator_feedback": null,
-          "actual_output": null
-        },
-        {
-          "case_id": "dense-run-on-four",
-          "inputs": {
-            "transcript": "Tomorrow email Sara about lunch book the dentist appointment update the pricing doc and remind Alex about the design review, and yeah the earlier call was chaotic.",
-            "reference_dt": "2026-03-24T09:30:00+00:00",
-            "previous_todos": null
-          },
-          "expected_output": [
-            {
-              "text": "Email Sara about lunch",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            },
-            {
-              "text": "Book the dentist appointment",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            },
-            {
-              "text": "Update the pricing doc",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            },
-            {
-              "text": "Remind Alex about the design review",
               "priority": null,
               "category": null,
               "due_date": null,
@@ -3824,15 +3597,15 @@
       "incorrect_cases": [],
       "incomplete_cases": [
         {
-          "case_id": "duplicate-update-and-repeat",
+          "case_id": "merge-and-keep-separate",
           "inputs": {
-            "transcript": "I need to send the invoice to Lena, and book the train to Lyon. Later today, actually not Lena, send the invoice to Nora instead. And yeah, book the train to Lyon, don't forget.",
+            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
             "reference_dt": "2026-03-24T09:30:00+00:00",
             "previous_todos": null
           },
           "expected_output": [
             {
-              "text": "Send the invoice to Nora",
+              "text": "Do one grocery run for milk and bread",
               "priority": null,
               "category": null,
               "due_date": null,
@@ -3840,7 +3613,7 @@
               "assign_to": null
             },
             {
-              "text": "Book the train to Lyon",
+              "text": "Call Marc",
               "priority": null,
               "category": null,
               "due_date": null,
@@ -3884,52 +3657,6 @@
           "actual_output": null
         },
         {
-          "case_id": "dense-run-on-four",
-          "inputs": {
-            "transcript": "Tomorrow email Sara about lunch book the dentist appointment update the pricing doc and remind Alex about the design review, and yeah the earlier call was chaotic.",
-            "reference_dt": "2026-03-24T09:30:00+00:00",
-            "previous_todos": null
-          },
-          "expected_output": [
-            {
-              "text": "Email Sara about lunch",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            },
-            {
-              "text": "Book the dentist appointment",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            },
-            {
-              "text": "Update the pricing doc",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            },
-            {
-              "text": "Remind Alex about the design review",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            }
-          ],
-          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
-          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
-          "validator_feedback": null,
-          "actual_output": null
-        },
-        {
           "case_id": "call-mom-clear",
           "inputs": {
             "transcript": "Okay, tonight I need to call Mom about the weekend.",
@@ -3954,16 +3681,16 @@
       ],
       "slowest_cases": [
         {
-          "case_id": "noisy-two-tasks",
-          "duration_s": 5.57115
+          "case_id": "parent-action-with-details",
+          "duration_s": 8.281688
+        },
+        {
+          "case_id": "duplicate-update-and-repeat",
+          "duration_s": 7.659469
         },
         {
           "case_id": "long-mixed-signal-three",
-          "duration_s": 5.475191
-        },
-        {
-          "case_id": "correction-changes-action",
-          "duration_s": 5.281987
+          "duration_s": 7.23967
         }
       ]
     },
@@ -3971,8 +3698,8 @@
       "entry_id": "deepinfra_qwen35_0_8b_provider_json_schema",
       "label": "Qwen 3.5 0.8B / DeepInfra provider json_schema",
       "status": "current",
-      "selected_run_id": "2026-05-11T15-56-55Z-829b00fb--deepinfra_qwen35_0_8b_provider_json_schema",
-      "selected_timestamp": "2026-05-11T15:56:55.969792Z",
+      "selected_run_id": "2026-05-11T20-28-35Z-4e1d0c11--deepinfra_qwen35_0_8b_provider_json_schema",
+      "selected_timestamp": "2026-05-11T20:28:35.940046Z",
       "headline_metric_value": 0.5,
       "total_case_count": 26,
       "passed_case_count": 13,
@@ -3980,8 +3707,8 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 0.5661144230769231,
-      "max_case_duration_s": 1.456141,
+      "average_case_duration_s": 0.5508307692307692,
+      "max_case_duration_s": 1.410859,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -4497,15 +4224,15 @@
       "slowest_cases": [
         {
           "case_id": "duplicate-update-and-repeat",
-          "duration_s": 1.456141
+          "duration_s": 1.410859
         },
         {
           "case_id": "three-simple-tasks",
-          "duration_s": 1.202467
+          "duration_s": 1.104148
         },
         {
           "case_id": "merge-and-keep-separate",
-          "duration_s": 0.888685
+          "duration_s": 0.820071
         }
       ]
     },
@@ -4513,8 +4240,8 @@
       "entry_id": "deepinfra_qwen35_2b_provider_json_schema",
       "label": "Qwen 3.5 2B / DeepInfra provider json_schema",
       "status": "current",
-      "selected_run_id": "2026-05-11T15-57-10Z-4f269715--deepinfra_qwen35_2b_provider_json_schema",
-      "selected_timestamp": "2026-05-11T15:57:10.979557Z",
+      "selected_run_id": "2026-05-11T20-28-50Z-4ab66dbf--deepinfra_qwen35_2b_provider_json_schema",
+      "selected_timestamp": "2026-05-11T20:28:50.643827Z",
       "headline_metric_value": 0.8076923076923077,
       "total_case_count": 26,
       "passed_case_count": 21,
@@ -4522,8 +4249,8 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 0.6296701923076923,
-      "max_case_duration_s": 1.367129,
+      "average_case_duration_s": 0.6822784615384615,
+      "max_case_duration_s": 1.573112,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -4727,15 +4454,15 @@
       "slowest_cases": [
         {
           "case_id": "dense-run-on-four",
-          "duration_s": 1.367129
+          "duration_s": 1.573112
         },
         {
-          "case_id": "correction-changes-action",
-          "duration_s": 1.019259
+          "case_id": "merge-and-keep-separate",
+          "duration_s": 1.216159
         },
         {
           "case_id": "three-simple-tasks",
-          "duration_s": 0.983743
+          "duration_s": 1.022532
         }
       ]
     },
@@ -4743,8 +4470,8 @@
       "entry_id": "deepinfra_qwen35_4b_provider_json_schema",
       "label": "Qwen 3.5 4B / DeepInfra provider json_schema",
       "status": "current",
-      "selected_run_id": "2026-05-11T15-57-27Z-88cc2d90--deepinfra_qwen35_4b_provider_json_schema",
-      "selected_timestamp": "2026-05-11T15:57:27.669075Z",
+      "selected_run_id": "2026-05-11T20-29-08Z-7cb92852--deepinfra_qwen35_4b_provider_json_schema",
+      "selected_timestamp": "2026-05-11T20:29:08.579903Z",
       "headline_metric_value": 0.7307692307692307,
       "total_case_count": 26,
       "passed_case_count": 19,
@@ -4752,8 +4479,8 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 1.3555208461538462,
-      "max_case_duration_s": 3.326009,
+      "average_case_duration_s": 0.9316623076923076,
+      "max_case_duration_s": 2.147533,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -4931,8 +4658,8 @@
               "text": "Call Marc about the quote.",
               "priority": "medium",
               "category": "communication",
-              "due_date": "2026-03-24",
-              "notification": "2026-03-24T09:30:00+00:00",
+              "due_date": "2026-03-25",
+              "notification": "2026-03-24T17:00:00+00:00",
               "assign_to": "Marc"
             }
           ]
@@ -5014,15 +4741,15 @@
       "slowest_cases": [
         {
           "case_id": "dense-run-on-four",
-          "duration_s": 3.326009
+          "duration_s": 2.147533
         },
         {
-          "case_id": "merge-and-keep-separate",
-          "duration_s": 2.832272
+          "case_id": "long-noisy-three-with-past",
+          "duration_s": 1.852956
         },
         {
-          "case_id": "three-simple-tasks",
-          "duration_s": 2.76011
+          "case_id": "long-mixed-signal-three",
+          "duration_s": 1.668086
         }
       ]
     },
@@ -5030,17 +4757,17 @@
       "entry_id": "deepinfra_qwen35_9b_provider_json_schema",
       "label": "Qwen 3.5 9B / DeepInfra provider json_schema",
       "status": "current",
-      "selected_run_id": "2026-05-11T15-58-03Z-2bab2fcc--deepinfra_qwen35_9b_provider_json_schema",
-      "selected_timestamp": "2026-05-11T15:58:03.160751Z",
-      "headline_metric_value": 0.8461538461538461,
+      "selected_run_id": "2026-05-11T20-29-33Z-9d37df5c--deepinfra_qwen35_9b_provider_json_schema",
+      "selected_timestamp": "2026-05-11T20:29:33.100210Z",
+      "headline_metric_value": 0.8846153846153846,
       "total_case_count": 26,
-      "passed_case_count": 22,
-      "incorrect_case_count": 4,
+      "passed_case_count": 23,
+      "incorrect_case_count": 3,
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 2.246353076923077,
-      "max_case_duration_s": 5.658262,
+      "average_case_duration_s": 2.7048353076923073,
+      "max_case_duration_s": 7.760702,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -5094,42 +4821,6 @@
               "due_date": "2026-03-24",
               "notification": "2026-03-24T17:00:00+00:00",
               "assign_to": "Zen"
-            }
-          ]
-        },
-        {
-          "case_id": "duplicate-far-apart",
-          "inputs": {
-            "transcript": "I need to call Marc about the quote, and also order printer ink. Anyway the meeting earlier was a bit strange. And yeah, don't let me forget to call Marc.",
-            "reference_dt": "2026-03-24T09:30:00+00:00",
-            "previous_todos": null
-          },
-          "expected_output": [
-            {
-              "text": "Call Marc about the quote",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            },
-            {
-              "text": "Order printer ink",
-              "priority": null,
-              "category": null,
-              "due_date": null,
-              "notification": null,
-              "assign_to": null
-            }
-          ],
-          "actual_output": [
-            {
-              "text": "Call Marc about the quote.",
-              "priority": "medium",
-              "category": "communication",
-              "due_date": "2026-03-24",
-              "notification": "2026-03-24T10:00:00+00:00",
-              "assign_to": null
             }
           ]
         },
@@ -5217,19 +4908,381 @@
       "incomplete_cases": [],
       "slowest_cases": [
         {
-          "case_id": "dense-run-on-four",
-          "duration_s": 5.658262
+          "case_id": "long-mixed-signal-three",
+          "duration_s": 7.760702
         },
         {
-          "case_id": "correction-changes-action",
-          "duration_s": 4.12117
+          "case_id": "duplicate-update-and-repeat",
+          "duration_s": 5.848463
+        },
+        {
+          "case_id": "dense-run-on-four",
+          "duration_s": 5.782402
+        }
+      ]
+    },
+    {
+      "entry_id": "modal_outlines_qwen35_0_8b",
+      "label": "Qwen 3.5 0.8B / Modal Outlines",
+      "status": "current",
+      "selected_run_id": "2026-05-11T20-05-35Z-b45f9473--modal_outlines_qwen35_0_8b",
+      "selected_timestamp": "2026-05-11T20:05:35.825128Z",
+      "headline_metric_value": 0.9615384615384616,
+      "total_case_count": 26,
+      "passed_case_count": 25,
+      "incorrect_case_count": 1,
+      "incomplete_case_count": 0,
+      "completed_case_count": 26,
+      "failure_count": 0,
+      "average_case_duration_s": 2.2081725384615387,
+      "max_case_duration_s": 5.540699,
+      "cost_usd": null,
+      "config": {
+        "provider": "managed-openai",
+        "model": "Qwen/Qwen3.5-0.8B",
+        "prompt_version": "v1",
+        "implementation": {
+          "family": "modal-outlines"
+        },
+        "model_settings": {
+          "temperature": 0,
+          "max_tokens": 1024
+        },
+        "session": {
+          "stack": "sglang-outlines",
+          "host": "modal",
+          "gpu": "L40S",
+          "context_window": 4096
+        }
+      },
+      "failures": [],
+      "incorrect_cases": [
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "actual_output": [
+            {
+              "text": "Send Zen email to Sarah with revised budget",
+              "priority": "medium",
+              "category": "email",
+              "due_date": "2026-03-24",
+              "notification": "2026-03-24T09:30:00",
+              "assign_to": "Sarah"
+            }
+          ]
+        }
+      ],
+      "incomplete_cases": [],
+      "slowest_cases": [
+        {
+          "case_id": "dense-run-on-four",
+          "duration_s": 5.540699
         },
         {
           "case_id": "long-noisy-three-with-past",
-          "duration_s": 4.096507
+          "duration_s": 4.040209
+        },
+        {
+          "case_id": "long-mixed-signal-three",
+          "duration_s": 3.934711
+        }
+      ]
+    },
+    {
+      "entry_id": "modal_outlines_qwen35_2b",
+      "label": "Qwen 3.5 2B / Modal Outlines",
+      "status": "current",
+      "selected_run_id": "2026-05-11T20-07-44Z-9f378193--modal_outlines_qwen35_2b",
+      "selected_timestamp": "2026-05-11T20:07:44.542174Z",
+      "headline_metric_value": 0.9615384615384616,
+      "total_case_count": 26,
+      "passed_case_count": 25,
+      "incorrect_case_count": 1,
+      "incomplete_case_count": 0,
+      "completed_case_count": 26,
+      "failure_count": 0,
+      "average_case_duration_s": 2.374510076923077,
+      "max_case_duration_s": 8.277254,
+      "cost_usd": null,
+      "config": {
+        "provider": "managed-openai",
+        "model": "Qwen/Qwen3.5-2B",
+        "prompt_version": "v1",
+        "implementation": {
+          "family": "modal-outlines"
+        },
+        "model_settings": {
+          "temperature": 0,
+          "max_tokens": 1024
+        },
+        "session": {
+          "stack": "sglang-outlines",
+          "host": "modal",
+          "gpu": "L40S",
+          "context_window": 4096
+        }
+      },
+      "failures": [],
+      "incorrect_cases": [
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "actual_output": [
+            {
+              "text": "Send Zen email to Sarah with revised budget",
+              "priority": "medium",
+              "category": "email",
+              "due_date": "2026-03-24",
+              "notification": "2026-03-24T09:30:00",
+              "assign_to": "Sarah"
+            }
+          ]
+        }
+      ],
+      "incomplete_cases": [],
+      "slowest_cases": [
+        {
+          "case_id": "merge-instruction-simple",
+          "duration_s": 8.277254
+        },
+        {
+          "case_id": "dense-run-on-four",
+          "duration_s": 5.257403
+        },
+        {
+          "case_id": "long-noisy-three-with-past",
+          "duration_s": 3.839398
+        }
+      ]
+    },
+    {
+      "entry_id": "modal_outlines_qwen35_4b",
+      "label": "Qwen 3.5 4B / Modal Outlines",
+      "status": "current",
+      "selected_run_id": "2026-05-11T20-03-49Z-1306500d--modal_outlines_qwen35_4b",
+      "selected_timestamp": "2026-05-11T20:03:49.972388Z",
+      "headline_metric_value": 0.9615384615384616,
+      "total_case_count": 26,
+      "passed_case_count": 25,
+      "incorrect_case_count": 1,
+      "incomplete_case_count": 0,
+      "completed_case_count": 26,
+      "failure_count": 0,
+      "average_case_duration_s": 2.5816267692307693,
+      "max_case_duration_s": 11.364955,
+      "cost_usd": null,
+      "config": {
+        "provider": "managed-openai",
+        "model": "Qwen/Qwen3.5-4B",
+        "prompt_version": "v1",
+        "implementation": {
+          "family": "modal-outlines"
+        },
+        "model_settings": {
+          "temperature": 0,
+          "max_tokens": 1024
+        },
+        "session": {
+          "stack": "sglang-outlines",
+          "host": "modal",
+          "gpu": "L40S",
+          "context_window": 4096
+        }
+      },
+      "failures": [],
+      "incorrect_cases": [
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "actual_output": [
+            {
+              "text": "Send Zen email to Sarah with revised budget",
+              "priority": "medium",
+              "category": "email",
+              "due_date": "2026-03-24",
+              "notification": "2026-03-24T09:30:00",
+              "assign_to": "Sarah"
+            }
+          ]
+        }
+      ],
+      "incomplete_cases": [],
+      "slowest_cases": [
+        {
+          "case_id": "merge-instruction-simple",
+          "duration_s": 11.364955
+        },
+        {
+          "case_id": "dense-run-on-four",
+          "duration_s": 5.481055
+        },
+        {
+          "case_id": "long-noisy-three-with-past",
+          "duration_s": 4.0303
+        }
+      ]
+    },
+    {
+      "entry_id": "modal_outlines_qwen35_9b",
+      "label": "Qwen 3.5 9B / Modal Outlines",
+      "status": "current",
+      "selected_run_id": "2026-05-11T20-10-02Z-2bf30e3a--modal_outlines_qwen35_9b",
+      "selected_timestamp": "2026-05-11T20:10:02.867442Z",
+      "headline_metric_value": 0.9615384615384616,
+      "total_case_count": 26,
+      "passed_case_count": 25,
+      "incorrect_case_count": 1,
+      "incomplete_case_count": 0,
+      "completed_case_count": 26,
+      "failure_count": 0,
+      "average_case_duration_s": 2.4476637692307692,
+      "max_case_duration_s": 9.423299,
+      "cost_usd": null,
+      "config": {
+        "provider": "managed-openai",
+        "model": "Qwen/Qwen3.5-9B",
+        "prompt_version": "v1",
+        "implementation": {
+          "family": "modal-outlines"
+        },
+        "model_settings": {
+          "temperature": 0,
+          "max_tokens": 1024
+        },
+        "session": {
+          "stack": "sglang-outlines",
+          "host": "modal",
+          "gpu": "L40S",
+          "context_window": 4096
+        }
+      },
+      "failures": [],
+      "incorrect_cases": [
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "actual_output": [
+            {
+              "text": "Send Zen email to Sarah with revised budget",
+              "priority": "medium",
+              "category": "email",
+              "due_date": "2026-03-24",
+              "notification": "2026-03-24T09:30:00",
+              "assign_to": "Sarah"
+            }
+          ]
+        }
+      ],
+      "incomplete_cases": [],
+      "slowest_cases": [
+        {
+          "case_id": "merge-instruction-simple",
+          "duration_s": 9.423299
+        },
+        {
+          "case_id": "dense-run-on-four",
+          "duration_s": 5.317617
+        },
+        {
+          "case_id": "three-simple-tasks",
+          "duration_s": 4.07862
         }
       ]
     }
   ],
-  "missing_entry_ids": []
+  "missing_entry_ids": [
+    "gemini3_flash_default",
+    "gemini3_flash_minimal_thinking",
+    "gemini31_flash_lite_default",
+    "gemini31_flash_lite_minimal_thinking",
+    "mistral_small_4_default"
+  ]
 }

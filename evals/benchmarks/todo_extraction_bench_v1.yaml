@@ -146,3 +146,67 @@ entries:
       extra_body:
         chat_template_kwargs:
           enable_thinking: false
+- id: modal_outlines_qwen35_0_8b
+  label: Qwen 3.5 0.8B / Modal Outlines
+  config:
+    provider: managed-openai
+    model: Qwen/Qwen3.5-0.8B
+    prompt_version: v1
+    implementation:
+      family: modal-outlines
+    model_settings:
+      temperature: 0
+      max_tokens: 1024
+    session:
+      stack: sglang-outlines
+      host: modal
+      gpu: L40S
+      context_window: 4096
+- id: modal_outlines_qwen35_2b
+  label: Qwen 3.5 2B / Modal Outlines
+  config:
+    provider: managed-openai
+    model: Qwen/Qwen3.5-2B
+    prompt_version: v1
+    implementation:
+      family: modal-outlines
+    model_settings:
+      temperature: 0
+      max_tokens: 1024
+    session:
+      stack: sglang-outlines
+      host: modal
+      gpu: L40S
+      context_window: 4096
+- id: modal_outlines_qwen35_4b
+  label: Qwen 3.5 4B / Modal Outlines
+  config:
+    provider: managed-openai
+    model: Qwen/Qwen3.5-4B
+    prompt_version: v1
+    implementation:
+      family: modal-outlines
+    model_settings:
+      temperature: 0
+      max_tokens: 1024
+    session:
+      stack: sglang-outlines
+      host: modal
+      gpu: L40S
+      context_window: 4096
+- id: modal_outlines_qwen35_9b
+  label: Qwen 3.5 9B / Modal Outlines
+  config:
+    provider: managed-openai
+    model: Qwen/Qwen3.5-9B
+    prompt_version: v1
+    implementation:
+      family: modal-outlines
+    model_settings:
+      temperature: 0
+      max_tokens: 1024
+    session:
+      stack: sglang-outlines
+      host: modal
+      gpu: L40S
+      context_window: 4096

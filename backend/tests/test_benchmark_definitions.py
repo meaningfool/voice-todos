@@ -5,7 +5,6 @@ from pathlib import Path
 from evals.resolution import resolve_entry_config
 from evals.storage import load_benchmark_definition
 
-
 BENCHMARK_DEFINITION = (
     Path(__file__).resolve().parents[2]
     / "evals/benchmarks/todo_extraction_bench_v1.yaml"
@@ -27,9 +26,7 @@ def test_benchmark_definition_parses_required_fields_and_unique_entry_ids():
 def test_extraction_entry_matches_legacy_registry_values():
     benchmark = load_benchmark_definition(BENCHMARK_DEFINITION)
     entry = next(
-        entry
-        for entry in benchmark.entries
-        if entry.id == "gemini3_flash_default"
+        entry for entry in benchmark.entries if entry.id == "gemini3_flash_default"
     )
     resolved = resolve_entry_config(benchmark=benchmark, entry=entry)
 
@@ -93,3 +90,33 @@ def test_resolve_entry_config_surfaces_implementation_family():
         "max_tokens": 512,
         "extra_body": {"chat_template_kwargs": {"enable_thinking": False}},
     }
+
+
+def test_extraction_benchmark_defines_modal_outlines_family_for_all_qwen_sizes():
+    benchmark = load_benchmark_definition(BENCHMARK_DEFINITION)
+    modal_entries = {
+        entry.id: entry
+        for entry in benchmark.entries
+        if entry.config["provider"] == "managed-openai"
+    }
+
+    assert set(modal_entries) == {
+        "modal_outlines_qwen35_0_8b",
+        "modal_outlines_qwen35_2b",
+        "modal_outlines_qwen35_4b",
+        "modal_outlines_qwen35_9b",
+    }
+
+    for entry in modal_entries.values():
+        assert entry.config["prompt_version"] == "v1"
+        assert entry.config["implementation"]["family"] == "modal-outlines"
+        assert entry.config["model_settings"] == {
+            "temperature": 0,
+            "max_tokens": 1024,
+        }
+        assert entry.config["session"] == {
+            "stack": "sglang-outlines",
+            "host": "modal",
+            "gpu": "L40S",
+            "context_window": 4096,
+        }

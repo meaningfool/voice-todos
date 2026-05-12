@@ -7,7 +7,7 @@ import asyncio
 import os
 import sys
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -15,12 +15,13 @@ BACKEND_ROOT = Path(__file__).resolve().parents[2]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
+from evals.benchmark_ids import TODO_EXTRACTION_BENCHMARK_ID
+from evals.run import BenchmarkStaleError, ensure_benchmark_dataset_path
 from pydantic_evals import Dataset
 
 from app.extract import extract_todos
 from app.logfire_setup import configure_logfire, has_logfire_write_credentials
 from app.models import Todo
-from evals.benchmark_ids import TODO_EXTRACTION_BENCHMARK_ID
 from evals.common.experiment_metadata import (
     build_batch_id,
     build_experiment_metadata,
@@ -37,7 +38,6 @@ from evals.extraction_quality.experiment_configs import (
     experiment_definition_from_entry_config,
     read_backend_env_var,
 )
-from evals.run import BenchmarkStaleError, ensure_benchmark_dataset_path
 
 
 @dataclass
@@ -167,6 +167,19 @@ def _build_task(experiment: ExperimentDefinition):
     return run_case
 
 
+def _managed_session_payload(
+    managed_session: object | None,
+) -> dict[str, object] | None:
+    if managed_session is None:
+        return None
+    if isinstance(managed_session, dict):
+        return {str(key): value for key, value in managed_session.items()}
+    model_dump = getattr(managed_session, "model_dump", None)
+    if callable(model_dump):
+        return model_dump()
+    return dict(vars(managed_session))
+
+
 def _resolve_dataset_path(dataset_path: Path | None) -> Path:
     if dataset_path is not None:
         return dataset_path
@@ -176,7 +189,8 @@ def _resolve_dataset_path(dataset_path: Path | None) -> Path:
     except BenchmarkStaleError as exc:
         raise ValueError(
             "Default extraction dataset lock is stale. Re-run "
-            f"`cd backend && uv run python ../evals/cli.py benchmark run {TODO_EXTRACTION_BENCHMARK_ID} --rebase` "
+            "`cd backend && uv run python ../evals/cli.py benchmark run "
+            f"{TODO_EXTRACTION_BENCHMARK_ID} --rebase` "
             "or pass --dataset-path."
         ) from exc
 
@@ -249,6 +263,9 @@ async def launch_experiments_for_definitions(
             full_config={
                 "provider": experiment.provider,
                 "implementation_family": experiment.implementation_family,
+                "managed_session": _managed_session_payload(
+                    getattr(experiment, "managed_session", None)
+                ),
                 "thinking_mode": experiment.thinking_mode,
                 "model_settings": experiment.extraction_config.model_settings,
                 "prompt_version": experiment.extraction_config.prompt_version,
@@ -290,6 +307,7 @@ async def launch_extraction_entry(
     task_retries: int,
     max_concurrency: int,
     allow_untracked: bool,
+    managed_lease=None,
 ) -> dict[str, str]:
     experiment = experiment_definition_from_entry_config(
         experiment_name_hint=entry.id,
@@ -298,7 +316,20 @@ async def launch_extraction_entry(
         prompt_version=resolved_config.prompt_version,
         implementation_family=resolved_config.implementation_family,
         model_settings=resolved_config.model_settings,
+        managed_session=_managed_session_payload(
+            getattr(resolved_config, "managed_session", None)
+        ),
     )
+    if managed_lease is not None:
+        experiment = replace(
+            experiment,
+            extraction_config=replace(
+                experiment.extraction_config,
+                openai_base_url=managed_lease.base_url,
+                openai_api_key=managed_lease.api_key,
+                transport_headers=dict(managed_lease.headers),
+            ),
+        )
     result = await launch_experiments_for_definitions(
         experiments=[experiment],
         dataset_path=dataset_path,

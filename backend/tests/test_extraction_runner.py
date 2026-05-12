@@ -274,9 +274,7 @@ async def test_launch_experiments_returns_batch_and_attached_refs(
 
 
 @pytest.mark.asyncio
-async def test_run_resolves_default_dataset_from_benchmark_lock(
-    monkeypatch, tmp_path
-):
+async def test_run_resolves_default_dataset_from_benchmark_lock(monkeypatch, tmp_path):
     import evals.extraction_quality.run as runner
 
     lock_path = tmp_path / "todo_extraction_bench_v1.json"
@@ -412,3 +410,150 @@ async def test_launch_experiments_separates_same_model_by_implementation_family(
     fingerprints = [call["metadata"]["config_fingerprint"] for call in evaluate_calls]
     assert len(fingerprints) == 2
     assert fingerprints[0] != fingerprints[1]
+
+
+@pytest.mark.asyncio
+async def test_managed_session_changes_config_fingerprint(monkeypatch, tmp_path):
+    import evals.extraction_quality.run as runner
+
+    dataset_override = tmp_path / "dataset.json"
+    dataset_override.write_text('{"cases": []}\n')
+    evaluate_calls = []
+
+    experiments = [
+        SimpleNamespace(
+            name="modal-outlines-4b-l40s",
+            provider="managed-openai",
+            thinking_mode="custom",
+            implementation_family="modal-outlines",
+            managed_session={
+                "stack": "sglang-outlines",
+                "host": "modal",
+                "gpu": "L40S",
+                "context_window": 4096,
+            },
+            extraction_config=SimpleNamespace(
+                model_name="Qwen/Qwen3.5-4B",
+                model_settings={"temperature": 0, "max_tokens": 1024},
+                prompt_version="v1",
+            ),
+            prompt_metadata={"prompt_sha": "prompt-sha"},
+            unavailable_reason=lambda: None,
+        ),
+        SimpleNamespace(
+            name="modal-outlines-4b-a100",
+            provider="managed-openai",
+            thinking_mode="custom",
+            implementation_family="modal-outlines",
+            managed_session={
+                "stack": "sglang-outlines",
+                "host": "modal",
+                "gpu": "A100",
+                "context_window": 4096,
+            },
+            extraction_config=SimpleNamespace(
+                model_name="Qwen/Qwen3.5-4B",
+                model_settings={"temperature": 0, "max_tokens": 1024},
+                prompt_version="v1",
+            ),
+            prompt_metadata={"prompt_sha": "prompt-sha"},
+            unavailable_reason=lambda: None,
+        ),
+    ]
+
+    class FakeReport:
+        def print(self, include_metadata: bool) -> None:
+            assert include_metadata is True
+
+    async def fake_evaluate(self, task, **kwargs):
+        evaluate_calls.append(kwargs)
+        return FakeReport()
+
+    monkeypatch.setattr(runner, "has_logfire_write_credentials", lambda: True)
+    monkeypatch.setattr(runner, "configure_logfire", lambda **kwargs: None)
+    monkeypatch.setattr(
+        runner,
+        "load_extraction_quality_dataset",
+        lambda path=None: SimpleNamespace(name="override-dataset", cases=[]),
+    )
+    monkeypatch.setattr(runner.Dataset, "evaluate", fake_evaluate)
+
+    await runner.launch_experiments_for_definitions(
+        experiments=experiments,
+        dataset_path=dataset_override,
+        repeat=1,
+        task_retries=0,
+        max_concurrency=1,
+        allow_untracked=False,
+    )
+
+    fingerprints = [call["metadata"]["config_fingerprint"] for call in evaluate_calls]
+    assert len(fingerprints) == 2
+    assert fingerprints[0] != fingerprints[1]
+
+
+@pytest.mark.asyncio
+async def test_launch_extraction_entry_preserves_entry_identity_with_managed_lease(
+    monkeypatch, tmp_path
+):
+    import evals.extraction_quality.run as runner
+
+    captured: dict[str, object] = {}
+
+    async def fake_launch_experiments_for_definitions(**kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(batch_id="managed-batch")
+
+    monkeypatch.setattr(
+        runner,
+        "launch_experiments_for_definitions",
+        fake_launch_experiments_for_definitions,
+    )
+
+    result = await runner.launch_extraction_entry(
+        entry=SimpleNamespace(id="modal_outlines_qwen35_4b"),
+        resolved_config=SimpleNamespace(
+            provider="managed-openai",
+            model_name="Qwen/Qwen3.5-4B",
+            prompt_version="v1",
+            implementation_family="modal-outlines",
+            model_settings={"temperature": 0, "max_tokens": 1024},
+            managed_session=SimpleNamespace(
+                stack="sglang-outlines",
+                host="modal",
+                gpu="L40S",
+                context_window=4096,
+            ),
+        ),
+        dataset_path=tmp_path / "dataset.json",
+        repeat=1,
+        task_retries=0,
+        max_concurrency=1,
+        allow_untracked=True,
+        managed_lease=SimpleNamespace(
+            base_url="https://managed.example/v1",
+            api_key="managed-test-key",
+            headers={"Modal-Session-ID": "session-123"},
+        ),
+    )
+
+    experiment = captured["experiments"][0]
+    assert experiment.name == "modal_outlines_qwen35_4b"
+    assert experiment.provider == "managed-openai"
+    assert experiment.implementation_family == "modal-outlines"
+    assert experiment.managed_session == {
+        "stack": "sglang-outlines",
+        "host": "modal",
+        "gpu": "L40S",
+        "context_window": 4096,
+    }
+    assert experiment.extraction_config.openai_base_url == "https://managed.example/v1"
+    assert experiment.extraction_config.openai_api_key == "managed-test-key"
+    assert experiment.extraction_config.transport_headers == {
+        "Modal-Session-ID": "session-123"
+    }
+    assert result == {
+        "entry_id": "modal_outlines_qwen35_4b",
+        "batch_id": "managed-batch",
+        "experiment_id": "modal_outlines_qwen35_4b",
+    }

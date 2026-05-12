@@ -18,8 +18,7 @@ requires_gemini = pytest.mark.skipif(
         and os.environ.get("RUN_GEMINI_INTEGRATION") == "1"
     ),
     reason=(
-        "Gemini integration tests require GEMINI_API_KEY and "
-        "RUN_GEMINI_INTEGRATION=1"
+        "Gemini integration tests require GEMINI_API_KEY and RUN_GEMINI_INTEGRATION=1"
     ),
 )
 
@@ -90,9 +89,7 @@ def test_get_agent_uses_configured_gemini_api_key():
         fake_model,
         output_type=ExtractionResult,
         instructions=_extract_mod.get_extraction_prompt_ref().content,
-        model_settings={
-            "google_thinking_config": {"thinking_level": "minimal"}
-        },
+        model_settings={"google_thinking_config": {"thinking_level": "minimal"}},
     )
 
 
@@ -104,10 +101,10 @@ def test_build_model_uses_google_factory_for_gemini():
     fake_model = object()
 
     with (
-        patch("app.model_providers.GoogleProvider", return_value=fake_provider)
-        as mock_provider,
-        patch("app.model_providers.GoogleModel", return_value=fake_model)
-        as mock_model,
+        patch(
+            "app.model_providers.GoogleProvider", return_value=fake_provider
+        ) as mock_provider,
+        patch("app.model_providers.GoogleModel", return_value=fake_model) as mock_model,
         patch("builtins.__import__", side_effect=_guard_optional_mistral_import),
     ):
         model = model_providers.build_model(
@@ -206,6 +203,48 @@ def test_build_model_uses_deepinfra_factory_lazily():
     assert model.provider.api_key == "deepinfra-test-key"
     gemini_api_key_getter.assert_not_called()
     deepinfra_api_key_getter.assert_called_once_with()
+
+
+def test_build_model_supports_runtime_openai_compatible_base_url():
+    from app import model_providers
+
+    gemini_api_key_getter = Mock(
+        side_effect=AssertionError("Gemini lookup should not happen for managed OpenAI")
+    )
+
+    class FakeOpenAIProvider:
+        def __init__(self, *, base_url, api_key):
+            self.base_url = base_url
+            self.api_key = api_key
+
+    class FakeOpenAIChatModel:
+        def __init__(self, model_name, *, provider):
+            self.model_name = model_name
+            self.provider = provider
+
+    fake_openai_module = SimpleNamespace(OpenAIChatModel=FakeOpenAIChatModel)
+    fake_provider_module = SimpleNamespace(OpenAIProvider=FakeOpenAIProvider)
+
+    with patch.dict(
+        sys.modules,
+        {
+            "pydantic_ai.models.openai": fake_openai_module,
+            "pydantic_ai.providers.openai": fake_provider_module,
+        },
+    ):
+        model = model_providers.build_model(
+            "Qwen/Qwen3.5-4B",
+            provider="managed-openai",
+            gemini_api_key_getter=gemini_api_key_getter,
+            openai_base_url="https://managed.example/v1",
+            openai_api_key="managed-test-key",
+        )
+
+    assert isinstance(model, FakeOpenAIChatModel)
+    assert model.model_name == "Qwen/Qwen3.5-4B"
+    assert model.provider.base_url == "https://managed.example/v1"
+    assert model.provider.api_key == "managed-test-key"
+    gemini_api_key_getter.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -379,9 +418,52 @@ def test_build_extraction_agent_uses_native_output_for_provider_json_schema():
     assert mock_agent.call_args.kwargs["model_settings"] == {
         "temperature": 0,
         "max_tokens": 512,
-        "extra_body": {
-            "chat_template_kwargs": {"enable_thinking": False}
-        },
+        "extra_body": {"chat_template_kwargs": {"enable_thinking": False}},
+    }
+
+
+def test_build_extraction_agent_uses_native_output_for_managed_family():
+    from app.extract import ExtractionConfig, build_extraction_agent
+
+    fake_model = object()
+    fake_agent = object()
+
+    with (
+        patch("app.extract._get_gemini_api_key") as mock_gemini_key,
+        patch("app.extract._get_mistral_api_key") as mock_mistral_key,
+        patch("app.extract._get_deepinfra_api_key") as mock_deepinfra_key,
+        patch("app.extract.build_model", return_value=fake_model) as mock_build_model,
+        patch("app.extract.Agent", return_value=fake_agent) as mock_agent,
+    ):
+        agent = build_extraction_agent(
+            ExtractionConfig(
+                model_name="Qwen/Qwen3.5-4B",
+                provider="managed-openai",
+                implementation_family="modal-outlines",
+                model_settings={"temperature": 0, "max_tokens": 1024},
+                openai_base_url="https://managed.example/v1",
+                openai_api_key="managed-test-key",
+                transport_headers={"Modal-Session-ID": "session-123"},
+            )
+        )
+
+    assert agent is fake_agent
+    mock_build_model.assert_called_once_with(
+        "Qwen/Qwen3.5-4B",
+        provider="managed-openai",
+        gemini_api_key_getter=mock_gemini_key,
+        mistral_api_key_getter=mock_mistral_key,
+        deepinfra_api_key_getter=mock_deepinfra_key,
+        openai_base_url="https://managed.example/v1",
+        openai_api_key="managed-test-key",
+    )
+    output_type = mock_agent.call_args.kwargs["output_type"]
+    assert isinstance(output_type, NativeOutput)
+    assert output_type.outputs is ExtractionResult
+    assert mock_agent.call_args.kwargs["model_settings"] == {
+        "temperature": 0,
+        "max_tokens": 1024,
+        "extra_headers": {"Modal-Session-ID": "session-123"},
     }
 
 
@@ -498,10 +580,9 @@ def test_extract_todos_passes_model_settings():
                 model_settings={"google_thinking_config": {"thinking_level": "high"}}
             )
         ).content,
-        model_settings={
-            "google_thinking_config": {"thinking_level": "high"}
-        },
+        model_settings={"google_thinking_config": {"thinking_level": "high"}},
     )
+
 
 def test_get_agent_does_not_reuse_different_model_config():
     """Agent caching should distinguish different extraction configs."""
@@ -601,9 +682,7 @@ async def test_extract_todos_with_priority_and_deadline():
     """When the speaker uses urgency language and dates, those fields are populated."""
     from app.extract import extract_todos
 
-    todos = await extract_todos(
-        "I urgently need to finish the report by Friday."
-    )
+    todos = await extract_todos("I urgently need to finish the report by Friday.")
 
     assert len(todos) >= 1
     report_todo = todos[0]
@@ -736,9 +815,7 @@ async def test_extract_todos_returns_agent_output():
     """Structured agent output is returned unchanged to the caller."""
     from app.extract import extract_todos
 
-    fake_todos = [
-        Todo(text="Call Marie", due_date="2026-03-24", assign_to="Marie")
-    ]
+    fake_todos = [Todo(text="Call Marie", due_date="2026-03-24", assign_to="Marie")]
     fake_agent = SimpleNamespace(
         run=AsyncMock(
             return_value=SimpleNamespace(output=ExtractionResult(todos=fake_todos))
@@ -757,8 +834,6 @@ async def test_extract_todos_no_actionable_items():
     """Transcript with no tasks returns empty or near-empty list."""
     from app.extract import extract_todos
 
-    todos = await extract_todos(
-        "The weather is nice today. I had a good lunch."
-    )
+    todos = await extract_todos("The weather is nice today. I had a good lunch.")
 
     assert len(todos) == 0

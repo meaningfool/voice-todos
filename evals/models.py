@@ -48,6 +48,13 @@ class LockedDatasetDefinition(DatasetDefinition):
     benchmark_lock: BenchmarkLockMetadata = Field(alias="_benchmark_lock")
 
 
+class ManagedSessionConfig(BaseModel):
+    stack: str
+    host: str
+    gpu: str
+    context_window: int
+
+
 class ResolvedEntryConfig(BaseModel):
     suite: str
     dataset_family: str
@@ -56,6 +63,7 @@ class ResolvedEntryConfig(BaseModel):
     prompt_version: str
     implementation_family: str | None = None
     model_settings: dict = Field(default_factory=dict)
+    managed_session: ManagedSessionConfig | None = None
 
 
 class BenchmarkRunResult(BaseModel):

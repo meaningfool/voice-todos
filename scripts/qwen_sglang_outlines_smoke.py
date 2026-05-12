@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from __future__ import annotations
 
 import asyncio
 import json
@@ -19,15 +18,19 @@ MINUTES = 60
 PORT = 8000
 REGION = "us-east"
 GPU = "L40S"
-MODEL_NAME = "Qwen/Qwen3.5-4B"
-CONTEXT_LENGTH = 4096
+DEFAULT_MODE = "smoke"
+DEFAULT_MODEL_NAME = "Qwen/Qwen3.5-4B"
+DEFAULT_CONTEXT_LENGTH = 4096
 STARTUP_TIMEOUT_SECONDS = 30 * MINUTES
 SMOKE_TIMEOUT_SECONDS = 35 * MINUTES
-SESSION_ID = "voice-todos-qwen4b-smoke"
+DEFAULT_SESSION_ID = "voice-todos-qwen4b-smoke"
+DEFAULT_API_KEY = "modal-managed-placeholder-key"
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PROMPT_PATH = REPO_ROOT / "backend" / "app" / "prompts" / "todo_extraction" / "v1.md"
-CACHE_VOLUME = modal.Volume.from_name("voice-todos-sglang-cache", create_if_missing=True)
+CACHE_VOLUME = modal.Volume.from_name(
+    "voice-todos-sglang-cache", create_if_missing=True
+)
 CACHE_PATH = "/cache"
 HF_CACHE_PATH = f"{CACHE_PATH}/huggingface"
 OUTLINES_WHITESPACE_PATTERN = os.environ.get(
@@ -47,7 +50,7 @@ SG_LANG_IMAGE = (
     )
 )
 
-app = modal.App(name="voice-todos-qwen4b-sglang-outlines-smoke")
+app = modal.App(name="voice-todos-qwen-sglang-outlines")
 
 
 @dataclass
@@ -99,11 +102,13 @@ def _read_prompt() -> str:
 def _build_extraction_input() -> str:
     reference_dt = datetime.now().astimezone()
     transcript = (
-        "Tomorrow at 9am, email Alice the revised budget and remind me at the same time. "
+        "Tomorrow at 9am, email Alice the revised budget and remind me at the "
+        "same time. "
         "Also ask Ben to review the onboarding checklist by Friday. "
         "Book the dentist appointment for next Tuesday afternoon. "
         "Mark the budget email as high priority and work-related. "
-        "Don't create a task for 'the quarterly meeting was chaotic' because that's just commentary."
+        "Don't create a task for 'the quarterly meeting was chaotic' because "
+        "that's just commentary."
     )
     timezone_name = reference_dt.tzname() or "UTC"
     return "\n".join(
@@ -154,12 +159,14 @@ def _wait_ready(process: subprocess.Popen[Any], *, timeout: int) -> None:
     raise TimeoutError(f"SGLang server not ready within {timeout} seconds")
 
 
-def _warmup_server() -> None:
+def _warmup_server(model_name: str) -> None:
     _json_request(
         f"http://127.0.0.1:{PORT}/v1/chat/completions",
         payload={
-            "model": MODEL_NAME,
-            "messages": [{"role": "user", "content": "Reply with the single word READY."}],
+            "model": model_name,
+            "messages": [
+                {"role": "user", "content": "Reply with the single word READY."}
+            ],
             "temperature": 0,
             "max_tokens": 8,
         },
@@ -217,10 +224,10 @@ def _probe_chat_completion(
     *,
     payload: dict[str, Any],
     timeout: int,
+    headers: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     deadline = time.time() + timeout
     url = f"{base_url}/v1/chat/completions"
-    headers = {"Modal-Session-ID": SESSION_ID}
     last_error: Exception | None = None
 
     while time.time() < deadline:
@@ -230,13 +237,13 @@ def _probe_chat_completion(
                 raise ValueError(f"Unexpected response type: {type(response).__name__}")
             return response
         except error.HTTPError as exc:
-            if exc.code == 503:
+            if exc.code in {502, 503, 504}:
                 last_error = exc
                 time.sleep(2)
                 continue
             body = exc.read().decode("utf-8", errors="replace")
             raise RuntimeError(f"HTTP {exc.code} from {url}: {body}") from exc
-        except (error.URLError, TimeoutError, ValueError) as exc:
+        except (ConnectionResetError, error.URLError, TimeoutError, ValueError) as exc:
             last_error = exc
             time.sleep(2)
 
@@ -260,6 +267,10 @@ def _probe_chat_completion(
     exit_grace_period=15,
 )
 class SGLangServer:
+    model_name: str = modal.parameter(default=DEFAULT_MODEL_NAME)
+    context_length: int = modal.parameter(default=DEFAULT_CONTEXT_LENGTH)
+    process: subprocess.Popen[Any]
+
     @modal.enter()
     def startup(self) -> None:
         cmd = [
@@ -267,9 +278,9 @@ class SGLangServer:
             "-m",
             "sglang.launch_server",
             "--model-path",
-            MODEL_NAME,
+            self.model_name,
             "--served-model-name",
-            MODEL_NAME,
+            self.model_name,
             "--host",
             "0.0.0.0",
             "--port",
@@ -277,7 +288,7 @@ class SGLangServer:
             "--tp",
             "1",
             "--context-length",
-            str(CONTEXT_LENGTH),
+            str(self.context_length),
             "--download-dir",
             HF_CACHE_PATH,
             "--grammar-backend",
@@ -297,7 +308,7 @@ class SGLangServer:
 
         self.process = subprocess.Popen(cmd)
         _wait_ready(self.process, timeout=STARTUP_TIMEOUT_SECONDS)
-        _warmup_server()
+        _warmup_server(self.model_name)
 
     @modal.exit()
     def shutdown(self) -> None:
@@ -310,17 +321,81 @@ class SGLangServer:
                 self.process.wait(timeout=30)
 
 
+def _session_headers(session_id: str) -> dict[str, str]:
+    return {"Modal-Session-ID": session_id}
+
+
+def _warmup_payload(model_name: str) -> dict[str, Any]:
+    return {
+        "model": model_name,
+        "messages": [{"role": "user", "content": "Reply with the single word READY."}],
+        "temperature": 0,
+        "max_tokens": 8,
+    }
+
+
+async def _warmed_flash_url(
+    server: SGLangServer,
+    *,
+    model_name: str,
+    session_id: str,
+    timeout: int,
+) -> str:
+    flash_urls = await (
+        server._cached_service_function()._experimental_get_flash_urls.aio()
+    )
+    if not flash_urls:
+        raise RuntimeError("Modal did not return a flash URL for the bound server")
+    flash_url = flash_urls[0]
+    await asyncio.to_thread(
+        _probe_chat_completion,
+        flash_url,
+        payload=_warmup_payload(model_name),
+        timeout=timeout,
+        headers=_session_headers(session_id),
+    )
+    return flash_url
+
+
 @app.local_entrypoint()
 async def main(
+    mode: str = DEFAULT_MODE,
+    model_name: str = DEFAULT_MODEL_NAME,
+    context_length: int = DEFAULT_CONTEXT_LENGTH,
+    session_id: str = DEFAULT_SESSION_ID,
+    api_key: str = DEFAULT_API_KEY,
     test_timeout: int = SMOKE_TIMEOUT_SECONDS,
 ) -> None:
-    base_url = (await SGLangServer._experimental_get_flash_urls.aio())[0]
+    server = SGLangServer(model_name=model_name, context_length=context_length)
+    flash_url = await _warmed_flash_url(
+        server,
+        model_name=model_name,
+        session_id=session_id,
+        timeout=test_timeout,
+    )
+    if mode == "serve":
+        print(
+            json.dumps(
+                {
+                    "status": "ready",
+                    "base_url": f"{flash_url.rstrip('/')}/v1",
+                    "api_key": api_key,
+                    "headers": _session_headers(session_id),
+                }
+            ),
+            flush=True,
+        )
+        await asyncio.Event().wait()
+        return
+
+    if mode != "smoke":
+        raise ValueError(f"Unsupported mode: {mode}")
 
     unconstrained_response = await asyncio.to_thread(
         _probe_chat_completion,
-        base_url,
+        flash_url,
         payload={
-            "model": MODEL_NAME,
+            "model": model_name,
             "messages": [
                 {"role": "system", "content": _read_prompt()},
                 {"role": "user", "content": _build_extraction_input()},
@@ -329,21 +404,25 @@ async def main(
             "max_tokens": 512,
         },
         timeout=test_timeout,
+        headers=_session_headers(session_id),
     )
     unconstrained_text = _extract_message_content(unconstrained_response)
 
     constrained_response = await asyncio.to_thread(
         _probe_chat_completion,
-        base_url,
+        flash_url,
         payload={
-            "model": MODEL_NAME,
+            "model": model_name,
             "messages": [
                 {"role": "system", "content": _read_prompt()},
                 {
                     "role": "user",
                     "content": (
                         _build_extraction_input()
-                        + "\n\nReturn pretty-printed JSON with indentation and line breaks."
+                        + (
+                            "\n\nReturn pretty-printed JSON with indentation "
+                            "and line breaks."
+                        )
                     ),
                 },
             ],
@@ -358,14 +437,15 @@ async def main(
             },
         },
         timeout=test_timeout,
+        headers=_session_headers(session_id),
     )
     constrained_raw = _extract_message_content(constrained_response)
     constrained_payload = json.loads(constrained_raw)
     parsed_todos = _validate_todo_payload(constrained_payload)
 
     summary = SmokeSummary(
-        endpoint_url=base_url,
-        model_name=MODEL_NAME,
+        endpoint_url=flash_url,
+        model_name=model_name,
         whitespace_pattern=OUTLINES_WHITESPACE_PATTERN or None,
         unconstrained_text=unconstrained_text,
         constrained_raw=constrained_raw,
@@ -374,4 +454,4 @@ async def main(
         constrained_max_space_run=_max_space_run(constrained_raw),
         parsed_todos=parsed_todos,
     )
-    print(json.dumps(asdict(summary), indent=2, ensure_ascii=False))
+    print(json.dumps(asdict(summary), indent=2, ensure_ascii=False), flush=True)
