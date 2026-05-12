@@ -2,22 +2,22 @@
 
 ## Source
 
-- Work item: [020_shaping_qwen-constrained-evals.md](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/docs/meanpowers/02_qwen-constrained-evals/020_shaping_qwen-constrained-evals.md:245)
+- Work item: [020_shaping_qwen-constrained-evals.md](020_shaping_qwen-constrained-evals.md)
 - This revised spec supersedes the earlier narrow draft saved at this path.
 - Scope here is the first provider-local slice, combining the original shaping `V1` and `V2` without pulling in Modal/Outlines or replay.
 
 ## Baseline
 
-Today the extraction benchmark only contains two DeepInfra Qwen entries in [todo_extraction_bench_v1.yaml](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/evals/benchmarks/todo_extraction_bench_v1.yaml:49):
+Today the extraction benchmark only contains two DeepInfra Qwen entries in [todo_extraction_bench_v1.yaml](../../../evals/benchmarks/todo_extraction_bench_v1.yaml):
 
 - `deepinfra_qwen35_9b_default`
 - `deepinfra_qwen35_4b_structured_tuned`
 
-The shaping already defined the intended two-family DeepInfra comparison. It describes the old family as the `current SDK-default structured path` and the `historical DeepInfra structured path`, and the new family as the explicit provider-side `response_format=json_schema` path in [020_shaping_qwen-constrained-evals.md](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/docs/meanpowers/02_qwen-constrained-evals/020_shaping_qwen-constrained-evals.md:264).
+The shaping already defined the intended two-family DeepInfra comparison. It describes the old family as the `current SDK-default structured path` and the `historical DeepInfra structured path`, and the new family as the explicit provider-side `response_format=json_schema` path in [020_shaping_qwen-constrained-evals.md](020_shaping_qwen-constrained-evals.md).
 
-In this repo's current implementation, that old family is not unstructured. It is the `pydantic_ai` output-tool path. The extraction agent is built with `output_type=ExtractionResult` in [extract.py](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/backend/app/extract.py:119), `pydantic_ai` defaults structured output to `tool` mode in [profiles/__init__.py](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/backend/.venv/lib/python3.14/site-packages/pydantic_ai/profiles/__init__.py:42), and the OpenAI-compatible adapter only sends `response_format` when the output mode is `native` in [openai.py](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/backend/.venv/lib/python3.14/site-packages/pydantic_ai/models/openai.py:697). To make the family names explicit about mechanism instead of chronology, this spec names the two families `deepinfra-output-tool` and `deepinfra-provider-json-schema`.
+In this repo's current implementation, that old family is not unstructured. It is the `pydantic_ai` output-tool path. The extraction agent is built with `output_type=ExtractionResult` in [extract.py](../../../backend/app/extract.py), `pydantic_ai` defaults structured output to `tool` mode in [profiles/__init__.py](../../../backend/.venv/lib/python3.14/site-packages/pydantic_ai/profiles/__init__.py), and the OpenAI-compatible adapter only sends `response_format` when the output mode is `native` in [openai.py](../../../backend/.venv/lib/python3.14/site-packages/pydantic_ai/models/openai.py). To make the family names explicit about mechanism instead of chronology, this spec names the two families `deepinfra-output-tool` and `deepinfra-provider-json-schema`.
 
-The benchmark runner is already benchmark-first. It resolves YAML entry configs and can synthesize experiment definitions from entry data in [experiment_configs.py](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/backend/evals/extraction_quality/experiment_configs.py:166) and [run.py](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/backend/evals/extraction_quality/run.py:293). However, benchmark/report identity currently has no explicit family field, so this slice must add that comparison axis to the benchmark contract.
+The benchmark runner is already benchmark-first. It resolves YAML entry configs and can synthesize experiment definitions from entry data in [experiment_configs.py](../../../backend/evals/extraction_quality/experiment_configs.py) and [run.py](../../../backend/evals/extraction_quality/run.py). However, benchmark/report identity currently has no explicit family field, so this slice must add that comparison axis to the benchmark contract.
 
 ## Target System
 
@@ -33,7 +33,7 @@ The two families are:
 - `deepinfra-output-tool`
   - the current DeepInfra structured extraction path in this repo
   - implemented through `pydantic_ai` output-tool mode
-  - preserves the existing typed extraction contract returning [ExtractionResult / Todo](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/backend/app/models.py:7)
+  - preserves the existing typed extraction contract returning [ExtractionResult / Todo](../../../backend/app/models.py)
   - does not explicitly send provider-side `response_format=json_schema`
 
 - `deepinfra-provider-json-schema`
@@ -156,9 +156,9 @@ After this slice:
 
 ## Design And Implementation Constraints
 
-- The benchmark definition in [todo_extraction_bench_v1.yaml](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/evals/benchmarks/todo_extraction_bench_v1.yaml:1) is the contract surface for this slice
+- The benchmark definition in [todo_extraction_bench_v1.yaml](../../../evals/benchmarks/todo_extraction_bench_v1.yaml) is the contract surface for this slice
 - `implementation.family`, when present, must participate in benchmark resolution, query selection, config fingerprinting, and report identity so alternative implementations do not collapse into one result stream
-- `deepinfra-output-tool` and `deepinfra-provider-json-schema` must both preserve the same [ExtractionResult / Todo](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/backend/app/models.py:7) contract
+- `deepinfra-output-tool` and `deepinfra-provider-json-schema` must both preserve the same [ExtractionResult / Todo](../../../backend/app/models.py) contract
 - `deepinfra-output-tool` must preserve the current output-tool path rather than re-implementing it through the new JSON-schema request path
 - `deepinfra-provider-json-schema` must explicitly exercise DeepInfra's provider-side `response_format=json_schema` behavior rather than only relabeling the current path
 - `deepinfra-provider-json-schema` must disable thinking unless the implementation is updated to treat `reasoning_content` as a supported result channel

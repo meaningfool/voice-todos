@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-03-24-item4-ui-redesign-design.md`
 
-**Reference HTML:** `docs/references/2026-03-24-item4-motion-light-reference.html`
+**Reference HTML:** `research/design/2026-03-24-item4-motion-light-reference.html`
 
 ---
 
@@ -1053,7 +1053,7 @@ git commit -m "feat: keep progressive placeholders while voice processing"
 
 **Files:**
 - Verify: `docs/superpowers/specs/2026-03-24-item4-ui-redesign-design.md`
-- Verify: `docs/references/2026-03-24-item4-motion-light-reference.html`
+- Verify: `research/design/2026-03-24-item4-motion-light-reference.html`
 - Verify: `frontend/src/App.tsx`
 - Verify: `frontend/src/components/RecordButton.tsx`
 - Verify: `frontend/src/components/TodoList.tsx`
@@ -1080,7 +1080,7 @@ Expected: PASS
 
 Open and compare:
 
-- `docs/references/2026-03-24-item4-motion-light-reference.html`
+- `research/design/2026-03-24-item4-motion-light-reference.html`
 - `docs/superpowers/specs/2026-03-24-item4-ui-redesign-design.md`
 - the live implementation in `frontend/src/App.tsx`, `frontend/src/components/RecordButton.tsx`, `frontend/src/components/TodoList.tsx`, and `frontend/src/components/TodoCard.tsx`
 

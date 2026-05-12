@@ -10,7 +10,7 @@
 
 **Tech Stack:** FastAPI backend code, PydanticAI, Pydantic Evals, Logfire, pytest, Gemini via Google GLA, Mistral APIs, optional OpenAI / Anthropic providers later
 
-**References:** `backend/app/extract.py`, `backend/app/models.py`, `backend/tests/test_extract.py`, `backend/tests/fixtures/`, `docs/references/logfire-trace-analysis.md`, `docs/references/eval-models-and-stacks.md`
+**References:** `backend/app/extract.py`, `backend/app/models.py`, `backend/tests/test_extract.py`, `backend/tests/fixtures/`, `research/notes/logfire-trace-analysis.md`, `research/notes/eval-models-and-stacks.md`
 
 ---
 

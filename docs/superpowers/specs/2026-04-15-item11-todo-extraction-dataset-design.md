@@ -393,7 +393,7 @@ counts as failure, not partial success.
 
 - `backend/tests/test_item7_logfire_query.py`
 - `backend/tests/test_item7_benchmark_report.py`
-- `docs/references/2026-04-16-logfire-query-api-notes.md`
+- `research/notes/2026-04-16-logfire-query-api-notes.md`
 
 ### Phase boundary rule
 

@@ -2,14 +2,14 @@
 
 ## Source
 
-- Shaping document: [020_shaping_qwen-constrained-evals.md](/Users/josselinperrus/conductor/workspaces/voice-todos/douala/docs/meanpowers/02_qwen-constrained-evals/020_shaping_qwen-constrained-evals.md)
+- Shaping document: [020_shaping_qwen-constrained-evals.md](020_shaping_qwen-constrained-evals.md)
 - This spec implements shaping `V3`.
-- This spec builds directly on the merged DeepInfra baseline in [021_spec_restore-deepinfra-qwen-baseline.md](/Users/josselinperrus/conductor/workspaces/voice-todos/douala/docs/meanpowers/02_qwen-constrained-evals/021_spec_restore-deepinfra-qwen-baseline.md).
+- This spec builds directly on the merged DeepInfra baseline in [021_spec_restore-deepinfra-qwen-baseline.md](021_spec_restore-deepinfra-qwen-baseline.md).
 - This spec replaces the unmerged local Modal draft that incorrectly reused the `021` number.
 
 ## Baseline
 
-Today `origin/main` already contains the first two shaping slices. The extraction benchmark in [todo_extraction_bench_v1.yaml](/Users/josselinperrus/conductor/workspaces/voice-todos/douala/evals/benchmarks/todo_extraction_bench_v1.yaml) exposes the eight-entry DeepInfra comparison:
+Today `origin/main` already contains the first two shaping slices. The extraction benchmark in [todo_extraction_bench_v1.yaml](../../../evals/benchmarks/todo_extraction_bench_v1.yaml) exposes the eight-entry DeepInfra comparison:
 
 - `deepinfra-output-tool`
 - `deepinfra-provider-json-schema`
@@ -151,7 +151,7 @@ After this slice:
 
 ## Design And Implementation Constraints
 
-- [todo_extraction_bench_v1.yaml](/Users/josselinperrus/conductor/workspaces/voice-todos/douala/evals/benchmarks/todo_extraction_bench_v1.yaml) remains the benchmark contract surface.
+- [todo_extraction_bench_v1.yaml](../../../evals/benchmarks/todo_extraction_bench_v1.yaml) remains the benchmark contract surface.
 - `implementation.family` must continue to participate in benchmark resolution, config fingerprinting, and report identity.
 - The new managed `session` spec must also participate in benchmark identity so materially different managed runtime shapes do not collapse into the same result stream.
 - The extraction layer must support runtime transport overrides without changing the persisted benchmark config for the eight DeepInfra entries.

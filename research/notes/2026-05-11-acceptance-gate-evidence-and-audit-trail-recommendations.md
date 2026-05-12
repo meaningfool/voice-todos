@@ -167,12 +167,12 @@ At the time of writing, `AGENTS.md` contains stale references:
 - the “Specs And Plans” section points to
   `docs/references/2026-04-13-phased-spec-plan-acceptance-gates.md`
 - the “Acceptance Tests” section references
-  `docs/references/2026-04-13-acceptance-tests-and-verification-policy.md`
+  `docs/references/acceptance-tests-and-verification-policy.md`
 
 In this workspace:
 
 - `docs/references/2026-04-13-phased-spec-plan-acceptance-gates.md` is empty
-- `docs/references/2026-04-13-acceptance-tests-and-verification-policy.md`
+- `docs/references/acceptance-tests-and-verification-policy.md`
   does not exist
 
 That creates two problems:

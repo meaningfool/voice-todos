@@ -11,13 +11,13 @@
 After `V2`, the repo has:
 
 - a shared session/transcript/finalization core in:
-  - [backend/app/live_session.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/live_session.py)
-  - [backend/app/transcript_accumulator.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/transcript_accumulator.py)
-- a local FastAPI `/ws` adapter in [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py)
-- a real hosted Cloudflare Worker + Durable Object path in [cloudflare/src/entry.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/entry.py) and [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py)
-- a hosted Soniox transport path in [cloudflare/src/stt_soniox_cf.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/stt_soniox_cf.py)
+  - [backend/app/live_session.py](../../../backend/app/live_session.py)
+  - [backend/app/transcript_accumulator.py](../../../backend/app/transcript_accumulator.py)
+- a local FastAPI `/ws` adapter in [backend/app/ws.py](../../../backend/app/ws.py)
+- a real hosted Cloudflare Worker + Durable Object path in [cloudflare/src/entry.py](../../../cloudflare/src/entry.py) and [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py)
+- a hosted Soniox transport path in [cloudflare/src/stt_soniox_cf.py](../../../cloudflare/src/stt_soniox_cf.py)
 
-But todo behavior is still not shared. The intended app behavior currently lives only in the local path through [backend/app/extraction_loop.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/extraction_loop.py) and the local `/ws` adapter's stop/fallback logic in [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py).
+But todo behavior is still not shared. The intended app behavior currently lives only in the local path through [backend/app/extraction_loop.py](../../../backend/app/extraction_loop.py) and the local `/ws` adapter's stop/fallback logic in [backend/app/ws.py](../../../backend/app/ws.py).
 
 That means `V2` proved hosted transcript/runtime behavior, but not hosted todo parity.
 
@@ -54,27 +54,27 @@ The adapters remain thin:
 - **Local FastAPI adapter** sends browser `transcript`, `todos`, and `stopped`, but no longer owns todo policy
 - **Hosted Durable Object adapter** does the same, using the same shared todo core
 
-The extraction model/provider seam remains below this layer in [backend/app/extract.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/extract.py) and the model-provider code. `V3` does not redesign provider choice; it only shares the app behavior that calls into extraction.
+The extraction model/provider seam remains below this layer in [backend/app/extract.py](../../../backend/app/extract.py) and the model-provider code. `V3` does not redesign provider choice; it only shares the app behavior that calls into extraction.
 
 ## Components
 
 - **Shared session core**
-  - [backend/app/live_session.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/live_session.py)
-  - [backend/app/transcript_accumulator.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/transcript_accumulator.py)
+  - [backend/app/live_session.py](../../../backend/app/live_session.py)
+  - [backend/app/transcript_accumulator.py](../../../backend/app/transcript_accumulator.py)
 
 - **Shared todo core**
-  - evolve [backend/app/extraction_loop.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/extraction_loop.py) into the runtime-neutral todo coordinator
+  - evolve [backend/app/extraction_loop.py](../../../backend/app/extraction_loop.py) into the runtime-neutral todo coordinator
   - add any narrowly needed shared result types for final-stop todo outcomes
 
 - **Extraction engine seam**
-  - [backend/app/extract.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/extract.py)
+  - [backend/app/extract.py](../../../backend/app/extract.py)
   - existing model/provider code remains the extraction implementation seam
 
 - **Local adapter**
-  - [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py)
+  - [backend/app/ws.py](../../../backend/app/ws.py)
 
 - **Hosted adapter**
-  - [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py)
+  - [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py)
 
 ## Data Flow
 
@@ -127,7 +127,7 @@ After this slice:
 
 ## Design And Implementation Constraints
 
-- Preserve the browser `/ws` contract already consumed by [frontend/src/hooks/useTranscript.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/frontend/src/hooks/useTranscript.ts)
+- Preserve the browser `/ws` contract already consumed by [frontend/src/hooks/useTranscript.ts](../../../frontend/src/hooks/useTranscript.ts)
 - Preserve local behavior while moving todo policy behind a shared boundary
 - Preserve `todos` before `stopped` ordering where the current app behavior requires it
 - Preserve final-stop fallback behavior when no new final todo send occurs

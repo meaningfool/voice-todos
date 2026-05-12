@@ -32,7 +32,7 @@ Repo evidence:
 
 Relevant code:
 
-- [frontend/src/hooks/useTranscript.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/frontend/src/hooks/useTranscript.ts:16)
+- [frontend/src/hooks/useTranscript.ts](../../../frontend/src/hooks/useTranscript.ts)
 
 Impact:
 
@@ -52,10 +52,10 @@ Repo evidence:
 
 Relevant code:
 
-- [backend/app/stt.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/stt.py:34)
-- [backend/app/transcript_accumulator.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/transcript_accumulator.py:18)
-- [backend/app/extraction_loop.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/extraction_loop.py:15)
-- [backend/app/extract.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/extract.py:194)
+- [backend/app/stt.py](../../../backend/app/stt.py)
+- [backend/app/transcript_accumulator.py](../../../backend/app/transcript_accumulator.py)
+- [backend/app/extraction_loop.py](../../../backend/app/extraction_loop.py)
+- [backend/app/extract.py](../../../backend/app/extract.py)
 
 Impact:
 
@@ -78,7 +78,7 @@ Repo evidence:
 
 Relevant code:
 
-- [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/ws.py:92)
+- [backend/app/ws.py](../../../backend/app/ws.py)
 
 Impact:
 
@@ -100,9 +100,9 @@ Repo evidence:
 
 Relevant code:
 
-- [backend/app/stt_soniox.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/stt_soniox.py:74)
-- [backend/app/stt_soniox.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/stt_soniox.py:122)
-- [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/ws.py:28)
+- [backend/app/stt_soniox.py](../../../backend/app/stt_soniox.py)
+- [backend/app/stt_soniox.py](../../../backend/app/stt_soniox.py)
+- [backend/app/ws.py](../../../backend/app/ws.py)
 
 Impact:
 
@@ -121,8 +121,8 @@ Repo evidence:
 
 Relevant code:
 
-- [backend/app/session_recorder.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/session_recorder.py:23)
-- [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/ws.py:102)
+- [backend/app/session_recorder.py](../../../backend/app/session_recorder.py)
+- [backend/app/ws.py](../../../backend/app/ws.py)
 
 Impact:
 
@@ -139,7 +139,7 @@ Repo evidence:
 
 Relevant code:
 
-- [backend/tests/test_ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/tests/test_ws.py:61)
+- [backend/tests/test_ws.py](../../../backend/tests/test_ws.py)
 
 Impact:
 

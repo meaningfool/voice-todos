@@ -19,16 +19,16 @@ The first slice is structural with semantic non-regression requirements. The sec
 
 After `V3`, the hosted Cloudflare runtime supports only Soniox at the hosted STT factory edge:
 
-- [cloudflare/src/stt_factory_cf.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/stt_factory_cf.py) rejects any hosted `stt_provider` other than `soniox`
-- [cloudflare/src/stt_soniox_cf.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/stt_soniox_cf.py) owns both:
+- [cloudflare/src/stt_factory_cf.py](../../../cloudflare/src/stt_factory_cf.py) rejects any hosted `stt_provider` other than `soniox`
+- [cloudflare/src/stt_soniox_cf.py](../../../cloudflare/src/stt_soniox_cf.py) owns both:
   - Cloudflare-specific connection mechanics
   - Soniox normalization/config/capability logic
 
 Meanwhile the local app already supports both Soniox and Mistral:
 
-- [backend/app/stt_factory.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/stt_factory.py)
-- [backend/app/stt_soniox.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/stt_soniox.py)
-- [backend/app/stt_mistral.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/stt_mistral.py)
+- [backend/app/stt_factory.py](../../../backend/app/stt_factory.py)
+- [backend/app/stt_soniox.py](../../../backend/app/stt_soniox.py)
+- [backend/app/stt_mistral.py](../../../backend/app/stt_mistral.py)
 
 That leaves two gaps:
 
@@ -95,7 +95,7 @@ This means Soniox is also cleaned up to match the same shape as Mistral rather t
   - keep local websocket/client connection mechanics in local adapter files
 - **Hosted STT adapters**
   - keep Cloudflare outbound connection mechanics in hosted adapter files
-  - add [cloudflare/src/stt_mistral_cf.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/stt_mistral_cf.py) in the second slice
+  - add [cloudflare/src/stt_mistral_cf.py](../../../cloudflare/src/stt_mistral_cf.py) in the second slice
 - **Factory seams**
   - local and hosted factories dispatch on provider name but do not own provider semantics
 
@@ -110,7 +110,7 @@ This means Soniox is also cleaned up to match the same shape as Mistral rather t
 
 **Slice `V4b.2`: hosted STT provider parity**
 1. hosted settings choose `stt_provider`.
-2. [cloudflare/src/stt_factory_cf.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/stt_factory_cf.py) dispatches:
+2. [cloudflare/src/stt_factory_cf.py](../../../cloudflare/src/stt_factory_cf.py) dispatches:
    - `soniox` to hosted Soniox transport
    - `mistral` to hosted Mistral transport
 3. the chosen hosted transport opens the runtime-specific outbound provider connection.
@@ -219,9 +219,9 @@ This is the actual hosted parity outcome. If the Cloudflare runtime still only s
     - finalized-transcript stop handling
     - terminal ordering
   - these should mirror the accepted local Mistral session behavior already covered in:
-    - [backend/tests/test_ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/tests/test_ws.py)
+    - [backend/tests/test_ws.py](../../../backend/tests/test_ws.py)
 - **Structural seam proof**
-  - inspect [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py) to show it does not branch on provider-specific transcript semantics
+  - inspect [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py) to show it does not branch on provider-specific transcript semantics
 
 **Expected evidence**
 

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED HANDOFF: use `superpowers:executing-plans` to implement this plan task-by-task. `superpowers:subagent-driven-development` is also acceptable if the environment supports it well. Steps use checkbox syntax for tracking.
 
-**Spec:** [011_spec_shared-session-core-local-path.md](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/docs/meanpowers/01_shape-cloudflare-hosting-path/011_spec_shared-session-core-local-path.md)
+**Spec:** [011_spec_shared-session-core-local-path.md](011_spec_shared-session-core-local-path.md)
 
 **Goal:** Extract a shared live session controller out of the local FastAPI `/ws` path so transcript and finalization lifecycle are reusable across runtimes, while preserving the existing local browser contract and keeping todo extraction orchestration local to the FastAPI adapter.
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** FastAPI, websockets, Soniox realtime WebSocket API, PydanticAI, Gemini 3 Flash, Logfire, pytest, Starlette TestClient
 
-**References:** `docs/references/logfire-trace-analysis.md`, `docs/superpowers/specs/2026-03-24-item3-todos-while-speaking-design.md`, `docs/superpowers/specs/2026-03-24-item2.5-reliability-hardening-design.md`, `sessions/recent/2026-03-26T16-10-23/soniox.jsonl`, `https://ai.google.dev/gemini-api/docs/gemini-3`
+**References:** `research/notes/logfire-trace-analysis.md`, `docs/superpowers/specs/2026-03-24-item3-todos-while-speaking-design.md`, `docs/superpowers/specs/2026-03-24-item2.5-reliability-hardening-design.md`, `sessions/recent/2026-03-26T16-10-23/soniox.jsonl`, `https://ai.google.dev/gemini-api/docs/gemini-3`
 
 ---
 

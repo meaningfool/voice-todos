@@ -10,20 +10,20 @@
 After `V3`, both local runtimes exist:
 
 - local FastAPI websocket path:
-  - [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py)
+  - [backend/app/ws.py](../../../backend/app/ws.py)
 - local Cloudflare Worker + Durable Object websocket path:
-  - [cloudflare/src/entry.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/entry.py)
-  - [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py)
+  - [cloudflare/src/entry.py](../../../cloudflare/src/entry.py)
+  - [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py)
 
 The frontend app UI currently opens:
 - `ws://<current-host>/ws`
-through [frontend/src/hooks/useTranscript.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/frontend/src/hooks/useTranscript.ts)
+through [frontend/src/hooks/useTranscript.ts](../../../frontend/src/hooks/useTranscript.ts)
 
-The frontend dev server currently proxies `/ws` only to the local backend port through [frontend/vite.config.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/frontend/vite.config.ts).
+The frontend dev server currently proxies `/ws` only to the local backend port through [frontend/vite.config.ts](../../../frontend/vite.config.ts).
 
 The hosted Worker currently requires:
 - `/ws?session=<id>`
-in [cloudflare/src/entry.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/entry.py)
+in [cloudflare/src/entry.py](../../../cloudflare/src/entry.py)
 
 So the current state is:
 - the real frontend works against FastAPI
@@ -68,20 +68,20 @@ This avoids teaching the frontend about backend runtime details while still maki
 ## Components
 
 - **Frontend websocket client**
-  - [frontend/src/hooks/useTranscript.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/frontend/src/hooks/useTranscript.ts)
+  - [frontend/src/hooks/useTranscript.ts](../../../frontend/src/hooks/useTranscript.ts)
   - should remain runtime-agnostic and keep opening `/ws`
 
 - **Frontend dev routing**
-  - [frontend/vite.config.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/frontend/vite.config.ts)
+  - [frontend/vite.config.ts](../../../frontend/vite.config.ts)
   - should expose explicit local backend selection for websocket proxying
 
 - **Cloudflare entry compatibility**
-  - [cloudflare/src/entry.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/entry.py)
+  - [cloudflare/src/entry.py](../../../cloudflare/src/entry.py)
   - should accept plain `/ws` from the real frontend
   - may preserve optional `?session=...` compatibility for smoke scripts
 
 - **Hosted session runtime**
-  - [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py)
+  - [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py)
   - should remain the hosted session owner
   - this slice should not reopen transcript/todo behavior beyond connection bootstrap needs
 
@@ -161,8 +161,8 @@ Even if one manual run works, the slice is incomplete if runtime switching is am
 - The Cloudflare Worker accepts plain `/ws` from the frontend instead of requiring a frontend-supplied `session` query parameter.
 
 **Proof**
-- **Config proof:** inspect [frontend/vite.config.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/frontend/vite.config.ts) and show explicit runtime-selection behavior
-- **Worker proof:** inspect [cloudflare/src/entry.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/entry.py) and show plain `/ws` compatibility for real frontend requests
+- **Config proof:** inspect [frontend/vite.config.ts](../../../frontend/vite.config.ts) and show explicit runtime-selection behavior
+- **Worker proof:** inspect [cloudflare/src/entry.py](../../../cloudflare/src/entry.py) and show plain `/ws` compatibility for real frontend requests
 - **Negative-config proof:** run the frontend with an invalid `WS_BACKEND` value and assert startup fails clearly rather than silently proxying to an unintended target
 
 **Expected evidence**

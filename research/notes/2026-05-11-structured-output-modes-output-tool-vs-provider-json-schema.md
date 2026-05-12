@@ -35,7 +35,7 @@ not a proven result yet.
 ## What The Current Repo Actually Does
 
 The extraction agent is built with a typed output model in
-[extract.py](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/backend/app/extract.py:119):
+[extract.py](../../backend/app/extract.py):
 
 ```python
 agent = Agent(
@@ -49,12 +49,12 @@ agent = Agent(
 Relevant `pydantic_ai` behavior:
 
 - `ModelProfile.default_structured_output_mode` defaults to `tool` in
-  [profiles/__init__.py](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/backend/.venv/lib/python3.14/site-packages/pydantic_ai/profiles/__init__.py:42)
+  [profiles/__init__.py](../../backend/.venv/lib/python3.14/site-packages/pydantic_ai/profiles/__init__.py)
 - output tools are materialized from the output schema in
-  [_output.py](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/backend/.venv/lib/python3.14/site-packages/pydantic_ai/_output.py:926)
+  [_output.py](../../backend/.venv/lib/python3.14/site-packages/pydantic_ai/_output.py)
 - the OpenAI-compatible adapter only sends `response_format` when output mode is
   `native` in
-  [openai.py](/Users/josselinperrus/conductor/workspaces/voice-todos/seattle/backend/.venv/lib/python3.14/site-packages/pydantic_ai/models/openai.py:697)
+  [openai.py](../../backend/.venv/lib/python3.14/site-packages/pydantic_ai/models/openai.py)
 
 This means the current DeepInfra path is:
 

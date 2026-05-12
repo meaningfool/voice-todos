@@ -16,7 +16,7 @@
 
 This plan follows:
 
-- `docs/references/2026-04-13-acceptance-tests-and-verification-policy.md`
+- `docs/references/acceptance-tests-and-verification-policy.md`
 - `docs/superpowers/specs/2026-04-16-item12-test-surface-cleanup-design.md`
 
 ## Non-Phased Refactor Rule
@@ -693,7 +693,7 @@ Item 12 is complete only when all of these are true:
 ## References
 
 - `docs/superpowers/specs/2026-04-16-item12-test-surface-cleanup-design.md`
-- `docs/references/2026-04-13-acceptance-tests-and-verification-policy.md`
+- `docs/references/acceptance-tests-and-verification-policy.md`
 - `backend/app/live_eval_env.py`
 - `backend/tests/`
 - `tests/live/benchmarks/`

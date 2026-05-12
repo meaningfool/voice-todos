@@ -3,14 +3,14 @@
 Analysis of telemetry data from two recording sessions on 2026-03-25, compared against the baseline session from 2026-03-24.
 
 For benchmark-report query behavior and Logfire Query API notes, see
-`docs/references/2026-04-16-logfire-query-api-notes.md`.
+`research/notes/2026-04-16-logfire-query-api-notes.md`.
 
 ## Setup
 
 - **Service**: `voice-todos-backend` (previously reported as `unknown_service`, fixed by setting `service_name` in `logfire.configure()`)
 - **Model**: `gemini-3-flash-preview` via Google Generative Language API (`google-gla`)
 - **Query method**: Logfire SQL API at `https://logfire-eu.pydantic.dev/v1/query` using a read token
-- **Dashboard**: https://logfire-eu.pydantic.dev/meaningfool/voice-todos
+- **Dashboard**: https://logfire-eu.pydantic.dev/acme/voice-todos
 
 ## Instrumentation changes (2026-03-25)
 

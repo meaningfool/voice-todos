@@ -28,7 +28,7 @@ refactor.
 
 ## Implementation Artifact
 
-- Prototype project: [research/x7-soniox-provider-transport](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/research/x7-soniox-provider-transport/README.md)
+- Prototype project: [research/x7-soniox-provider-transport](../../../research/x7-soniox-provider-transport/README.md)
 
 ## Findings
 
@@ -59,8 +59,8 @@ The current app's stop contract is tied to Soniox finalization, not to provider 
 
 Evidence:
 
-- The existing backend sets its final-transcript event when `translate_soniox_event()` sees `<fin>` in [backend/app/stt_soniox.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/stt_soniox.py:31).
-- The current stop path waits for `stt_session.wait_for_final_transcript()` or the relay's finalized event in [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/ws.py:223).
+- The existing backend sets its final-transcript event when `translate_soniox_event()` sees `<fin>` in [backend/app/stt_soniox.py](../../../backend/app/stt_soniox.py).
+- The current stop path waits for `stt_session.wait_for_final_transcript()` or the relay's finalized event in [backend/app/ws.py](../../../backend/app/ws.py).
 - In the Durable Object proof, `finalize=1` produced the full transcript and observed `<fin>`, but did not emit provider `finished` before the idle cutoff.
 
 Impact:

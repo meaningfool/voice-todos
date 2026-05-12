@@ -8,12 +8,12 @@
 
 ## Baseline
 
-After `V3`, the repo has working local and hosted paths, but the shared runtime code still physically lives under `backend/app/`. The hosted app reaches that code through the symlink mirror in [cloudflare/src/app](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/app), which currently points back into `backend/app/`.
+After `V3`, the repo has working local and hosted paths, but the shared runtime code still physically lives under `backend/app/`. The hosted app reaches that code through the symlink mirror in [cloudflare/src/app](../../../cloudflare/src/app), which currently points back into `backend/app/`.
 
 That means the architecture is only logically symmetric:
 
-- local adapter: [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py)
-- hosted adapter: [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py)
+- local adapter: [backend/app/ws.py](../../../backend/app/ws.py)
+- hosted adapter: [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py)
 - but the shared code still "belongs" to the local app in filesystem terms
 
 The runtime-neutral surface currently includes:
@@ -133,7 +133,7 @@ This is the actual refactor outcome. If the repo still depends on `backend/app/`
   - verify the moved runtime-neutral modules exist under `shared/`
   - verify `cloudflare/src/app/` does not exist
 - **Import proof**
-  - inspect [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py) and [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py)
+  - inspect [backend/app/ws.py](../../../backend/app/ws.py) and [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py)
   - assert both import shared runtime modules from `shared/`
 - **Neutrality proof**
   - inspect modules under `shared/`

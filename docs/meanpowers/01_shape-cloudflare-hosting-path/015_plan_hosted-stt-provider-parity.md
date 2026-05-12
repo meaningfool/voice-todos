@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED HANDOFF: use `superpowers:executing-plans` to implement this plan task-by-task. `superpowers:subagent-driven-development` is also acceptable if the environment supports it well. Steps use checkbox syntax for tracking.
 
-**Spec:** [015_spec_hosted-stt-provider-parity.md](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/docs/meanpowers/01_shape-cloudflare-hosting-path/015_spec_hosted-stt-provider-parity.md)
+**Spec:** [015_spec_hosted-stt-provider-parity.md](015_spec_hosted-stt-provider-parity.md)
 
 **Goal:** Make Soniox and Mistral follow the same shared-provider boundary, then extend the hosted Cloudflare runtime so `stt_provider` supports both `soniox` and `mistral` without leaking provider-specific transcript semantics into the hosted session runtime.
 
-**Architecture:** This plan assumes [014_plan_extract-shared-runtime-package.md](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/docs/meanpowers/01_shape-cloudflare-hosting-path/014_plan_extract-shared-runtime-package.md) has landed or an equivalent `shared/` package already exists. Move provider normalization, capabilities, and provider-specific session semantics into shared runtime-neutral modules. Keep runtime-specific connection mechanics in local and hosted adapter files. Keep provider selection in the factory layer only. Add a hosted Mistral transport adapter and extend the hosted factory without changing the shared session controller or browser protocol.
+**Architecture:** This plan assumes [014_plan_extract-shared-runtime-package.md](014_plan_extract-shared-runtime-package.md) has landed or an equivalent `shared/` package already exists. Move provider normalization, capabilities, and provider-specific session semantics into shared runtime-neutral modules. Keep runtime-specific connection mechanics in local and hosted adapter files. Keep provider selection in the factory layer only. Add a hosted Mistral transport adapter and extend the hosted factory without changing the shared session controller or browser protocol.
 
 **Tech Stack:** Python 3.12+, FastAPI websocket flow, Cloudflare workers-py / workers-runtime-sdk / pywrangler, `mistralai`, Soniox, pytest, pytest-asyncio, ruff, ty
 
@@ -140,9 +140,9 @@ This is the actual hosted parity outcome. If the Cloudflare runtime still only s
     - finalized-transcript stop handling
     - terminal ordering
   - these should mirror the accepted local Mistral session behavior already covered in:
-    - [backend/tests/test_ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/tests/test_ws.py)
+    - [backend/tests/test_ws.py](../../../backend/tests/test_ws.py)
 - **Structural seam proof**
-  - inspect [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py) to show it does not branch on provider-specific transcript semantics
+  - inspect [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py) to show it does not branch on provider-specific transcript semantics
 
 **Expected evidence**
 
@@ -229,7 +229,7 @@ Evidence to collect:
 
 - pytest output for the hosted factory tests
 - pytest output for the hosted Mistral acceptance tests
-- the absence of provider-name branching in [cloudflare/src/session_runtime.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/cloudflare/src/session_runtime.py)
+- the absence of provider-name branching in [cloudflare/src/session_runtime.py](../../../cloudflare/src/session_runtime.py)
 
 ---
 
@@ -666,7 +666,7 @@ Add:
 - `test_hosted_mistral_stop_uses_finalized_transcript_for_final_pass`
 - `test_hosted_mistral_stop_sends_todos_before_stopped`
 
-Model them after the accepted local Mistral `/ws` tests in [backend/tests/test_ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/tests/test_ws.py), but run them against the hosted `HostedSessionActor` / hosted runtime seam.
+Model them after the accepted local Mistral `/ws` tests in [backend/tests/test_ws.py](../../../backend/tests/test_ws.py), but run them against the hosted `HostedSessionActor` / hosted runtime seam.
 
 - [ ] **Step 2: Run the targeted hosted Mistral acceptance tests to verify they fail**
 

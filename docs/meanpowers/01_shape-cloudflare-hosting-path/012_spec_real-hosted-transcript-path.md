@@ -8,12 +8,12 @@
 
 ## Baseline
 
-After `V1`, the repo has a shared live-session controller in [backend/app/live_session.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/live_session.py), a preserved local FastAPI `/ws` adapter in [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py), and the existing shared provider/transcript contracts in:
+After `V1`, the repo has a shared live-session controller in [backend/app/live_session.py](../../../backend/app/live_session.py), a preserved local FastAPI `/ws` adapter in [backend/app/ws.py](../../../backend/app/ws.py), and the existing shared provider/transcript contracts in:
 
-- [backend/app/stt.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/stt.py)
-- [backend/app/transcript_accumulator.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/transcript_accumulator.py)
+- [backend/app/stt.py](../../../backend/app/stt.py)
+- [backend/app/transcript_accumulator.py](../../../backend/app/transcript_accumulator.py)
 
-The browser contract is still consumed by [frontend/src/hooks/useTranscript.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/frontend/src/hooks/useTranscript.ts) and expects `started`, `transcript`, `todos`, `stopped`, and `error` messages over `/ws`.
+The browser contract is still consumed by [frontend/src/hooks/useTranscript.ts](../../../frontend/src/hooks/useTranscript.ts) and expects `started`, `transcript`, `todos`, `stopped`, and `error` messages over `/ws`.
 
 No real hosted runtime path exists yet in the product code. The only Cloudflare evidence so far is in the local prototype spikes:
 
@@ -80,8 +80,8 @@ The Cloudflare Soniox transport adapter implements the existing `SttSession` con
 
 ## Components
 
-- **Shared session/transcript/finalization core**: reuse [backend/app/live_session.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/live_session.py), [backend/app/stt.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/stt.py), and [backend/app/transcript_accumulator.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/transcript_accumulator.py) unchanged except for any narrowly necessary hosted integration support.
-- **Local adapter**: [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/backend/app/ws.py) remains the local `/ws` adapter and is not reopened for behavior changes in this slice.
+- **Shared session/transcript/finalization core**: reuse [backend/app/live_session.py](../../../backend/app/live_session.py), [backend/app/stt.py](../../../backend/app/stt.py), and [backend/app/transcript_accumulator.py](../../../backend/app/transcript_accumulator.py) unchanged except for any narrowly necessary hosted integration support.
+- **Local adapter**: [backend/app/ws.py](../../../backend/app/ws.py) remains the local `/ws` adapter and is not reopened for behavior changes in this slice.
 - **Worker ingress**: `cloudflare/src/entry.py` accepts `/ws` and routes to the session Durable Object.
 - **Session-owned Durable Object runtime**: `cloudflare/src/session_runtime.py` owns browser websocket lifecycle, hosted message mapping, shared-controller use, cap enforcement, and teardown.
 - **Cloudflare Soniox transport**: `cloudflare/src/stt_soniox_cf.py` hides Cloudflare-specific websocket mechanics behind the existing `SttSession` contract.
@@ -124,7 +124,7 @@ The externally visible system delta is that there is now a real hosted runtime p
 
 ## Design And Implementation Constraints
 
-- Preserve browser protocol compatibility with [frontend/src/hooks/useTranscript.ts](/Users/josselinperrus/conductor/workspaces/voice-todos/florence/frontend/src/hooks/useTranscript.ts).
+- Preserve browser protocol compatibility with [frontend/src/hooks/useTranscript.ts](../../../frontend/src/hooks/useTranscript.ts).
 - Preserve the real stop contract already proven locally and in `X7`: finalize, EOS, wait for finalization, then return the finalized transcript.
 - Keep the Worker front door transport-thin and the Durable Object session-owned.
 - Keep Cloudflare-specific websocket mechanics inside the hosted Soniox adapter, not in the shared core.

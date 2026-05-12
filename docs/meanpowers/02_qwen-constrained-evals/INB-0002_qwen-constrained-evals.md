@@ -22,7 +22,7 @@ Answer the durable research question of whether constrained decoding can make sm
 ## Relevant References
 
 - `.context/attachments/pasted_text_2026-04-30_12-11-07.txt`
-- `docs/references/2026-04-07-deepinfra-qwen-smoke-test.md`
+- `research/notes/2026-04-07-deepinfra-qwen-smoke-test.md`
 - `docs/superpowers/specs/2026-04-07-item6.7-deepinfra-qwen-evals-design.md`
 - `evals/benchmarks/todo_extraction_bench_v1.yaml`
 - `evals/benchmarks/todo_replay_bench_v1.yaml`

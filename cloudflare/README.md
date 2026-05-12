@@ -72,7 +72,7 @@ Required result:
 Set the public hostname first:
 
 ```bash
-export PUBLIC_APP_DOMAIN=voice-todos.meaningfool.net
+export PUBLIC_APP_DOMAIN=your-public-domain.example.com
 ```
 
 Run the single accepted deploy command:
@@ -163,7 +163,7 @@ After recovery, rerun the required public smoke:
 
 ## Mistral Note
 
-`docs/references/2026-05-07-mistral-live-validation-findings.md` remains linked
+`research/notes/2026-05-07-mistral-live-validation-findings.md` remains linked
 context only. It does not block the first public deploy because the deploy
 contract for this slice is Soniox-based and hosted Mistral is rejected
 explicitly in the free-tier public runtime.

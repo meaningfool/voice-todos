@@ -31,7 +31,7 @@ Repo evidence:
 
 Relevant code:
 
-- [backend/app/ws.py](/Users/josselinperrus/conductor/workspaces/voice-todos/doha/backend/app/ws.py:92)
+- [backend/app/ws.py](../../../backend/app/ws.py)
 
 Impact:
 

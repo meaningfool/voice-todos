@@ -61,8 +61,8 @@ Use the **CLI** for setup/admin:
 - `logfire auth`: browser/device login, stored under `~/.logfire/default.toml`.
 - `logfire whoami`: show current auth/project info.
 - `logfire projects list/new/use`: project management.
-- `logfire read-tokens --project meaningfool/voice-todos create`: create read tokens.
-- `logfire prompt --project meaningfool/voice-todos ...`: get an investigation prompt and optionally configure MCP.
+- `logfire read-tokens --project acme/voice-todos create`: create read tokens.
+- `logfire prompt --project acme/voice-todos ...`: get an investigation prompt and optionally configure MCP.
 - `logfire info` / `--version`: package and platform info.
 - `logfire inspect`: recommend missing instrumentation packages.
 - `logfire clean`: remove local Logfire data files.
@@ -92,9 +92,9 @@ If tools are unavailable, check whether `LOGFIRE_MCP_TOKEN` is set in the enviro
 The repo currently has Logfire CLI `4.29.0`.
 
 - Correct read-token command shape:
-  `logfire read-tokens --project meaningfool/voice-todos create`
+  `logfire read-tokens --project acme/voice-todos create`
 - Incorrect shape:
-  `logfire read-tokens create --project meaningfool/voice-todos`
+  `logfire read-tokens create --project acme/voice-todos`
 - Running `logfire read-tokens create` without `--project` can crash with an internal `AttributeError` instead of a helpful argparse error.
 - `logfire prompt --codex` in 4.29.0 writes old local stdio MCP config:
   `command = "uvx"`, `args = ["logfire-mcp@latest"]`, `env = { "LOGFIRE_READ_TOKEN" = "..." }`.

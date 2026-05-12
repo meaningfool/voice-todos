@@ -107,7 +107,7 @@ collection is coordination work, not a TDD step.
 | `cloudflare/scripts/sync_frontend_dist.sh` | Keeps the accepted `frontend/dist/` -> `cloudflare/public/` handoff instead of inventing a second asset-copy path |
 | `frontend/package.json` | Owns the accepted frontend build entrypoint that the deploy script must run |
 | `cloudflare/tests/test_assets_config.py` | Keeps the `031` same-origin asset boundary pinned while `032` layers deployment behavior on top |
-| `docs/references/2026-05-07-mistral-live-validation-findings.md` | Remains the explicit linked note for the known Mistral live-validation gap that is non-blocking for this slice |
+| `research/notes/2026-05-07-mistral-live-validation-findings.md` | Remains the explicit linked note for the known Mistral live-validation gap that is non-blocking for this slice |
 
 ---
 
@@ -838,7 +838,7 @@ spreading critical knowledge across shell history and prior conversations.
 - Create: `cloudflare/README.md`
 - Reference: `cloudflare/scripts/deploy_public_app.py`
 - Reference: `scripts/browser_ui_smoke.sh`
-- Link: `docs/references/2026-05-07-mistral-live-validation-findings.md`
+- Link: `research/notes/2026-05-07-mistral-live-validation-findings.md`
 
 **Supports:**
 - Acceptance Gate: `Deploy Contract And Publish Path Are Explicit And Repeatable`
@@ -886,7 +886,7 @@ cd cloudflare && uv run python scripts/deploy_public_app.py \
   --public-domain "$PUBLIC_APP_DOMAIN"
 ```
 
-- a short note that `docs/references/2026-05-07-mistral-live-validation-findings.md`
+- a short note that `research/notes/2026-05-07-mistral-live-validation-findings.md`
   remains linked context only and is not a blocker for the Soniox-based first
   public deploy
 

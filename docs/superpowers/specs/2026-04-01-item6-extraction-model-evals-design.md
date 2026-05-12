@@ -90,7 +90,7 @@ Each experiment run should make it easy to compare:
 ## Relationship To Other Eval Work
 
 - STT model evals are a separate track and should not be mixed into this harness
-- the stack comparison document in `docs/references/eval-models-and-stacks.md` is the broad candidate inventory
+- the stack comparison document in `research/notes/eval-models-and-stacks.md` is the broad candidate inventory
 - this design is the narrower source of truth for the extraction LLM experiment set
 
 ## Open Questions After The First Run
