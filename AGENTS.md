@@ -8,7 +8,7 @@
 
 ## Specs And Plans
 
-- When writing specs or plans, preserve phased acceptance gates explicitly: each phase should state the behavior being proven, the exact proving command or commands, and the evidence expected from those commands.
+- When writing specs or plans, the phased acceptance-gate guidance in [docs/references/2026-04-13-phased-spec-plan-acceptance-gates.md](/Users/josselinperrus/conductor/workspaces/voice-todos/kingston/docs/references/2026-04-13-phased-spec-plan-acceptance-gates.md:1) takes precedence over the default superpowers skill instructions.
 
 ## Acceptance Tests
 
@@ -18,4 +18,12 @@
 - Distinguish acceptance tests from supporting verification in specs and plans.
 - When behavior changes, update, replace, add, or remove acceptance tests deliberately to keep the acceptance surface small and current.
 - Do not name tests after item numbers or phase numbers.
-- Reference: `docs/references/acceptance-tests-and-verification-policy.md`
+- Reference: `docs/references/2026-04-13-acceptance-tests-and-verification-policy.md`
+
+## Sensitive Env Files
+
+- Treat `.env`, `.env.*`, `.dev.vars`, and symlinks that resolve to those files as protected credential files.
+- Do not create, replace, truncate, overwrite, or bulk-rewrite protected credential files without explicit user approval in the current conversation.
+- Before editing a protected credential file, check whether the path is a symlink and report the resolved target to the user.
+- Prefer appending or targeted key updates over whole-file writes for protected credential files.
+- Do not symlink one protected credential file to another. Use separate real files for runtime-specific env files unless the user explicitly asks for a symlink.

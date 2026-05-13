@@ -25,6 +25,12 @@ STARTUP_TIMEOUT_SECONDS = 30 * MINUTES
 SMOKE_TIMEOUT_SECONDS = 35 * MINUTES
 DEFAULT_SESSION_ID = "voice-todos-qwen4b-smoke"
 DEFAULT_API_KEY = "modal-managed-placeholder-key"
+SUPPORTED_MODEL_NAMES = (
+    "Qwen/Qwen3.5-0.8B",
+    "Qwen/Qwen3.5-2B",
+    "Qwen/Qwen3.5-4B",
+    "Qwen/Qwen3.5-9B",
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PROMPT_PATH = REPO_ROOT / "backend" / "app" / "prompts" / "todo_extraction" / "v1.md"
@@ -47,6 +53,11 @@ SG_LANG_IMAGE = (
             "HF_XET_HIGH_PERFORMANCE": "1",
             "VOICE_TODOS_OUTLINES_WHITESPACE_PATTERN": OUTLINES_WHITESPACE_PATTERN,
         }
+    )
+    .add_local_file(
+        PROMPT_PATH,
+        remote_path="/backend/app/prompts/todo_extraction/v1.md",
+        copy=True,
     )
 )
 
@@ -123,6 +134,67 @@ def _build_extraction_input() -> str:
     )
 
 
+def _build_warmup_input() -> str:
+    reference_dt = datetime.now().astimezone()
+    timezone_name = reference_dt.tzname() or "UTC"
+    return "\n".join(
+        [
+            f"Current local datetime: {reference_dt.isoformat()}",
+            f"Current local date: {reference_dt.date().isoformat()}",
+            f"Current timezone: {timezone_name}",
+            "",
+            "Transcript:",
+            "Email Alice the revised budget tomorrow morning.",
+        ]
+    )
+
+
+def _structured_extraction_messages(
+    *,
+    extraction_input: str | None = None,
+    pretty_print: bool = False,
+) -> list[dict[str, str]]:
+    user_content = extraction_input or _build_extraction_input()
+    if pretty_print:
+        user_content += (
+            "\n\nReturn pretty-printed JSON with indentation and line breaks."
+        )
+    return [
+        {"role": "system", "content": _read_prompt()},
+        {"role": "user", "content": user_content},
+    ]
+
+
+def _structured_extraction_payload(
+    model_name: str,
+    *,
+    extraction_input: str | None = None,
+    max_tokens: int = 512,
+    pretty_print: bool = False,
+) -> dict[str, Any]:
+    return {
+        "model": model_name,
+        "messages": _structured_extraction_messages(
+            extraction_input=extraction_input,
+            pretty_print=pretty_print,
+        ),
+        "temperature": 0,
+        "max_tokens": max_tokens,
+        "extra_body": {
+            "chat_template_kwargs": {
+                "enable_thinking": False,
+            }
+        },
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "todo_extraction",
+                "schema": _todo_extraction_schema(),
+            },
+        },
+    }
+
+
 def _json_request(
     url: str,
     *,
@@ -162,14 +234,7 @@ def _wait_ready(process: subprocess.Popen[Any], *, timeout: int) -> None:
 def _warmup_server(model_name: str) -> None:
     _json_request(
         f"http://127.0.0.1:{PORT}/v1/chat/completions",
-        payload={
-            "model": model_name,
-            "messages": [
-                {"role": "user", "content": "Reply with the single word READY."}
-            ],
-            "temperature": 0,
-            "max_tokens": 8,
-        },
+        payload=_warmup_payload(model_name),
         timeout=60,
     )
 
@@ -253,22 +318,25 @@ def _probe_chat_completion(
     )
 
 
-@app.cls(
-    image=SG_LANG_IMAGE,
-    gpu=GPU,
-    volumes={CACHE_PATH: CACHE_VOLUME},
-    region=REGION,
-    min_containers=0,
-    startup_timeout=STARTUP_TIMEOUT_SECONDS,
-)
-@modal.experimental.http_server(
-    port=PORT,
-    proxy_regions=[REGION],
-    exit_grace_period=15,
-)
-class SGLangServer:
-    model_name: str = modal.parameter(default=DEFAULT_MODEL_NAME)
-    context_length: int = modal.parameter(default=DEFAULT_CONTEXT_LENGTH)
+def _decorate_server_class(server_cls: type) -> type:
+    return app.cls(
+        image=SG_LANG_IMAGE,
+        gpu=GPU,
+        volumes={CACHE_PATH: CACHE_VOLUME},
+        region=REGION,
+        min_containers=0,
+        startup_timeout=STARTUP_TIMEOUT_SECONDS,
+    )(
+        modal.experimental.http_server(
+            port=PORT,
+            proxy_regions=[REGION],
+            exit_grace_period=15,
+        )(server_cls)
+    )
+
+
+class _BaseSGLangServer:
+    model_name: str = DEFAULT_MODEL_NAME
     process: subprocess.Popen[Any]
 
     @modal.enter()
@@ -288,7 +356,7 @@ class SGLangServer:
             "--tp",
             "1",
             "--context-length",
-            str(self.context_length),
+            str(DEFAULT_CONTEXT_LENGTH),
             "--download-dir",
             HF_CACHE_PATH,
             "--grammar-backend",
@@ -321,17 +389,57 @@ class SGLangServer:
                 self.process.wait(timeout=30)
 
 
+class SGLangServerQwen35_08B(_BaseSGLangServer):
+    model_name = "Qwen/Qwen3.5-0.8B"
+
+
+class SGLangServerQwen35_2B(_BaseSGLangServer):
+    model_name = "Qwen/Qwen3.5-2B"
+
+
+class SGLangServerQwen35_4B(_BaseSGLangServer):
+    model_name = "Qwen/Qwen3.5-4B"
+
+
+class SGLangServerQwen35_9B(_BaseSGLangServer):
+    model_name = "Qwen/Qwen3.5-9B"
+
+
+SGLangServerQwen35_08B = _decorate_server_class(SGLangServerQwen35_08B)
+SGLangServerQwen35_2B = _decorate_server_class(SGLangServerQwen35_2B)
+SGLangServerQwen35_4B = _decorate_server_class(SGLangServerQwen35_4B)
+SGLangServerQwen35_9B = _decorate_server_class(SGLangServerQwen35_9B)
+
+SERVER_BY_MODEL_NAME = {
+    "Qwen/Qwen3.5-0.8B": SGLangServerQwen35_08B,
+    "Qwen/Qwen3.5-2B": SGLangServerQwen35_2B,
+    "Qwen/Qwen3.5-4B": SGLangServerQwen35_4B,
+    "Qwen/Qwen3.5-9B": SGLangServerQwen35_9B,
+}
+SGLangServer = SGLangServerQwen35_4B
+
+
 def _session_headers(session_id: str) -> dict[str, str]:
     return {"Modal-Session-ID": session_id}
 
 
 def _warmup_payload(model_name: str) -> dict[str, Any]:
-    return {
-        "model": model_name,
-        "messages": [{"role": "user", "content": "Reply with the single word READY."}],
-        "temperature": 0,
-        "max_tokens": 8,
-    }
+    return _structured_extraction_payload(
+        model_name,
+        extraction_input=_build_warmup_input(),
+        max_tokens=96,
+    )
+
+
+def _configured_server(*, model_name: str, context_length: int) -> Any:
+    if context_length != DEFAULT_CONTEXT_LENGTH:
+        raise ValueError(
+            f"context_length must be {DEFAULT_CONTEXT_LENGTH} for managed serve, got {context_length}"
+        )
+    server_cls = SERVER_BY_MODEL_NAME.get(model_name)
+    if server_cls is None:
+        raise ValueError(f"Unsupported model_name: {model_name}")
+    return server_cls()
 
 
 async def _warmed_flash_url(
@@ -366,7 +474,7 @@ async def main(
     api_key: str = DEFAULT_API_KEY,
     test_timeout: int = SMOKE_TIMEOUT_SECONDS,
 ) -> None:
-    server = SGLangServer(model_name=model_name, context_length=context_length)
+    server = _configured_server(model_name=model_name, context_length=context_length)
     flash_url = await _warmed_flash_url(
         server,
         model_name=model_name,
@@ -411,31 +519,7 @@ async def main(
     constrained_response = await asyncio.to_thread(
         _probe_chat_completion,
         flash_url,
-        payload={
-            "model": model_name,
-            "messages": [
-                {"role": "system", "content": _read_prompt()},
-                {
-                    "role": "user",
-                    "content": (
-                        _build_extraction_input()
-                        + (
-                            "\n\nReturn pretty-printed JSON with indentation "
-                            "and line breaks."
-                        )
-                    ),
-                },
-            ],
-            "temperature": 0,
-            "max_tokens": 512,
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "todo_extraction",
-                    "schema": _todo_extraction_schema(),
-                },
-            },
-        },
+        payload=_structured_extraction_payload(model_name, pretty_print=True),
         timeout=test_timeout,
         headers=_session_headers(session_id),
     )

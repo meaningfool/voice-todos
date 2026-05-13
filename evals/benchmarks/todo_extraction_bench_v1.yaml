@@ -156,7 +156,10 @@ entries:
       family: modal-outlines
     model_settings:
       temperature: 0
-      max_tokens: 1024
+      max_tokens: 512
+      extra_body:
+        chat_template_kwargs:
+          enable_thinking: false
     session:
       stack: sglang-outlines
       host: modal
@@ -172,7 +175,10 @@ entries:
       family: modal-outlines
     model_settings:
       temperature: 0
-      max_tokens: 1024
+      max_tokens: 512
+      extra_body:
+        chat_template_kwargs:
+          enable_thinking: false
     session:
       stack: sglang-outlines
       host: modal
@@ -188,7 +194,10 @@ entries:
       family: modal-outlines
     model_settings:
       temperature: 0
-      max_tokens: 1024
+      max_tokens: 512
+      extra_body:
+        chat_template_kwargs:
+          enable_thinking: false
     session:
       stack: sglang-outlines
       host: modal
@@ -204,7 +213,10 @@ entries:
       family: modal-outlines
     model_settings:
       temperature: 0
-      max_tokens: 1024
+      max_tokens: 512
+      extra_body:
+        chat_template_kwargs:
+          enable_thinking: false
     session:
       stack: sglang-outlines
       host: modal

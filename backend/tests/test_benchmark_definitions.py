@@ -112,7 +112,8 @@ def test_extraction_benchmark_defines_modal_outlines_family_for_all_qwen_sizes()
         assert entry.config["implementation"]["family"] == "modal-outlines"
         assert entry.config["model_settings"] == {
             "temperature": 0,
-            "max_tokens": 1024,
+            "max_tokens": 512,
+            "extra_body": {"chat_template_kwargs": {"enable_thinking": False}},
         }
         assert entry.config["session"] == {
             "stack": "sglang-outlines",

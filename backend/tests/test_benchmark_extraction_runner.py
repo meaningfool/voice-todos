@@ -106,7 +106,8 @@ def test_managed_modal_entry_resolves_runtime_contract():
     assert resolved.implementation_family == "modal-outlines"
     assert resolved.model_settings == {
         "temperature": 0,
-        "max_tokens": 1024,
+        "max_tokens": 512,
+        "extra_body": {"chat_template_kwargs": {"enable_thinking": False}},
     }
     assert resolved.managed_session.model_dump() == {
         "stack": "sglang-outlines",
