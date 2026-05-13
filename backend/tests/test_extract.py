@@ -74,7 +74,7 @@ def test_get_agent_uses_configured_gemini_api_key():
 
     assert agent is fake_agent
     mock_build_model.assert_called_once_with(
-        "gemini-3-flash-preview",
+        "gemini-3.1-flash-lite-preview",
         provider=None,
         gemini_api_key_getter=fake_gemini_lookup,
         mistral_api_key_getter=fake_mistral_lookup,
@@ -89,7 +89,7 @@ def test_get_agent_uses_configured_gemini_api_key():
         fake_model,
         output_type=ExtractionResult,
         instructions=_extract_mod.get_extraction_prompt_ref().content,
-        model_settings={"google_thinking_config": {"thinking_level": "minimal"}},
+        model_settings={},
     )
 
 
@@ -108,7 +108,7 @@ def test_build_model_uses_google_factory_for_gemini():
         patch("builtins.__import__", side_effect=_guard_optional_mistral_import),
     ):
         model = model_providers.build_model(
-            "gemini-3-flash-preview",
+            "gemini-3.1-flash-lite-preview",
             gemini_api_key_getter=gemini_api_key_getter,
         )
 
@@ -116,7 +116,7 @@ def test_build_model_uses_google_factory_for_gemini():
     gemini_api_key_getter.assert_called_once_with()
     mock_provider.assert_called_once_with(api_key="gemini-test-key")
     mock_model.assert_called_once_with(
-        "gemini-3-flash-preview",
+        "gemini-3.1-flash-lite-preview",
         provider=fake_provider,
     )
 
@@ -467,8 +467,8 @@ def test_build_extraction_agent_uses_native_output_for_managed_family():
     }
 
 
-def test_get_agent_uses_minimal_google_thinking():
-    """The cached agent should request minimal Google thinking."""
+def test_get_agent_uses_provider_default_google_thinking():
+    """The cached agent should use provider-default Google thinking."""
     fake_model = object()
     fake_agent = object()
 
@@ -482,9 +482,7 @@ def test_get_agent_uses_minimal_google_thinking():
         _extract_mod._agent = None
         _extract_mod._get_agent()
 
-    assert mock_agent.call_args.kwargs["model_settings"] == {
-        "google_thinking_config": {"thinking_level": "minimal"}
-    }
+    assert mock_agent.call_args.kwargs["model_settings"] == {}
 
 
 @requires_gemini
@@ -538,7 +536,7 @@ async def test_extract_todos_uses_override_model():
         mistral_api_key_getter=fake_mistral_key,
         deepinfra_api_key_getter=fake_deepinfra_key,
     )
-    assert _extract_mod.ExtractionConfig().model_name == "gemini-3-flash-preview"
+    assert _extract_mod.ExtractionConfig().model_name == "gemini-3.1-flash-lite-preview"
 
 
 def test_extract_todos_passes_model_settings():
@@ -566,7 +564,7 @@ def test_extract_todos_passes_model_settings():
 
     assert agent is fake_agent
     mock_build_model.assert_called_once_with(
-        "gemini-3-flash-preview",
+        "gemini-3.1-flash-lite-preview",
         provider=None,
         gemini_api_key_getter=fake_key,
         mistral_api_key_getter=fake_mistral_key,

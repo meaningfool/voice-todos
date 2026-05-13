@@ -23,9 +23,7 @@ _GEMINI_API_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     "{model_name}:generateContent"
 )
-_DEFAULT_MODEL_SETTINGS: dict[str, Any] = {
-    "google_thinking_config": {"thinking_level": "minimal"}
-}
+_DEFAULT_MODEL_SETTINGS: dict[str, Any] = {}
 _HOSTED_PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "todo_extraction" / "v1.md"
 _HOSTED_PROMPT_CONTENT = """You extract actionable todo items from a voice transcript.
 
@@ -82,7 +80,7 @@ _TODO_RESPONSE_SCHEMA: dict[str, object] = {
 
 @dataclass(frozen=True)
 class ExtractionConfig:
-    model_name: str = "gemini-3-flash-preview"
+    model_name: str = "gemini-3.1-flash-lite-preview"
     provider: str | None = None
     model_settings: dict[str, Any] | None = None
     prompt_family: str = "todo_extraction"

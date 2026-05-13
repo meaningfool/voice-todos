@@ -28,7 +28,7 @@ GoogleProvider = _GoogleProvider
 
 @dataclass(frozen=True)
 class ExtractionConfig:
-    model_name: str = "gemini-3-flash-preview"
+    model_name: str = "gemini-3.1-flash-lite-preview"
     provider: str | None = None
     model_settings: dict[str, Any] | None = None
     prompt_family: str = "todo_extraction"
@@ -39,9 +39,7 @@ class ExtractionConfig:
     transport_headers: dict[str, str] | None = None
 
 
-_DEFAULT_MODEL_SETTINGS: dict[str, Any] = {
-    "google_thinking_config": {"thinking_level": "minimal"}
-}
+_DEFAULT_MODEL_SETTINGS: dict[str, Any] = {}
 
 _agent_cache: dict[tuple[Any, ...], Agent[None, ExtractionResult]] = {}
 
