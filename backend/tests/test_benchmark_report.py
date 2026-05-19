@@ -66,6 +66,7 @@ def _case_row(
     span_id: str | None = None,
     level: int = 9,
     task_duration: float | None = 2.18,
+    span_duration_s: float | None = None,
     assertion_value: bool | None = None,
     inputs: dict | None = None,
     expected_output: list[dict] | None = None,
@@ -80,6 +81,7 @@ def _case_row(
         "span_id": span_id,
         "level": level,
         "task_duration": task_duration,
+        "span_duration_s": span_duration_s,
         "inputs": inputs or {},
         "expected_output": expected_output or [],
         "output": output,
@@ -366,6 +368,7 @@ def test_benchmark_report_classifies_passed_incorrect_and_incomplete_cases():
                     span_id="case-incomplete",
                     level=17,
                     task_duration=None,
+                    span_duration_s=7.0,
                     inputs={
                         "transcript": "Buy milk, buy bread, call Marc, and actually make that one grocery run."
                     },
@@ -419,8 +422,11 @@ def test_benchmark_report_classifies_passed_incorrect_and_incomplete_cases():
     assert entry_state.incorrect_case_count == 1
     assert entry_state.incomplete_case_count == 1
     assert entry_state.headline_metric_value == pytest.approx(1 / 3)
-    assert entry_state.max_case_duration_s == 5.0
+    assert entry_state.average_case_duration_s == pytest.approx(13 / 3)
+    assert entry_state.p95_case_duration_s == 7.0
+    assert entry_state.max_case_duration_s == 7.0
     assert entry_state.slowest_cases == [
+        {"case_id": "incomplete-case", "duration_s": 7.0},
         {"case_id": "passed-case", "duration_s": 5.0},
         {"case_id": "incorrect-case", "duration_s": 1.0},
     ]

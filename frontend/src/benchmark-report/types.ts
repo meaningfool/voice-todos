@@ -40,6 +40,7 @@ export type BenchmarkEntry = {
   completed_case_count?: number;
   failure_count?: number;
   average_case_duration_s?: number | null;
+  p95_case_duration_s?: number | null;
   max_case_duration_s?: number | null;
   incorrect_cases?: BenchmarkIncorrectCase[];
   incomplete_cases?: BenchmarkIncompleteCase[];

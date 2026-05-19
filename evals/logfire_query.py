@@ -13,7 +13,9 @@ from app.logfire_setup import (
 from evals.models import EntryQuerySelector
 
 DEFAULT_LOGFIRE_QUERY_URL = "https://logfire-api.pydantic.dev/v1/query"
-DEFAULT_CASE_SPAN_QUERY_LIMIT = 1000
+DEFAULT_CASE_SPAN_QUERY_LIMIT = 10000
+CASE_SPAN_NAMES = ("case: {case_name}", "case: {{case_name}}")
+EXECUTE_SPAN_NAMES = ("execute {task}", "execute {{task}}")
 
 
 def _sql_quote(value: str) -> str:
@@ -70,17 +72,20 @@ LIMIT 200
 def build_case_spans_query(trace_ids: list[str]) -> str:
     if not trace_ids:
         return (
-            "SELECT trace_id, start_timestamp, level, NULL AS case_id, NULL AS task_duration "
+            "SELECT trace_id, start_timestamp, level, NULL AS case_id, NULL AS task_duration, NULL AS span_duration_s "
             "FROM records WHERE FALSE"
         )
 
     trace_conditions = " OR ".join(
         f"trace_id = {_sql_quote(trace_id)}" for trace_id in trace_ids
     )
+    case_span_names = ", ".join(_sql_quote(name) for name in CASE_SPAN_NAMES)
+    execute_span_names = ", ".join(_sql_quote(name) for name in EXECUTE_SPAN_NAMES)
     return f"""
 SELECT
   trace_id,
   start_timestamp,
+  duration AS span_duration_s,
   span_id,
   parent_span_id,
   span_name,
@@ -100,8 +105,8 @@ SELECT
 FROM records
 WHERE ({trace_conditions})
   AND (
-    attributes->>'logfire.msg_template' = 'case: {{case_name}}'
-    OR span_name = 'execute {{task}}'
+    attributes->>'logfire.msg_template' IN ({case_span_names})
+    OR span_name IN ({case_span_names}, {execute_span_names})
     OR span_name = 'agent run'
   )
 ORDER BY start_timestamp DESC

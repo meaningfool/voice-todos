@@ -22,8 +22,9 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 3.0529903846153847,
-      "max_case_duration_s": 10.617366,
+      "average_case_duration_s": 3.055139923076923,
+      "p95_case_duration_s": 4.251292,
+      "max_case_duration_s": 10.619216,
       "cost_usd": 0.0016084807692307694,
       "config": {
         "provider": "google-gla",
@@ -37,15 +38,15 @@
       "slowest_cases": [
         {
           "case_id": "dense-run-on-four",
-          "duration_s": 10.617366
+          "duration_s": 10.619216
         },
         {
           "case_id": "two-simple-tasks",
-          "duration_s": 4.248538
+          "duration_s": 4.251292
         },
         {
           "case_id": "duplicate-far-apart",
-          "duration_s": 4.029073
+          "duration_s": 4.030262
         }
       ]
     },
@@ -62,8 +63,9 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 1.4270026538461538,
-      "max_case_duration_s": 3.450475,
+      "average_case_duration_s": 1.4296080769230768,
+      "p95_case_duration_s": 3.420003,
+      "max_case_duration_s": 3.452578,
       "cost_usd": 0.00045348076923076933,
       "config": {
         "provider": "google-gla",
@@ -81,15 +83,15 @@
       "slowest_cases": [
         {
           "case_id": "correction-changes-action",
-          "duration_s": 3.450475
+          "duration_s": 3.452578
         },
         {
           "case_id": "dense-run-on-four",
-          "duration_s": 3.417248
+          "duration_s": 3.420003
         },
         {
           "case_id": "mixed-own-and-delegated",
-          "duration_s": 3.262302
+          "duration_s": 3.264917
         }
       ]
     },
@@ -106,8 +108,9 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 1.0947217692307694,
-      "max_case_duration_s": 2.287944,
+      "average_case_duration_s": 1.097198576923077,
+      "p95_case_duration_s": 1.841118,
+      "max_case_duration_s": 2.29063,
       "cost_usd": null,
       "config": {
         "provider": "google-gla",
@@ -141,15 +144,15 @@
       "slowest_cases": [
         {
           "case_id": "duplicate-far-apart",
-          "duration_s": 2.287944
+          "duration_s": 2.29063
         },
         {
           "case_id": "question-not-commitment",
-          "duration_s": 1.836095
+          "duration_s": 1.841118
         },
         {
           "case_id": "vague-self-talk-long",
-          "duration_s": 1.701337
+          "duration_s": 1.702888
         }
       ]
     },
@@ -166,8 +169,9 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 1.3118502307692308,
-      "max_case_duration_s": 4.292186,
+      "average_case_duration_s": 1.3138268076923079,
+      "p95_case_duration_s": 2.51115,
+      "max_case_duration_s": 4.294013,
       "cost_usd": null,
       "config": {
         "provider": "google-gla",
@@ -205,15 +209,15 @@
       "slowest_cases": [
         {
           "case_id": "merge-and-keep-separate",
-          "duration_s": 4.292186
+          "duration_s": 4.294013
         },
         {
           "case_id": "duplicate-update-and-repeat",
-          "duration_s": 2.509011
+          "duration_s": 2.51115
         },
         {
           "case_id": "long-mixed-signal-three",
-          "duration_s": 2.451261
+          "duration_s": 2.453628
         }
       ]
     },
@@ -230,8 +234,9 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 0.6723092307692308,
-      "max_case_duration_s": 1.113613,
+      "average_case_duration_s": 0.6744915,
+      "p95_case_duration_s": 1.052694,
+      "max_case_duration_s": 1.115394,
       "cost_usd": null,
       "config": {
         "provider": "mistral",
@@ -245,15 +250,15 @@
       "slowest_cases": [
         {
           "case_id": "correction-changes-action",
-          "duration_s": 1.113613
+          "duration_s": 1.115394
         },
         {
           "case_id": "dense-run-on-four",
-          "duration_s": 1.050192
+          "duration_s": 1.052694
         },
         {
           "case_id": "call-mom-clear",
-          "duration_s": 1.029444
+          "duration_s": 1.031558
         }
       ]
     },
@@ -266,12 +271,13 @@
       "headline_metric_value": 0.0,
       "total_case_count": 26,
       "passed_case_count": 0,
-      "incorrect_case_count": 26,
-      "incomplete_case_count": 0,
-      "completed_case_count": 26,
-      "failure_count": 0,
-      "average_case_duration_s": null,
-      "max_case_duration_s": null,
+      "incorrect_case_count": 0,
+      "incomplete_case_count": 26,
+      "completed_case_count": 0,
+      "failure_count": 26,
+      "average_case_duration_s": 1.720741923076923,
+      "p95_case_duration_s": 2.141136,
+      "max_case_duration_s": 2.314096,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -285,10 +291,1367 @@
           "max_tokens": 512
         }
       },
-      "failures": [],
+      "failures": [
+        {
+          "case_id": "merge-and-keep-separate",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery run for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Marc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "long-noisy-three-with-past",
+          "inputs": {
+            "transcript": "Uh so I already called the landlord, but I still need to book the dentist, order printer ink, and text Julia about dinner, unless I already did that, no I didn't.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Text Julia about dinner",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "duplicate-update-and-repeat",
+          "inputs": {
+            "transcript": "I need to send the invoice to Lena, and book the train to Lyon. Later today, actually not Lena, send the invoice to Nora instead. And yeah, book the train to Lyon, don't forget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Nora",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the train to Lyon",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "dense-negative-task-words",
+          "inputs": {
+            "transcript": "We're talking about reminders, due dates, assigned tasks, and follow-ups, but this is only a demo recording of the feature.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "long-mixed-signal-three",
+          "inputs": {
+            "transcript": "The last meeting was a mess, anyway before Friday I need to finish the memo, check the catering quote, and call Mom, and the rest can wait.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Check the catering quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Mom",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "noisy-two-tasks",
+          "inputs": {
+            "transcript": "Uh I need to, well, buy oat milk tonight, and, um, send the invoice to Lena.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Send the invoice to Lena",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "dense-run-on-four",
+          "inputs": {
+            "transcript": "Tomorrow email Sara about lunch book the dentist appointment update the pricing doc and remind Alex about the design review, and yeah the earlier call was chaotic.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sara about lunch",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the dentist appointment",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Update the pricing doc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Remind Alex about the design review",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "pure-chatter-test",
+          "inputs": {
+            "transcript": "Okay, I'm testing this again to see whether the transcript captures everything I say.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "vague-self-talk-long",
+          "inputs": {
+            "transcript": "Honestly I should get my life together and be less late to everything, but anyway I'm mostly venting.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "product-discussion-task-words",
+          "inputs": {
+            "transcript": "We really need the app to extract tasks better from transcripts, but I'm just describing the feature here.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "question-not-commitment",
+          "inputs": {
+            "transcript": "I was wondering, should I call David tomorrow, or is that unnecessary?",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "cancel-one-keep-one",
+          "inputs": {
+            "transcript": "Remind me to call Anna tomorrow... actually never mind on Anna, but do send the invoice to Lena.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Lena",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "correction-changes-action",
+          "inputs": {
+            "transcript": "Call Anna tomorrow, no, text Anna instead, and book the dentist.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Text Anna tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "correction-adds-detail-dup-risk",
+          "inputs": {
+            "transcript": "I need to buy milk from the supermarket, actually, no, buy oat milk from the organic store.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk from the organic store",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "duplicate-far-apart",
+          "inputs": {
+            "transcript": "I need to call Marc about the quote, and also order printer ink. Anyway the meeting earlier was a bit strange. And yeah, don't let me forget to call Marc.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Marc about the quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "mixed-own-and-delegated",
+          "inputs": {
+            "transcript": "I need to finish the memo, and I need JC to call the supplier.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Have JC call the supplier",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "three-simple-tasks",
+          "inputs": {
+            "transcript": "I need to book the dentist, pay the electricity bill, and order printer ink.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Pay the electricity bill",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "two-simple-tasks",
+          "inputs": {
+            "transcript": "Uh, tomorrow I need to book the dentist and send Lena the invoice.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Send Lena the invoice",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "send-contract-clear",
+          "inputs": {
+            "transcript": "Right, I still need to send Priya the signed contract.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send Priya the signed contract",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "call-mom-clear",
+          "inputs": {
+            "transcript": "Okay, tonight I need to call Mom about the weekend.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Mom about the weekend",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "past-plus-new",
+          "inputs": {
+            "transcript": "I already emailed the landlord, so now I just need to call the plumber.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call the plumber",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "same-verb-two-topics",
+          "inputs": {
+            "transcript": "Email Sarah about the budget and Mark about the venue.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sarah about the budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Mark about the venue",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "one-topic-two-recipients",
+          "inputs": {
+            "transcript": "Email Sarah and Mark about the design review.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sarah and Mark about the design review",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "parent-action-with-details",
+          "inputs": {
+            "transcript": "Call the caterer and confirm the menu and the pickup time.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call the caterer to confirm the menu and pickup time",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "merge-instruction-simple",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, and actually make that a single grocery errand for milk and bread.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery errand for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        }
+      ],
       "incorrect_cases": [],
-      "incomplete_cases": [],
-      "slowest_cases": []
+      "incomplete_cases": [
+        {
+          "case_id": "merge-and-keep-separate",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery run for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Marc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "long-noisy-three-with-past",
+          "inputs": {
+            "transcript": "Uh so I already called the landlord, but I still need to book the dentist, order printer ink, and text Julia about dinner, unless I already did that, no I didn't.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Text Julia about dinner",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "duplicate-update-and-repeat",
+          "inputs": {
+            "transcript": "I need to send the invoice to Lena, and book the train to Lyon. Later today, actually not Lena, send the invoice to Nora instead. And yeah, book the train to Lyon, don't forget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Nora",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the train to Lyon",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "dense-negative-task-words",
+          "inputs": {
+            "transcript": "We're talking about reminders, due dates, assigned tasks, and follow-ups, but this is only a demo recording of the feature.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "long-mixed-signal-three",
+          "inputs": {
+            "transcript": "The last meeting was a mess, anyway before Friday I need to finish the memo, check the catering quote, and call Mom, and the rest can wait.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Check the catering quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Mom",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "noisy-two-tasks",
+          "inputs": {
+            "transcript": "Uh I need to, well, buy oat milk tonight, and, um, send the invoice to Lena.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Send the invoice to Lena",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "dense-run-on-four",
+          "inputs": {
+            "transcript": "Tomorrow email Sara about lunch book the dentist appointment update the pricing doc and remind Alex about the design review, and yeah the earlier call was chaotic.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sara about lunch",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the dentist appointment",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Update the pricing doc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Remind Alex about the design review",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "pure-chatter-test",
+          "inputs": {
+            "transcript": "Okay, I'm testing this again to see whether the transcript captures everything I say.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "vague-self-talk-long",
+          "inputs": {
+            "transcript": "Honestly I should get my life together and be less late to everything, but anyway I'm mostly venting.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "product-discussion-task-words",
+          "inputs": {
+            "transcript": "We really need the app to extract tasks better from transcripts, but I'm just describing the feature here.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "question-not-commitment",
+          "inputs": {
+            "transcript": "I was wondering, should I call David tomorrow, or is that unnecessary?",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "cancel-one-keep-one",
+          "inputs": {
+            "transcript": "Remind me to call Anna tomorrow... actually never mind on Anna, but do send the invoice to Lena.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Lena",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "correction-changes-action",
+          "inputs": {
+            "transcript": "Call Anna tomorrow, no, text Anna instead, and book the dentist.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Text Anna tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "correction-adds-detail-dup-risk",
+          "inputs": {
+            "transcript": "I need to buy milk from the supermarket, actually, no, buy oat milk from the organic store.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk from the organic store",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "duplicate-far-apart",
+          "inputs": {
+            "transcript": "I need to call Marc about the quote, and also order printer ink. Anyway the meeting earlier was a bit strange. And yeah, don't let me forget to call Marc.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Marc about the quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "mixed-own-and-delegated",
+          "inputs": {
+            "transcript": "I need to finish the memo, and I need JC to call the supplier.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Have JC call the supplier",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "three-simple-tasks",
+          "inputs": {
+            "transcript": "I need to book the dentist, pay the electricity bill, and order printer ink.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Pay the electricity bill",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "two-simple-tasks",
+          "inputs": {
+            "transcript": "Uh, tomorrow I need to book the dentist and send Lena the invoice.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Send Lena the invoice",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "send-contract-clear",
+          "inputs": {
+            "transcript": "Right, I still need to send Priya the signed contract.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send Priya the signed contract",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "call-mom-clear",
+          "inputs": {
+            "transcript": "Okay, tonight I need to call Mom about the weekend.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Mom about the weekend",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "past-plus-new",
+          "inputs": {
+            "transcript": "I already emailed the landlord, so now I just need to call the plumber.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call the plumber",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "same-verb-two-topics",
+          "inputs": {
+            "transcript": "Email Sarah about the budget and Mark about the venue.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sarah about the budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Mark about the venue",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "one-topic-two-recipients",
+          "inputs": {
+            "transcript": "Email Sarah and Mark about the design review.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sarah and Mark about the design review",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "parent-action-with-details",
+          "inputs": {
+            "transcript": "Call the caterer and confirm the menu and the pickup time.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call the caterer to confirm the menu and pickup time",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "merge-instruction-simple",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, and actually make that a single grocery errand for milk and bread.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery errand for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        }
+      ],
+      "slowest_cases": [
+        {
+          "case_id": "product-discussion-task-words",
+          "duration_s": 2.314096
+        },
+        {
+          "case_id": "cancel-one-keep-one",
+          "duration_s": 2.141136
+        },
+        {
+          "case_id": "send-contract-clear",
+          "duration_s": 2.138333
+        }
+      ]
     },
     {
       "entry_id": "deepinfra_qwen35_2b_output_tool",
@@ -299,12 +1662,13 @@
       "headline_metric_value": 0.0,
       "total_case_count": 26,
       "passed_case_count": 0,
-      "incorrect_case_count": 26,
-      "incomplete_case_count": 0,
-      "completed_case_count": 26,
-      "failure_count": 0,
-      "average_case_duration_s": null,
-      "max_case_duration_s": null,
+      "incorrect_case_count": 0,
+      "incomplete_case_count": 26,
+      "completed_case_count": 0,
+      "failure_count": 26,
+      "average_case_duration_s": 1.1843148076923078,
+      "p95_case_duration_s": 2.49987,
+      "max_case_duration_s": 2.546368,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -318,10 +1682,1367 @@
           "max_tokens": 512
         }
       },
-      "failures": [],
+      "failures": [
+        {
+          "case_id": "merge-and-keep-separate",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery run for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Marc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "long-noisy-three-with-past",
+          "inputs": {
+            "transcript": "Uh so I already called the landlord, but I still need to book the dentist, order printer ink, and text Julia about dinner, unless I already did that, no I didn't.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Text Julia about dinner",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "duplicate-update-and-repeat",
+          "inputs": {
+            "transcript": "I need to send the invoice to Lena, and book the train to Lyon. Later today, actually not Lena, send the invoice to Nora instead. And yeah, book the train to Lyon, don't forget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Nora",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the train to Lyon",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "dense-negative-task-words",
+          "inputs": {
+            "transcript": "We're talking about reminders, due dates, assigned tasks, and follow-ups, but this is only a demo recording of the feature.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "long-mixed-signal-three",
+          "inputs": {
+            "transcript": "The last meeting was a mess, anyway before Friday I need to finish the memo, check the catering quote, and call Mom, and the rest can wait.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Check the catering quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Mom",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "noisy-two-tasks",
+          "inputs": {
+            "transcript": "Uh I need to, well, buy oat milk tonight, and, um, send the invoice to Lena.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Send the invoice to Lena",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "dense-run-on-four",
+          "inputs": {
+            "transcript": "Tomorrow email Sara about lunch book the dentist appointment update the pricing doc and remind Alex about the design review, and yeah the earlier call was chaotic.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sara about lunch",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the dentist appointment",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Update the pricing doc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Remind Alex about the design review",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "pure-chatter-test",
+          "inputs": {
+            "transcript": "Okay, I'm testing this again to see whether the transcript captures everything I say.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "vague-self-talk-long",
+          "inputs": {
+            "transcript": "Honestly I should get my life together and be less late to everything, but anyway I'm mostly venting.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "product-discussion-task-words",
+          "inputs": {
+            "transcript": "We really need the app to extract tasks better from transcripts, but I'm just describing the feature here.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "question-not-commitment",
+          "inputs": {
+            "transcript": "I was wondering, should I call David tomorrow, or is that unnecessary?",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "cancel-one-keep-one",
+          "inputs": {
+            "transcript": "Remind me to call Anna tomorrow... actually never mind on Anna, but do send the invoice to Lena.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Lena",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "correction-changes-action",
+          "inputs": {
+            "transcript": "Call Anna tomorrow, no, text Anna instead, and book the dentist.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Text Anna tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "correction-adds-detail-dup-risk",
+          "inputs": {
+            "transcript": "I need to buy milk from the supermarket, actually, no, buy oat milk from the organic store.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk from the organic store",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "duplicate-far-apart",
+          "inputs": {
+            "transcript": "I need to call Marc about the quote, and also order printer ink. Anyway the meeting earlier was a bit strange. And yeah, don't let me forget to call Marc.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Marc about the quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "mixed-own-and-delegated",
+          "inputs": {
+            "transcript": "I need to finish the memo, and I need JC to call the supplier.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Have JC call the supplier",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "three-simple-tasks",
+          "inputs": {
+            "transcript": "I need to book the dentist, pay the electricity bill, and order printer ink.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Pay the electricity bill",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "two-simple-tasks",
+          "inputs": {
+            "transcript": "Uh, tomorrow I need to book the dentist and send Lena the invoice.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Send Lena the invoice",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "send-contract-clear",
+          "inputs": {
+            "transcript": "Right, I still need to send Priya the signed contract.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send Priya the signed contract",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "call-mom-clear",
+          "inputs": {
+            "transcript": "Okay, tonight I need to call Mom about the weekend.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Mom about the weekend",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "past-plus-new",
+          "inputs": {
+            "transcript": "I already emailed the landlord, so now I just need to call the plumber.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call the plumber",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "same-verb-two-topics",
+          "inputs": {
+            "transcript": "Email Sarah about the budget and Mark about the venue.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sarah about the budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Mark about the venue",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "one-topic-two-recipients",
+          "inputs": {
+            "transcript": "Email Sarah and Mark about the design review.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sarah and Mark about the design review",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "parent-action-with-details",
+          "inputs": {
+            "transcript": "Call the caterer and confirm the menu and the pickup time.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call the caterer to confirm the menu and pickup time",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "merge-instruction-simple",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, and actually make that a single grocery errand for milk and bread.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery errand for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        }
+      ],
       "incorrect_cases": [],
-      "incomplete_cases": [],
-      "slowest_cases": []
+      "incomplete_cases": [
+        {
+          "case_id": "merge-and-keep-separate",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery run for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Marc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "long-noisy-three-with-past",
+          "inputs": {
+            "transcript": "Uh so I already called the landlord, but I still need to book the dentist, order printer ink, and text Julia about dinner, unless I already did that, no I didn't.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Text Julia about dinner",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "duplicate-update-and-repeat",
+          "inputs": {
+            "transcript": "I need to send the invoice to Lena, and book the train to Lyon. Later today, actually not Lena, send the invoice to Nora instead. And yeah, book the train to Lyon, don't forget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Nora",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the train to Lyon",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "dense-negative-task-words",
+          "inputs": {
+            "transcript": "We're talking about reminders, due dates, assigned tasks, and follow-ups, but this is only a demo recording of the feature.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "long-mixed-signal-three",
+          "inputs": {
+            "transcript": "The last meeting was a mess, anyway before Friday I need to finish the memo, check the catering quote, and call Mom, and the rest can wait.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Check the catering quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Mom",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "noisy-two-tasks",
+          "inputs": {
+            "transcript": "Uh I need to, well, buy oat milk tonight, and, um, send the invoice to Lena.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Send the invoice to Lena",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "dense-run-on-four",
+          "inputs": {
+            "transcript": "Tomorrow email Sara about lunch book the dentist appointment update the pricing doc and remind Alex about the design review, and yeah the earlier call was chaotic.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sara about lunch",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the dentist appointment",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Update the pricing doc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Remind Alex about the design review",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "pure-chatter-test",
+          "inputs": {
+            "transcript": "Okay, I'm testing this again to see whether the transcript captures everything I say.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "vague-self-talk-long",
+          "inputs": {
+            "transcript": "Honestly I should get my life together and be less late to everything, but anyway I'm mostly venting.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "product-discussion-task-words",
+          "inputs": {
+            "transcript": "We really need the app to extract tasks better from transcripts, but I'm just describing the feature here.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "question-not-commitment",
+          "inputs": {
+            "transcript": "I was wondering, should I call David tomorrow, or is that unnecessary?",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "cancel-one-keep-one",
+          "inputs": {
+            "transcript": "Remind me to call Anna tomorrow... actually never mind on Anna, but do send the invoice to Lena.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Lena",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "correction-changes-action",
+          "inputs": {
+            "transcript": "Call Anna tomorrow, no, text Anna instead, and book the dentist.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Text Anna tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "correction-adds-detail-dup-risk",
+          "inputs": {
+            "transcript": "I need to buy milk from the supermarket, actually, no, buy oat milk from the organic store.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk from the organic store",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "duplicate-far-apart",
+          "inputs": {
+            "transcript": "I need to call Marc about the quote, and also order printer ink. Anyway the meeting earlier was a bit strange. And yeah, don't let me forget to call Marc.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Marc about the quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "mixed-own-and-delegated",
+          "inputs": {
+            "transcript": "I need to finish the memo, and I need JC to call the supplier.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Have JC call the supplier",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "three-simple-tasks",
+          "inputs": {
+            "transcript": "I need to book the dentist, pay the electricity bill, and order printer ink.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Pay the electricity bill",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "two-simple-tasks",
+          "inputs": {
+            "transcript": "Uh, tomorrow I need to book the dentist and send Lena the invoice.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Send Lena the invoice",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "send-contract-clear",
+          "inputs": {
+            "transcript": "Right, I still need to send Priya the signed contract.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send Priya the signed contract",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "call-mom-clear",
+          "inputs": {
+            "transcript": "Okay, tonight I need to call Mom about the weekend.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Mom about the weekend",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "past-plus-new",
+          "inputs": {
+            "transcript": "I already emailed the landlord, so now I just need to call the plumber.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call the plumber",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "same-verb-two-topics",
+          "inputs": {
+            "transcript": "Email Sarah about the budget and Mark about the venue.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sarah about the budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Mark about the venue",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "one-topic-two-recipients",
+          "inputs": {
+            "transcript": "Email Sarah and Mark about the design review.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sarah and Mark about the design review",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "parent-action-with-details",
+          "inputs": {
+            "transcript": "Call the caterer and confirm the menu and the pickup time.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call the caterer to confirm the menu and pickup time",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Exceeded maximum retries (1) for output validation",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": "Please return text or include your response in a tool call.",
+          "actual_output": null
+        },
+        {
+          "case_id": "merge-instruction-simple",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, and actually make that a single grocery errand for milk and bread.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery errand for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        }
+      ],
+      "slowest_cases": [
+        {
+          "case_id": "merge-instruction-simple",
+          "duration_s": 2.546368
+        },
+        {
+          "case_id": "dense-run-on-four",
+          "duration_s": 2.49987
+        },
+        {
+          "case_id": "correction-adds-detail-dup-risk",
+          "duration_s": 2.233524
+        }
+      ]
     },
     {
       "entry_id": "deepinfra_qwen35_4b_output_tool",
@@ -329,15 +3050,16 @@
       "status": "current",
       "selected_run_id": "2026-05-11T20-25-28Z-d8801569--deepinfra_qwen35_4b_output_tool",
       "selected_timestamp": "2026-05-11T20:25:28.009266Z",
-      "headline_metric_value": 1.0,
+      "headline_metric_value": 0.6923076923076923,
       "total_case_count": 26,
-      "passed_case_count": 26,
+      "passed_case_count": 18,
       "incorrect_case_count": 0,
-      "incomplete_case_count": 0,
-      "completed_case_count": 26,
-      "failure_count": 0,
-      "average_case_duration_s": 1.5636726111111112,
-      "max_case_duration_s": null,
+      "incomplete_case_count": 8,
+      "completed_case_count": 18,
+      "failure_count": 8,
+      "average_case_duration_s": 1.8928108076923078,
+      "p95_case_duration_s": 2.667211,
+      "max_case_duration_s": 2.694342,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -351,10 +3073,553 @@
           "max_tokens": 512
         }
       },
-      "failures": [],
+      "failures": [
+        {
+          "case_id": "duplicate-update-and-repeat",
+          "inputs": {
+            "transcript": "I need to send the invoice to Lena, and book the train to Lyon. Later today, actually not Lena, send the invoice to Nora instead. And yeah, book the train to Lyon, don't forget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Nora",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the train to Lyon",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "long-mixed-signal-three",
+          "inputs": {
+            "transcript": "The last meeting was a mess, anyway before Friday I need to finish the memo, check the catering quote, and call Mom, and the rest can wait.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Check the catering quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Mom",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "noisy-two-tasks",
+          "inputs": {
+            "transcript": "Uh I need to, well, buy oat milk tonight, and, um, send the invoice to Lena.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Send the invoice to Lena",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "dense-run-on-four",
+          "inputs": {
+            "transcript": "Tomorrow email Sara about lunch book the dentist appointment update the pricing doc and remind Alex about the design review, and yeah the earlier call was chaotic.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sara about lunch",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the dentist appointment",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Update the pricing doc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Remind Alex about the design review",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "correction-changes-action",
+          "inputs": {
+            "transcript": "Call Anna tomorrow, no, text Anna instead, and book the dentist.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Text Anna tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "duplicate-far-apart",
+          "inputs": {
+            "transcript": "I need to call Marc about the quote, and also order printer ink. Anyway the meeting earlier was a bit strange. And yeah, don't let me forget to call Marc.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Marc about the quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "two-simple-tasks",
+          "inputs": {
+            "transcript": "Uh, tomorrow I need to book the dentist and send Lena the invoice.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Send Lena the invoice",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        }
+      ],
       "incorrect_cases": [],
-      "incomplete_cases": [],
-      "slowest_cases": []
+      "incomplete_cases": [
+        {
+          "case_id": "duplicate-update-and-repeat",
+          "inputs": {
+            "transcript": "I need to send the invoice to Lena, and book the train to Lyon. Later today, actually not Lena, send the invoice to Nora instead. And yeah, book the train to Lyon, don't forget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Send the invoice to Nora",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the train to Lyon",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "long-mixed-signal-three",
+          "inputs": {
+            "transcript": "The last meeting was a mess, anyway before Friday I need to finish the memo, check the catering quote, and call Mom, and the rest can wait.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Finish the memo",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Check the catering quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Mom",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "noisy-two-tasks",
+          "inputs": {
+            "transcript": "Uh I need to, well, buy oat milk tonight, and, um, send the invoice to Lena.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Send the invoice to Lena",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "dense-run-on-four",
+          "inputs": {
+            "transcript": "Tomorrow email Sara about lunch book the dentist appointment update the pricing doc and remind Alex about the design review, and yeah the earlier call was chaotic.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sara about lunch",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the dentist appointment",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Update the pricing doc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Remind Alex about the design review",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "correction-changes-action",
+          "inputs": {
+            "transcript": "Call Anna tomorrow, no, text Anna instead, and book the dentist.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Text Anna tomorrow",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "duplicate-far-apart",
+          "inputs": {
+            "transcript": "I need to call Marc about the quote, and also order printer ink. Anyway the meeting earlier was a bit strange. And yeah, don't let me forget to call Marc.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Marc about the quote",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Order printer ink",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "two-simple-tasks",
+          "inputs": {
+            "transcript": "Uh, tomorrow I need to book the dentist and send Lena the invoice.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Book the dentist",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Send Lena the invoice",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        }
+      ],
+      "slowest_cases": [
+        {
+          "case_id": "mild-misrecognition-two",
+          "duration_s": 2.694342
+        },
+        {
+          "case_id": "duplicate-far-apart",
+          "duration_s": 2.667211
+        },
+        {
+          "case_id": "noisy-two-tasks",
+          "duration_s": 2.652903
+        }
+      ]
     },
     {
       "entry_id": "deepinfra_qwen35_9b_output_tool",
@@ -362,15 +3627,16 @@
       "status": "current",
       "selected_run_id": "2026-05-11T20-26-17Z-021779c3--deepinfra_qwen35_9b_output_tool",
       "selected_timestamp": "2026-05-11T20:26:17.525894Z",
-      "headline_metric_value": 1.0,
+      "headline_metric_value": 0.8846153846153846,
       "total_case_count": 26,
-      "passed_case_count": 26,
+      "passed_case_count": 23,
       "incorrect_case_count": 0,
-      "incomplete_case_count": 0,
-      "completed_case_count": 26,
-      "failure_count": 0,
-      "average_case_duration_s": 4.717860478260869,
-      "max_case_duration_s": null,
+      "incomplete_case_count": 3,
+      "completed_case_count": 23,
+      "failure_count": 3,
+      "average_case_duration_s": 5.287705038461539,
+      "p95_case_duration_s": 9.805038,
+      "max_case_duration_s": 10.829825,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -384,10 +3650,189 @@
           "max_tokens": 512
         }
       },
-      "failures": [],
+      "failures": [
+        {
+          "case_id": "merge-and-keep-separate",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery run for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Marc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "call-mom-clear",
+          "inputs": {
+            "transcript": "Okay, tonight I need to call Mom about the weekend.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Mom about the weekend",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        }
+      ],
       "incorrect_cases": [],
-      "incomplete_cases": [],
-      "slowest_cases": []
+      "incomplete_cases": [
+        {
+          "case_id": "merge-and-keep-separate",
+          "inputs": {
+            "transcript": "Buy milk, buy bread, call Marc, and actually make the milk and bread one grocery run, but keep calling Marc separate.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Do one grocery run for milk and bread",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Call Marc",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "mild-misrecognition-two",
+          "inputs": {
+            "transcript": "By oat milk tonight. Zen email Sarah the revised budget.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Buy oat milk",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Sarah the revised budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        },
+        {
+          "case_id": "call-mom-clear",
+          "inputs": {
+            "transcript": "Okay, tonight I need to call Mom about the weekend.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Call Mom about the weekend",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "summary": "Model token limit (512) exceeded before any response was generated. Increase the `max_tokens` model setting, or simplify the prompt to result in a shorter response that will fit within the limit.",
+          "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+          "validator_feedback": null,
+          "actual_output": null
+        }
+      ],
+      "slowest_cases": [
+        {
+          "case_id": "call-mom-clear",
+          "duration_s": 10.829825
+        },
+        {
+          "case_id": "merge-and-keep-separate",
+          "duration_s": 9.805038
+        },
+        {
+          "case_id": "parent-action-with-details",
+          "duration_s": 8.284351
+        }
+      ]
     },
     {
       "entry_id": "deepinfra_qwen35_0_8b_provider_json_schema",
@@ -395,15 +3840,16 @@
       "status": "current",
       "selected_run_id": "2026-05-11T20-28-35Z-4e1d0c11--deepinfra_qwen35_0_8b_provider_json_schema",
       "selected_timestamp": "2026-05-11T20:28:35.940046Z",
-      "headline_metric_value": 0.42857142857142855,
-      "total_case_count": 21,
-      "passed_case_count": 9,
-      "incorrect_case_count": 12,
+      "headline_metric_value": 0.5,
+      "total_case_count": 26,
+      "passed_case_count": 13,
+      "incorrect_case_count": 13,
       "incomplete_case_count": 0,
-      "completed_case_count": 21,
+      "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 0.5508307692307692,
-      "max_case_duration_s": 1.410859,
+      "average_case_duration_s": 0.5523006923076923,
+      "p95_case_duration_s": 1.105344,
+      "max_case_duration_s": 1.413139,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -877,21 +4323,57 @@
               "assign_to": "None"
             }
           ]
+        },
+        {
+          "case_id": "same-verb-two-topics",
+          "inputs": {
+            "transcript": "Email Sarah about the budget and Mark about the venue.",
+            "reference_dt": "2026-03-24T09:30:00+00:00",
+            "previous_todos": null
+          },
+          "expected_output": [
+            {
+              "text": "Email Sarah about the budget",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            },
+            {
+              "text": "Email Mark about the venue",
+              "priority": null,
+              "category": null,
+              "due_date": null,
+              "notification": null,
+              "assign_to": null
+            }
+          ],
+          "actual_output": [
+            {
+              "text": "Send email to Sarah regarding budget details.",
+              "priority": "medium",
+              "category": "communication",
+              "due_date": "2026-03-24",
+              "notification": "2026-03-24T09:30:00+00:00",
+              "assign_to": "Sarah"
+            }
+          ]
         }
       ],
       "incomplete_cases": [],
       "slowest_cases": [
         {
           "case_id": "duplicate-update-and-repeat",
-          "duration_s": 1.410859
+          "duration_s": 1.413139
         },
         {
           "case_id": "three-simple-tasks",
-          "duration_s": 1.104148
+          "duration_s": 1.105344
         },
         {
           "case_id": "merge-and-keep-separate",
-          "duration_s": 0.820071
+          "duration_s": 0.824341
         }
       ]
     },
@@ -908,8 +4390,9 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 0.6822784615384615,
-      "max_case_duration_s": 1.573112,
+      "average_case_duration_s": 0.6836885384615384,
+      "p95_case_duration_s": 1.217315,
+      "max_case_duration_s": 1.574303,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -1113,15 +4596,15 @@
       "slowest_cases": [
         {
           "case_id": "dense-run-on-four",
-          "duration_s": 1.573112
+          "duration_s": 1.574303
         },
         {
           "case_id": "merge-and-keep-separate",
-          "duration_s": 1.216159
+          "duration_s": 1.217315
         },
         {
           "case_id": "three-simple-tasks",
-          "duration_s": 1.022532
+          "duration_s": 1.023636
         }
       ]
     },
@@ -1138,8 +4621,9 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 0.9316623076923076,
-      "max_case_duration_s": 2.147533,
+      "average_case_duration_s": 0.9337536153846154,
+      "p95_case_duration_s": 1.855546,
+      "max_case_duration_s": 2.149416,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -1400,15 +4884,15 @@
       "slowest_cases": [
         {
           "case_id": "dense-run-on-four",
-          "duration_s": 2.147533
+          "duration_s": 2.149416
         },
         {
           "case_id": "long-noisy-three-with-past",
-          "duration_s": 1.852956
+          "duration_s": 1.855546
         },
         {
           "case_id": "long-mixed-signal-three",
-          "duration_s": 1.668086
+          "duration_s": 1.680224
         }
       ]
     },
@@ -1425,8 +4909,9 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 2.7048353076923073,
-      "max_case_duration_s": 7.760702,
+      "average_case_duration_s": 2.7127127307692307,
+      "p95_case_duration_s": 5.856709,
+      "max_case_duration_s": 7.763476,
       "cost_usd": null,
       "config": {
         "provider": "deepinfra",
@@ -1568,15 +5053,15 @@
       "slowest_cases": [
         {
           "case_id": "long-mixed-signal-three",
-          "duration_s": 7.760702
+          "duration_s": 7.763476
         },
         {
           "case_id": "duplicate-update-and-repeat",
-          "duration_s": 5.848463
+          "duration_s": 5.856709
         },
         {
           "case_id": "dense-run-on-four",
-          "duration_s": 5.782402
+          "duration_s": 5.784067
         }
       ]
     },
@@ -1593,8 +5078,9 @@
       "incomplete_case_count": 1,
       "completed_case_count": 25,
       "failure_count": 1,
-      "average_case_duration_s": 1.11991604,
-      "max_case_duration_s": 5.967418,
+      "average_case_duration_s": 1.513436730769231,
+      "p95_case_duration_s": 5.983313,
+      "max_case_duration_s": 11.270871,
       "cost_usd": null,
       "config": {
         "provider": "managed-openai",
@@ -2097,16 +5583,16 @@
       ],
       "slowest_cases": [
         {
+          "case_id": "dense-run-on-four",
+          "duration_s": 11.270871
+        },
+        {
           "case_id": "merge-instruction-simple",
-          "duration_s": 5.967418
+          "duration_s": 5.983313
         },
         {
           "case_id": "three-simple-tasks",
-          "duration_s": 2.089328
-        },
-        {
-          "case_id": "duplicate-update-and-repeat",
-          "duration_s": 1.541609
+          "duration_s": 2.102061
         }
       ]
     },
@@ -2123,8 +5609,9 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 0.9796425384615384,
-      "max_case_duration_s": 5.14506,
+      "average_case_duration_s": 0.9813872307692308,
+      "p95_case_duration_s": 1.341266,
+      "max_case_duration_s": 5.148354,
       "cost_usd": null,
       "config": {
         "provider": "managed-openai",
@@ -2664,15 +6151,15 @@
       "slowest_cases": [
         {
           "case_id": "merge-instruction-simple",
-          "duration_s": 5.14506
+          "duration_s": 5.148354
         },
         {
           "case_id": "parent-action-with-details",
-          "duration_s": 1.337202
+          "duration_s": 1.341266
         },
         {
           "case_id": "mild-misrecognition-two",
-          "duration_s": 1.101772
+          "duration_s": 1.103794
         }
       ]
     },
@@ -2689,8 +6176,9 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 2.651216923076923,
-      "max_case_duration_s": 8.797743,
+      "average_case_duration_s": 2.6540578846153844,
+      "p95_case_duration_s": 5.80112,
+      "max_case_duration_s": 8.802269,
       "cost_usd": null,
       "config": {
         "provider": "managed-openai",
@@ -2741,15 +6229,15 @@
       "slowest_cases": [
         {
           "case_id": "merge-instruction-simple",
-          "duration_s": 8.797743
+          "duration_s": 8.802269
         },
         {
           "case_id": "dense-run-on-four",
-          "duration_s": 5.798787
+          "duration_s": 5.80112
         },
         {
           "case_id": "three-simple-tasks",
-          "duration_s": 4.161751
+          "duration_s": 4.164457
         }
       ]
     },
@@ -2766,8 +6254,9 @@
       "incomplete_case_count": 0,
       "completed_case_count": 26,
       "failure_count": 0,
-      "average_case_duration_s": 3.2818158461538465,
-      "max_case_duration_s": 8.105734,
+      "average_case_duration_s": 3.284589153846154,
+      "p95_case_duration_s": 6.728386,
+      "max_case_duration_s": 8.108071,
       "cost_usd": null,
       "config": {
         "provider": "managed-openai",
@@ -2959,15 +6448,15 @@
       "slowest_cases": [
         {
           "case_id": "dense-run-on-four",
-          "duration_s": 8.105734
+          "duration_s": 8.108071
         },
         {
           "case_id": "merge-instruction-simple",
-          "duration_s": 6.723304
+          "duration_s": 6.728386
         },
         {
           "case_id": "long-noisy-three-with-past",
-          "duration_s": 5.889289
+          "duration_s": 5.894737
         }
       ]
     }

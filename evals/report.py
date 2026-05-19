@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from datetime import datetime
 from pathlib import Path
 
@@ -15,6 +16,8 @@ from evals.storage import (
     load_benchmark_by_id,
     load_benchmark_lock,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def build_benchmark_report(
@@ -147,9 +150,11 @@ def _build_benchmark_report_from_state(
                 incomplete_case_count=incomplete_case_count,
                 completed_case_count=completed_case_count,
                 failure_count=incomplete_case_count,
-                average_case_duration_s=_float_or_none(
-                    selected_row.get("average_case_duration_s")
+                average_case_duration_s=(
+                    _average_case_duration(case_records)
+                    or _float_or_none(selected_row.get("average_case_duration_s"))
                 ),
+                p95_case_duration_s=_p95_case_duration(case_records),
                 max_case_duration_s=_max_case_duration(case_records),
                 cost_usd=_float_or_none(selected_row.get("cost_usd")),
                 config=entry.config,
@@ -167,7 +172,9 @@ def _build_benchmark_report_from_state(
         headline_metric=benchmark.headline_metric,
         display_headline_metric="passed / total",
         active_lock_path=(
-            str(lock_state.lock_path) if lock_state.active_lock_exists else None
+            _repo_relative_path(lock_state.lock_path)
+            if lock_state.active_lock_exists
+            else None
         ),
         locked_dataset_hash=lock_state.locked_dataset_hash,
         current_hosted_dataset_hash=lock_state.current_hosted_dataset_hash,
@@ -304,6 +311,13 @@ def _int_or_zero(value) -> int:
         return 0
 
 
+def _repo_relative_path(path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
 def _float_or_none(value) -> float | None:
     try:
         return float(value)
@@ -336,7 +350,14 @@ def _load_persisted_report(path: Path) -> BenchmarkReport | None:
     if not path.exists():
         return None
     try:
-        return BenchmarkReport.model_validate(json.loads(path.read_text()))
+        raw_report = json.loads(path.read_text())
+        entries = raw_report.get("entries") if isinstance(raw_report, dict) else None
+        if not isinstance(entries, list) or any(
+            isinstance(entry, dict) and "p95_case_duration_s" not in entry
+            for entry in entries
+        ):
+            return None
+        return BenchmarkReport.model_validate(raw_report)
     except Exception:
         return None
 
@@ -358,7 +379,9 @@ def _persisted_report_matches_state(
         return False
 
     active_lock_path = (
-        str(lock_state.lock_path) if lock_state.active_lock_exists else None
+        _repo_relative_path(lock_state.lock_path)
+        if lock_state.active_lock_exists
+        else None
     )
     if report.active_lock_path != active_lock_path:
         return False
@@ -380,6 +403,12 @@ def _persisted_report_matches_state(
         if entry_state.label != benchmark_entry.label:
             return False
         if entry_state.config != benchmark_entry.config:
+            return False
+        if (
+            entry_state.selected_run_id is not None
+            and entry_state.average_case_duration_s is not None
+            and entry_state.p95_case_duration_s is None
+        ):
             return False
 
         selected_row = selected_rows_by_entry_id.get(benchmark_entry.id)
@@ -420,7 +449,7 @@ def _max_case_duration(case_records: list[dict]) -> float | None:
     durations = [
         duration
         for duration in (
-            _float_or_none(row.get("duration_s")) for row in case_records if row.get("status") in {"passed", "incorrect"}
+            _float_or_none(row.get("duration_s")) for row in case_records
         )
         if duration is not None
     ]
@@ -429,15 +458,41 @@ def _max_case_duration(case_records: list[dict]) -> float | None:
     return max(durations)
 
 
+def _average_case_duration(case_records: list[dict]) -> float | None:
+    durations = [
+        duration
+        for duration in (
+            _float_or_none(row.get("duration_s")) for row in case_records
+        )
+        if duration is not None
+    ]
+    if not durations:
+        return None
+    return sum(durations) / len(durations)
+
+
+def _p95_case_duration(case_records: list[dict]) -> float | None:
+    durations = sorted(
+        duration
+        for duration in (
+            _float_or_none(row.get("duration_s")) for row in case_records
+        )
+        if duration is not None
+    )
+    if not durations:
+        return None
+    index = max(0, min(len(durations) - 1, math.ceil(len(durations) * 0.95) - 1))
+    return durations[index]
+
+
 def _build_slowest_cases(case_records: list[dict]) -> list[dict]:
-    completed_rows = [
+    timed_rows = [
         {"case_id": row["case_id"], "duration_s": row["duration_s"]}
         for row in case_records
-        if row.get("status") in {"passed", "incorrect"}
-        and _float_or_none(row.get("duration_s")) is not None
+        if _float_or_none(row.get("duration_s")) is not None
     ]
-    completed_rows.sort(key=lambda row: row["duration_s"], reverse=True)
-    return completed_rows[:3]
+    timed_rows.sort(key=lambda row: row["duration_s"], reverse=True)
+    return timed_rows[:3]
 
 
 def _total_case_count(*, selected_row: dict, case_records: list[dict]) -> int:
@@ -545,7 +600,10 @@ def _base_case_record(row: dict) -> dict | None:
         "case_id": case_id,
         "inputs": row.get("inputs") or {},
         "expected_output": row.get("expected_output") or [],
-        "duration_s": _float_or_none(row.get("task_duration")),
+        "duration_s": (
+            _float_or_none(row.get("span_duration_s"))
+            or _float_or_none(row.get("task_duration"))
+        ),
     }
 
 

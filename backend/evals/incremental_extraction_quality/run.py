@@ -341,6 +341,7 @@ async def launch_replay_entry(
         provider=resolved_config.provider,
         model_name=resolved_config.model_name,
         prompt_version=resolved_config.prompt_version,
+        implementation_family=resolved_config.implementation_family,
         model_settings=resolved_config.model_settings,
     )
     result = await launch_experiments_for_definitions(

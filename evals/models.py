@@ -99,6 +99,7 @@ class BenchmarkEntryState(BaseModel):
     completed_case_count: int = 0
     failure_count: int = 0
     average_case_duration_s: float | None = None
+    p95_case_duration_s: float | None = None
     max_case_duration_s: float | None = None
     cost_usd: float | None = None
     config: dict = Field(default_factory=dict)

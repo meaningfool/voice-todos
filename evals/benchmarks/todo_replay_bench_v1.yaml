@@ -46,19 +46,103 @@ entries:
     model: mistral-small-2603
     prompt_version: v1
     model_settings: {}
-- id: deepinfra_qwen35_9b_default
-  label: Qwen 3.5 9B / default
+- id: deepinfra_qwen35_0_8b_output_tool
+  label: Qwen 3.5 0.8B / DeepInfra output tool
   config:
     provider: deepinfra
-    model: Qwen/Qwen3.5-9B
+    model: Qwen/Qwen3.5-0.8B
     prompt_version: v1
-    model_settings: {}
-- id: deepinfra_qwen35_4b_structured_tuned
-  label: Qwen 3.5 4B / structured tuned
+    implementation:
+      family: deepinfra-output-tool
+    model_settings:
+      temperature: 0
+      max_tokens: 512
+- id: deepinfra_qwen35_2b_output_tool
+  label: Qwen 3.5 2B / DeepInfra output tool
+  config:
+    provider: deepinfra
+    model: Qwen/Qwen3.5-2B
+    prompt_version: v1
+    implementation:
+      family: deepinfra-output-tool
+    model_settings:
+      temperature: 0
+      max_tokens: 512
+- id: deepinfra_qwen35_4b_output_tool
+  label: Qwen 3.5 4B / DeepInfra output tool
   config:
     provider: deepinfra
     model: Qwen/Qwen3.5-4B
     prompt_version: v1
+    implementation:
+      family: deepinfra-output-tool
     model_settings:
       temperature: 0
-      max_tokens: 1024
+      max_tokens: 512
+- id: deepinfra_qwen35_9b_output_tool
+  label: Qwen 3.5 9B / DeepInfra output tool
+  config:
+    provider: deepinfra
+    model: Qwen/Qwen3.5-9B
+    prompt_version: v1
+    implementation:
+      family: deepinfra-output-tool
+    model_settings:
+      temperature: 0
+      max_tokens: 512
+- id: deepinfra_qwen35_0_8b_provider_json_schema
+  label: Qwen 3.5 0.8B / DeepInfra provider json_schema
+  config:
+    provider: deepinfra
+    model: Qwen/Qwen3.5-0.8B
+    prompt_version: v1
+    implementation:
+      family: deepinfra-provider-json-schema
+    model_settings:
+      temperature: 0
+      max_tokens: 512
+      extra_body:
+        chat_template_kwargs:
+          enable_thinking: false
+- id: deepinfra_qwen35_2b_provider_json_schema
+  label: Qwen 3.5 2B / DeepInfra provider json_schema
+  config:
+    provider: deepinfra
+    model: Qwen/Qwen3.5-2B
+    prompt_version: v1
+    implementation:
+      family: deepinfra-provider-json-schema
+    model_settings:
+      temperature: 0
+      max_tokens: 512
+      extra_body:
+        chat_template_kwargs:
+          enable_thinking: false
+- id: deepinfra_qwen35_4b_provider_json_schema
+  label: Qwen 3.5 4B / DeepInfra provider json_schema
+  config:
+    provider: deepinfra
+    model: Qwen/Qwen3.5-4B
+    prompt_version: v1
+    implementation:
+      family: deepinfra-provider-json-schema
+    model_settings:
+      temperature: 0
+      max_tokens: 512
+      extra_body:
+        chat_template_kwargs:
+          enable_thinking: false
+- id: deepinfra_qwen35_9b_provider_json_schema
+  label: Qwen 3.5 9B / DeepInfra provider json_schema
+  config:
+    provider: deepinfra
+    model: Qwen/Qwen3.5-9B
+    prompt_version: v1
+    implementation:
+      family: deepinfra-provider-json-schema
+    model_settings:
+      temperature: 0
+      max_tokens: 512
+      extra_body:
+        chat_template_kwargs:
+          enable_thinking: false

@@ -32,6 +32,7 @@ export function EntryComparisonTable({
           <TableHead>Incorrect</TableHead>
           <TableHead>Incomplete</TableHead>
           <TableHead>Avg duration</TableHead>
+          <TableHead>P95 duration</TableHead>
           <TableHead>Max duration</TableHead>
           <TableHead>Selected timestamp</TableHead>
         </TableRow>
@@ -63,6 +64,7 @@ export function EntryComparisonTable({
               <TableCell>{entry.incorrect_case_count}</TableCell>
               <TableCell>{entry.incomplete_case_count}</TableCell>
               <TableCell>{formatDuration(entry.average_case_duration_s)}</TableCell>
+              <TableCell>{formatDuration(entry.p95_case_duration_s)}</TableCell>
               <TableCell>{formatDuration(entry.max_case_duration_s)}</TableCell>
               <TableCell>{entry.selected_timestamp ?? "—"}</TableCell>
             </TableRow>

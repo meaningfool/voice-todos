@@ -110,6 +110,11 @@ def test_fetch_case_spans_uses_single_query_with_explicit_limit(monkeypatch):
         },
     ]
     assert len(calls) == 1
-    assert calls[0]["params"]["limit"] == 1000
+    assert calls[0]["params"]["limit"] == 10000
     assert "trace_id = 'trace-1'" in calls[0]["params"]["sql"]
     assert "trace_id = 'trace-2'" in calls[0]["params"]["sql"]
+    assert "duration AS span_duration_s" in calls[0]["params"]["sql"]
+    assert "'case: {case_name}'" in calls[0]["params"]["sql"]
+    assert "'case: {{case_name}}'" in calls[0]["params"]["sql"]
+    assert "'execute {task}'" in calls[0]["params"]["sql"]
+    assert "'execute {{task}}'" in calls[0]["params"]["sql"]

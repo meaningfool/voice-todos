@@ -117,7 +117,7 @@ export function EntryDetail({ entry }: EntryDetailProps) {
         <CardHeader>
           <CardTitle>Slowest cases</CardTitle>
           <CardDescription>
-            The slowest completed cases captured for this entry.
+            The slowest case spans captured for this entry.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -134,7 +134,7 @@ export function EntryDetail({ entry }: EntryDetailProps) {
             </ul>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No completed-case timings recorded for this entry.
+              No case timings recorded for this entry.
             </p>
           )}
         </CardContent>
